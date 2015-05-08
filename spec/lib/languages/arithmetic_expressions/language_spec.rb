@@ -1,6 +1,5 @@
 require_relative '../../../spec_helper'
 
-
 describe TypedRb::Languages::ArithmeticExpressions::Language do
   let(:lang) { described_class.new }
   context '#eval' do
