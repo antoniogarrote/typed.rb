@@ -7,13 +7,16 @@ module TypedRb
     module SimplyTypedLambdaCalculus
 
       class ParsingContext
+        def initialize
+          @types_stack = []
+        end
+
         def type=(type)
-          raise StandardError, 'Type annotation already present' if @type
-          @type = type
+          @types_stack << type
         end
 
         def type
-          @type
+          @types_stack.pop
         end
       end
 

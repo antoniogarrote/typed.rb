@@ -12,16 +12,16 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Parser do
     it 'a lambda expression' do
       expect(subject.parse('typesig Int => Bool; ->(x){ x }').to_s).to be == 'λx:(Int -> Bool).x'
       expect(subject.parse('typesig Int => Bool; ->(x){ y }').to_s).to be == 'λx:(Int -> Bool).y'
-      expect {
-        subject.parse('typesig Int => [Bool => Int]; ->(y){ ->(x){ z } }').to_s
-        #expect(subject.parse('typesig Int => [Bool => Int]; ->(y){ ->(x){ z } }').to_s).to be ==
-        #  'λy:(Int -> (Bool -> Int)).λx:(Int -> (Bool -> Int)).z'
-      }.to raise_error
+      expect(subject.parse('typesig Int => [Bool => Int]; ->(y){ typesig Bool => Int; ->(x){ z } }').to_s).to be ==
+        'λy:(Int -> (Bool -> Int)).λx:(Bool -> Int).z'
     end
 
     it 'throws an exception if missing type annotation for lambda' do
       expect{
         subject.parse('->(x){ x }').to_s
+      }.to raise_error
+      expect {
+        subject.parse('typesig Int => [Bool => Int]; ->(y){ ->(x){ z } }').to_s
       }.to raise_error
     end
 

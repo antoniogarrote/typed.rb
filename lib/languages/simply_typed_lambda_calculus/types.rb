@@ -22,7 +22,7 @@ module TypedRb
           protected
 
           def self.parse_atomic_type(type)
-            #(const [nil, :Type])
+            # (const [nil, :Type])
             type_name = type.children[1]
             parsed_type = TYPE_REGISTRY[type_name]
             if(parsed_type.nil?)
