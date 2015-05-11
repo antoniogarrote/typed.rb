@@ -18,13 +18,10 @@ describe TypedRb::Languages::UntypedLambdaCalculus::Language do
 
     it 'evalutes a \'->(x){ x }[->(m){ ->(z){ m } }[o][p]]\' expression' do
       expr = '->(x){ x }[->(m){ ->(z){ m } }[o][p]]'
-      puts "\nEVALUATING:"
-      puts lang.parse(expr).to_s(false)
-      puts lang.parse(expr).to_s(true)
-      puts "-------------------"
       expect(lang.eval(expr).to_s).to be == 'o'
     end
 
+=begin
     it 'evaluates the Y combinator \'->(f) { ->(x) { f[x[x]] }[->(z) { f[z[z]]}]}\' expression' do
       expr = '->(f) { ->(x) { f[x[x]] }[->(z) { f[z[z]]}]}[m]'
       puts "\nEVALUATING:"
@@ -33,5 +30,6 @@ describe TypedRb::Languages::UntypedLambdaCalculus::Language do
       puts "-------------------"
       puts lang.eval(expr).to_s
     end
+=end
   end
 end

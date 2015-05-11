@@ -1,17 +1,93 @@
 # -*- coding: utf-8 -*-
 module TypedRb
   module Languages
-    module UntypedLambdaCalculus
+    module SimplyTypedLambdaCalculus
       module Model
         class Expr
+          attr_reader :line, :col, :type
 
-          attr_reader :line, :col
-
-          def initialize(node)
+          def initialize(node,type = nil)
             @line = node.location.line
             @col = node.location.column
+            @type = type
           end
 
+          def shift(displacement, accum_num_binders)
+            self
+          end
+
+          def substitute(from,to)
+            self
+          end
+
+          def eval
+            self
+          end
+        end
+
+        # integers
+        class TmInt < Expr
+
+          attr_accessor :val
+
+          def initialize(node)
+            super(node,TyInteger.new)
+            @val = node.children.first
+          end
+
+          def to_s
+            "#{@val}"
+          end
+        end
+
+        # booleans
+        class TmBoolean < Expr
+
+          attr_accessor :val
+
+          def initialize(node)
+            super(node, TyBoolean.new)
+            @val = node.type == "true" ? true : false
+          end
+
+          def to_s
+            if @val
+              "True"
+            else
+              "False"
+            end
+          end
+        end
+
+        class TmIfElse < Expr
+          def initialize(node, condition_expr, then_expr, else_expr)
+            super(node, nil)
+            @condition_expr = condition_expr
+            @then_expr = then_expr
+            @else_expr = else_expr
+          end
+
+          def eval
+            if @condition_expr.eval.instance_of?(TmTrue)
+              @then_expr.eval
+            else
+              @else_expr.eval
+            end
+          end
+
+          def shift(displacement, accum_num_binders)
+            @condition_expr.shift(displacement,accum_num_binders)
+            @then_expr.shift(displacement,accum_num_binders)
+            @else_expr.shift(displacement,accum_num_binders)
+            self
+          end
+
+          def substitute(from,to)
+            @condition_expr.substitute(from,to)
+            @then_expr.substitute(from,to)
+            @else_expr.substitute(from,to)
+            self
+          end
         end
 
         # variable
@@ -23,12 +99,6 @@ module TypedRb
             super(node)
             @val = val
             @index = nil
-          end
-
-          def eval
-            #puts "VAR"
-            #puts self.to_s
-            self
           end
 
           def shift(displacement, accum_num_binders)
@@ -50,7 +120,6 @@ module TypedRb
           def to_s(label = true)
             "#{label ? @val : @index}"
           end
-
         end
 
         # abstraction
@@ -58,8 +127,9 @@ module TypedRb
 
           attr_accessor :head, :term
 
-          def initialize(head,term,node)
-            super(node)
+          def initialize(head,term,type,node)
+            super(node, type)
+            raise StandardError, "Missing type annotation for abstraction" if type.nil?
             @head = head
             @term = term
           end
@@ -84,9 +154,9 @@ module TypedRb
 
           def to_s(label = true)
             if label
-              "λ#{@head}.#{@term}"
+              "λ#{@head}:#{type}.#{@term}"
             else
-              "λ.#{@term.to_s(false)}"
+              "λ:#{type}.#{@term.to_s(false)}"
             end
           end
         end
