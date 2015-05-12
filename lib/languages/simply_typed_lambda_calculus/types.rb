@@ -19,6 +19,14 @@ module TypedRb
             end
           end
 
+          def compatible?(other_type)
+            if other_type.instance_of?(Class)
+              self.instance_of?(other_type)
+            else
+              other_type.instance_of?(self.class)
+            end
+          end
+
           protected
 
           def self.parse_atomic_type(type)

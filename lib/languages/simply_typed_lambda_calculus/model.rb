@@ -3,6 +3,17 @@ module TypedRb
   module Languages
     module SimplyTypedLambdaCalculus
       module Model
+
+        class TypeError < StandardError
+
+          attr_reader :term
+
+          def initialize(msg,term)
+            super(msg)
+            @term = term
+          end
+        end
+
         class Expr
           attr_reader :line, :col, :type
 
@@ -22,6 +33,11 @@ module TypedRb
 
           def eval
             self
+          end
+
+          def check_type(context)
+            fail RuntimeError, "Unknown type" if @type.nil?
+            @type
           end
         end
 
@@ -88,6 +104,20 @@ module TypedRb
             @else_expr.substitute(from,to)
             self
           end
+
+          def check_type(context)
+            if condition_expr.check_type(context).compatible?(TmBoolean)
+              then_expr_type = then_expr_type.check_type(context)
+              else_expr_type = else_expr.check_type(context)
+              if then_expr_type.compatible?(else_expr_type)
+                else_expr_type
+              else
+              fail TypeError, "Arms of conditional have different types", self
+              end
+            else
+              fail TypeError, "Expected Bool type in if conditional expression", condition_expr
+            end
+          end
         end
 
         # variable
@@ -119,6 +149,11 @@ module TypedRb
 
           def to_s(label = true)
             "#{label ? @val : @index}"
+          end
+
+          def check_type(context)
+            fail "Not implemented yet"
+            context.get_type_for(@val)
           end
         end
 
@@ -158,6 +193,10 @@ module TypedRb
             else
               "λ:#{type}.#{@term.to_s(false)}"
             end
+          end
+
+          def check_type(context)
+            fail "Not implemented yet"
           end
         end
 
@@ -200,6 +239,10 @@ module TypedRb
 
           def to_s(label = true)
             "(#{@abs.to_s(label)} #{@subs.to_s(label)})"
+          end
+
+          def check_type(context)
+            fail "Not implemented yet"
           end
         end
       end
