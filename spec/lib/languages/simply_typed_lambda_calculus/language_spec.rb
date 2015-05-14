@@ -3,9 +3,10 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
   let(:lang) { described_class.new }
   let(:check) { ->(code) {
-      parsed = lang.parse(code)
-      puts parsed
-      lang.check_type(parsed) }
+    parsed = lang.parse(code)
+    #puts "-----------------"
+    #puts parsed
+    lang.check_type(parsed) }
   }
 
   context '#check_type' do
@@ -54,7 +55,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
       it 'throws an exception if the condition of the conditional is not boolean' do
         expect {
-          type_checked = check[%q(
+          check[%q(
             if 0
               true
             else
@@ -66,7 +67,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
       it 'throws an exception if both branches of the conditional do not have the same type' do
         expect {
-          type_checked = check[%q(
+          check[%q(
             if true
               1
             else
@@ -81,62 +82,125 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
     context 'Abstractions' do
       it 'checks the type of a lambda function' do
         type_checked = check[%q(
-            typesig Bool => Int
+            typesig 'Bool => Int'
             ->(x) { 3 }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
-                                                                                                                   TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,                                                                                                                                       TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger,                                                                                                                                       ))
+                                                  TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,
+                                                  TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger))
       end
 
       it 'supports optional return types' do
         type_checked = check[%q(
-            typesig Bool
+            typesig 'Bool => Int'
             ->(x) { 3 }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
-                                                                                                                   TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,                                                                                                                                       TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger,                                                                                                                                       ))
+                                                  TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,
+                                                  TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger))
       end
 
       it 'checks the type of a lambda function using the context' do
         type_checked = check[%q(
-            typesig Bool => Bool
+            typesig 'Bool => Bool'
             ->(x) { x }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
-                                                                                                                   TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,                                                                                                                                       TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,                                                                                                                                       ))
-      end
-
-      it 'checks the type of a complex abstraction' do
-        type_checked = check[%q(
-              typesig Bool
-              ->(x) {
-
-                 typesig Int
-                 ->(y) {
-
-                    typesig Int
-                    ->(z) { (x z) }
-                 }
-              }
-                             )]
-
-        puts "PARSED"
-        puts type_checked
+                                                  TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,
+                                                  TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,))
       end
 
       it 'detects errors in the typing' do
         expect {
-        type_checked = check[%q(
-            typesig Bool => Int
+          check[%q(
+            typesig 'Bool => Int'
             ->(x) { true }
                              )]
         }.to raise_error(TypedRb::Languages::SimplyTypedLambdaCalculus::Model::TypeError)
 
       end
+
+      it 'checks the type of a complex abstraction' do
+        type_checked = check[%q(
+              typesig 'Bool => Int => (Bool => Int) => Int'
+              ->(x) {
+
+                 typesig 'Int => (Bool => Int) => Int'
+                 ->(y) {
+
+                    typesig '(Bool => Int) => Int'
+                    ->(z) { z[x] }
+                 }
+              }
+                             )]
+
+        expect(type_checked).to be_compatible(
+                                    TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
+                                        TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,
+                                        TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
+                                            TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger,
+                                            TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
+                                                TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
+                                                    TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyBoolean,
+                                                    TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger),
+                                                TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger)))
+                                )
+
+      end
+
+      it 'checks errors in complex abstraction' do
+        expect {
+          check[%q(
+              typesig 'Bool => Int => (Bool => Int) => Int'
+              ->(x) {
+
+                 typesig 'Int => (Bool => Int) => Int'
+                 ->(y) {
+
+                    typesig '(Bool => Int) => Bool'
+                    ->(z) { z[x] }
+                 }
+              }
+                             )]
+        }.to raise_error(TypedRb::Languages::SimplyTypedLambdaCalculus::Model::TypeError)
+
+        expect {
+          check[%q(
+              typesig 'Bool => Int => (Bool => Int) => Int'
+              ->(x) {
+
+                 typesig 'Int => (Bool => Int) => Int'
+                 ->(y) {
+
+                    typesig '(Bool => Int) => Int'
+                    ->(z) { z[y] }
+                 }
+              }
+                             )]
+        }.to raise_error(TypedRb::Languages::SimplyTypedLambdaCalculus::Model::TypeError)
+      end
     end
 
     context 'Application' do
 
+      it 'checks function application' do
+        type_checked = check[%q(
+              typesig 'Bool => Int'
+              ->(x) { 0 }[true]
+         )]
+
+        expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyInteger)
+      end
+
+      it 'checks errors in function application' do
+        expect {
+          check[%q(
+              typesig 'Bool => Int'
+              ->(x) { 0 }[3434]
+         )]
+
+        }.to raise_error(TypedRb::Languages::SimplyTypedLambdaCalculus::Model::TypeError)
+      end
     end
   end
 end

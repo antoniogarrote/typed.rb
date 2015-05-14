@@ -1,0 +1,64 @@
+grammar TypeSignatures
+
+  rule type
+      type_name arrow type {
+	 def ast
+	     [elements[0].ast, elements[2].ast]
+	  end
+      }
+      /
+    open_paren type close_paren arrow open_paren type close_paren {
+      def ast
+	[elements[1].ast, elements[5].ast]
+      end
+    }
+    /
+    open_paren type close_paren  arrow type {
+      def ast
+	[elements[1].ast, elements[4].ast]
+      end
+    }
+    /
+    type_name arrow open_paren type close_paren {
+      def ast
+	if elements[3].respond_to?(:ast)
+	  [elements[0].ast, elements[3].ast]
+	else
+	  [elements[0].ast, elements[3]]
+	end
+      end
+    }
+    /
+    type_name
+  end
+
+  rule arrow
+    (ws arrow_symbol ws)
+  end
+
+  rule type_name
+   [a-zA-Z]+ {
+      def ast
+	text_value
+      end
+   }
+  end
+
+  rule arrow_symbol
+    "=>"
+  end
+
+  rule open_paren
+    ws '(' ws
+  end
+
+  rule close_paren
+    ws ')' ws
+  end
+
+  rule ws
+   ' '*
+  end
+
+
+end

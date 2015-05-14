@@ -35,12 +35,8 @@ module TypedRb
         class Type
           def self.parse(type)
             return nil if type.nil?
-            case type.type
-            when :array
-              # array -> hash
-              parse(type.children[0])
-            when :hash
-              from,to = type.children.first.children
+            if type.instance_of?(Array)
+              from,to = [type.first,type.last]
               parse_function_type(from,to)
             else
               parse_atomic_type(type)
@@ -58,14 +54,12 @@ module TypedRb
           protected
 
           def self.parse_atomic_type(type)
-            # (const [nil, :Type])
-            type_name = type.children[1]
-            parsed_type = TYPE_REGISTRY[type_name]
+            parsed_type = TYPE_REGISTRY[type]
             if(parsed_type.nil?)
-              puts "ERROR"
-              puts type
-              puts type.inspect
-              puts "==========================================="
+              #puts "ERROR"
+              #puts type
+              #puts type.inspect
+              #puts "==========================================="
               raise StandardError, "Uknown type #{type}"
             else
               parsed_type.new
@@ -85,7 +79,7 @@ module TypedRb
             "Int"
           end
         end
-        TYPE_REGISTRY[:Int] = TyInteger
+        TYPE_REGISTRY['Int'] = TyInteger
 
         class TyBoolean < Type
           def initialize
@@ -95,7 +89,7 @@ module TypedRb
             "Bool"
           end
         end
-        TYPE_REGISTRY[:Bool] = TyBoolean
+        TYPE_REGISTRY['Bool'] = TyBoolean
 
         class TyFunction < Type
           attr_accessor :from, :to

@@ -45,7 +45,7 @@ module TypedRb
             _, context = remove_names(ast.subs, context)
           when  TmAbs
             to_bind = ast.head
-            if(context[to_bind])
+            if context[to_bind]
               fail StandardError.new, "Variable #{to_bind} captured, renamining not in place yet"
             else
               context.keys.each do |variable|
@@ -135,7 +135,8 @@ module TypedRb
         def parse_type(node,context)
           # send -> hash
           signature = node.children[2]
-          type = Types::Type.parse(signature)
+          type_ast = TypedRb::TypeSignature::Parser.parse(signature.children.first.to_s)
+          type = Types::Type.parse(type_ast)
           unless type.compatible?(Types::TyFunction)
             type = Types::TyFunction.new(type,nil)
           end
