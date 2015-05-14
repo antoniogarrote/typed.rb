@@ -5,8 +5,36 @@ module TypedRb
 
         TYPE_REGISTRY = {}
 
+        class TypingContext
+          def initialize(parent=nil)
+            @parent = parent
+            @bindings = {}
+          end
+
+          def add_binding(val,type)
+            TypingContext.new(self).push_binding(val,type)
+          end
+
+          def get_type_for(val)
+            type = @bindings[val]
+            if type.nil?
+              @parent.get_type_for(val) if @parent
+            else
+              type
+            end
+          end
+
+          protected
+
+          def push_binding(val,type)
+            @bindings[val] = type
+            self
+          end
+        end
+
         class Type
           def self.parse(type)
+            return nil if type.nil?
             case type.type
             when :array
               # array -> hash
@@ -77,7 +105,11 @@ module TypedRb
           end
 
           def to_s
-            "(#{@from} -> #{@to})"
+            if @to.nil?
+              "#{@from}"
+            else
+              "(#{@from} -> #{@to})"
+            end
           end
         end
       end

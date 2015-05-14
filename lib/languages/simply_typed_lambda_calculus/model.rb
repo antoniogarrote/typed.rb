@@ -36,7 +36,7 @@ module TypedRb
           end
 
           def check_type(context)
-            fail RuntimeError, "Unknown type" if @type.nil?
+            fail(TypeError, "Unknown type", self) if @type.nil?
             @type
           end
         end
@@ -47,7 +47,7 @@ module TypedRb
           attr_accessor :val
 
           def initialize(node)
-            super(node,TyInteger.new)
+            super(node,Types::TyInteger.new)
             @val = node.children.first
           end
 
@@ -62,7 +62,7 @@ module TypedRb
           attr_accessor :val
 
           def initialize(node)
-            super(node, TyBoolean.new)
+            super(node, Types::TyBoolean.new)
             @val = node.type == "true" ? true : false
           end
 
@@ -106,16 +106,16 @@ module TypedRb
           end
 
           def check_type(context)
-            if condition_expr.check_type(context).compatible?(TmBoolean)
-              then_expr_type = then_expr_type.check_type(context)
-              else_expr_type = else_expr.check_type(context)
+            if @condition_expr.check_type(context).compatible?(Types::TyBoolean)
+              then_expr_type = @then_expr.check_type(context)
+              else_expr_type = @else_expr.check_type(context)
               if then_expr_type.compatible?(else_expr_type)
                 else_expr_type
               else
-              fail TypeError, "Arms of conditional have different types", self
+              raise TypeError.new("Arms of conditional have different types", self)
               end
             else
-              fail TypeError, "Expected Bool type in if conditional expression", condition_expr
+              raise TypeError.new("Expected Bool type in if conditional expression", @condition_expr)
             end
           end
         end
@@ -152,7 +152,6 @@ module TypedRb
           end
 
           def check_type(context)
-            fail "Not implemented yet"
             context.get_type_for(@val)
           end
         end
@@ -196,7 +195,16 @@ module TypedRb
           end
 
           def check_type(context)
-            fail "Not implemented yet"
+            puts type.to_s
+            context = context.add_binding(head,type.from)
+            type_term = term.check_type(context)
+            if type.to.nil? || type_term.compatible?(type.to)
+              type.to = type_term
+              type
+            else
+              error_message = "Error abstraction type, exepcted #{type} got #{type.from} -> #{type_term}"
+              raise TypeError.new(error_message, self)
+            end
           end
         end
 
@@ -242,7 +250,13 @@ module TypedRb
           end
 
           def check_type(context)
-            fail "Not implemented yet"
+            abs_type = abs.check_type(context)
+            subs_type = subs.check_type(context)
+            if abs_type.from.compatible?(subs_type)
+              abs_type.to
+            else
+              raise TypeError.new("Error in application expected #{abs_type.from} got #{subs_type}",self)
+            end
           end
         end
       end

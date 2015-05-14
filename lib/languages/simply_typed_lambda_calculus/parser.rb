@@ -115,7 +115,8 @@ module TypedRb
 
         def parse_if_then_else(node, context)
           cond_expr, then_expr, else_expr = node.children
-          TmIfElse.new(map(cond_expr, context),
+          TmIfElse.new(node,
+                       map(cond_expr, context),
                        map(then_expr, context),
                        map(else_expr, context))
         end
@@ -134,7 +135,11 @@ module TypedRb
         def parse_type(node,context)
           # send -> hash
           signature = node.children[2]
-          context.type = Types::Type.parse(signature)
+          type = Types::Type.parse(signature)
+          unless type.compatible?(Types::TyFunction)
+            type = Types::TyFunction.new(type,nil)
+          end
+          context.type = type
           nil
         end
       end
