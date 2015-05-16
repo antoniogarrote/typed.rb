@@ -55,7 +55,7 @@ module TypedRb
 
           def self.parse_atomic_type(type)
             parsed_type = TYPE_REGISTRY[type]
-            if(parsed_type.nil?)
+            if parsed_type.nil?
               #puts "ERROR"
               #puts type
               #puts type.inspect
@@ -76,7 +76,7 @@ module TypedRb
           end
 
           def to_s
-            "Int"
+            'Int'
           end
         end
         TYPE_REGISTRY['Int'] = TyInteger
@@ -86,7 +86,7 @@ module TypedRb
           end
 
           def to_s
-            "Bool"
+            'Bool'
           end
         end
         TYPE_REGISTRY['Bool'] = TyBoolean

@@ -77,6 +77,7 @@ module TypedRb
           def initialize(is_zero_expr)
             @is_zero_expr = is_zero_expr
           end
+
           def eval
             if @is_zero_expr.instance_of?(TmZero)
               TmTrue.new

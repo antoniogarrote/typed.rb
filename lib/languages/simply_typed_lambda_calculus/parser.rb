@@ -91,8 +91,8 @@ module TypedRb
                     node)
         end
 
-        def parse_args(args, context)
-          if(args.type != :args || args.children.length != 1)
+        def parse_args(args, _context)
+          if args.type != :args || args.children.length != 1
             fail StandardError,"Error parsing lambda args [#{args}]"
           end
           args.children.first.children.first

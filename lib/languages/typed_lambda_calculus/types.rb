@@ -55,12 +55,12 @@ module TypedRb
 
           def self.parse_atomic_type(type)
             parsed_type = TYPE_REGISTRY[type]
-            if(parsed_type.nil?)
+            if parsed_type.nil?
               #puts "ERROR"
               #puts type
               #puts type.inspect
               #puts "==========================================="
-              raise StandardError, "Uknown type #{type}"
+              raise StandardError, "Unknown type #{type}"
             else
               parsed_type.new
             end
@@ -79,7 +79,7 @@ module TypedRb
           end
 
           def to_s
-            "Int"
+            'Int'
           end
         end
 
@@ -91,7 +91,7 @@ module TypedRb
           end
 
           def to_s
-            "Bool"
+            'Bool'
           end
         end
 
@@ -103,7 +103,7 @@ module TypedRb
           end
 
           def to_s
-            "String"
+            'String'
           end
         end
 
@@ -115,7 +115,7 @@ module TypedRb
           end
 
           def to_s
-            "Float"
+            'Float'
           end
         end
 

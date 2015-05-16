@@ -3,12 +3,9 @@ module TypedRb
   module Languages
     module TypedLambdaCalculus
       module Model
-
         class TypeError < StandardError
-
           attr_reader :term
-
-          def initialize(msg,term)
+          def initialize(msg, term)
             super(msg)
             @term = term
           end
@@ -16,18 +13,17 @@ module TypedRb
 
         class Expr
           attr_reader :line, :col, :type
-
-          def initialize(node,type = nil)
+          def initialize(node, type = nil)
             @line = node.location.line
             @col = node.location.column
             @type = type
           end
 
-          def shift(displacement, accum_num_binders)
+          def shift(_displacement, _accum_num_binders)
             self
           end
 
-          def substitute(from,to)
+          def substitute(_from, _to)
             self
           end
 
@@ -35,42 +31,38 @@ module TypedRb
             self
           end
 
-          def check_type(context)
-            fail(TypeError, "Unknown type", self) if @type.nil?
+          def check_type(_context)
+            fail(TypeError, 'Unknown type', self) if @type.nil?
             @type
           end
         end
 
         # integers
         class TmInt < Expr
-
           attr_accessor :val
-
           def initialize(node)
             super(node,Types::TyInteger.new)
             @val = node.children.first
           end
 
-          def to_s(label = false)
+          def to_s(_label = false)
             "#{@val}"
           end
         end
 
         # booleans
         class TmBoolean < Expr
-
           attr_accessor :val
-
           def initialize(node)
             super(node, Types::TyBoolean.new)
-            @val = node.type == "true" ? true : false
+            @val = node.type == 'true' ? true : false
           end
 
-          def to_s(label=false)
+          def to_s(_label)
             if @val
-              "True"
+              'True'
             else
-              "False"
+              'False'
             end
           end
         end
@@ -78,13 +70,12 @@ module TypedRb
         # strings
         class TmString < Expr
           attr_accessor :val
-
           def initialize(node)
             super(node,Types::TyString.new)
             @val = node.children.first
           end
 
-          def to_s(label = false)
+          def to_s(_label)
             "'#{@val.gsub("'","\\'")}'"
           end
         end
@@ -92,13 +83,12 @@ module TypedRb
         # floats
         class TmFloat < Expr
           attr_accessor :val
-
           def initialize(node)
             super(node,Types::TyFloat.new)
             @val = node.children.first
           end
 
-          def to_s(label = false)
+          def to_s(_label)
             "#{@val}"
           end
         end
@@ -120,16 +110,16 @@ module TypedRb
           end
 
           def shift(displacement, accum_num_binders)
-            @condition_expr.shift(displacement,accum_num_binders)
-            @then_expr.shift(displacement,accum_num_binders)
-            @else_expr.shift(displacement,accum_num_binders)
+            @condition_expr.shift(displacement, accum_num_binders)
+            @then_expr.shift(displacement, accum_num_binders)
+            @else_expr.shift(displacement, accum_num_binders)
             self
           end
 
-          def substitute(from,to)
-            @condition_expr.substitute(from,to)
-            @then_expr.substitute(from,to)
-            @else_expr.substitute(from,to)
+          def substitute(from, to)
+            @condition_expr.substitute(from, to)
+            @then_expr.substitute(from, to)
+            @else_expr.substitute(from, to)
             self
           end
 
@@ -140,10 +130,10 @@ module TypedRb
               if then_expr_type.compatible?(else_expr_type)
                 else_expr_type
               else
-              raise TypeError.new("Arms of conditional have different types", self)
+              fail TypeError.new('Arms of conditional have different types', self)
               end
             else
-              raise TypeError.new("Expected Bool type in if conditional expression", @condition_expr)
+              fail TypeError.new('Expected Bool type in if conditional expression', @condition_expr)
             end
           end
         end
@@ -153,7 +143,7 @@ module TypedRb
 
           attr_accessor :index, :val
 
-          def initialize(val,node)
+          def initialize(val, node)
             super(node)
             @val = val
             @index = nil
@@ -166,8 +156,7 @@ module TypedRb
             self
           end
 
-          def substitute(from,to)
-            #put "TERM SUBS(#{@index}) #{from} -> #{to}"
+          def substitute(from, to)
             if @index == from
               to
             else
@@ -186,12 +175,12 @@ module TypedRb
 
         # abstraction
         class TmAbs < Expr
-
           attr_accessor :head, :term
-
-          def initialize(head,term,type,node)
+          def initialize(head, term, type,node)
             super(node, type)
-            raise StandardError, "Missing type annotation for abstraction" if type.nil?
+            if type.nil?
+              fail StandardError, 'Missing type annotation for abstraction'
+            end
             @head = head
             @term = term
           end
@@ -202,14 +191,11 @@ module TypedRb
           end
 
           def substitute(from,to)
-            #put "APP SUBSTITUTING [#{from} -> #{to}]"
-            @term = @term.substitute(from + 1, to.shift(1,0))
+            @term = @term.substitute(from + 1, to.shift(1, 0))
             self
           end
 
           def eval
-            #puts "ABS"
-            #puts self.to_s
             @term = @term.eval
             self
           end
@@ -230,17 +216,15 @@ module TypedRb
               type
             else
               error_message = "Error abstraction type, exepcted #{type} got #{type.from} -> #{type_term}"
-              raise TypeError.new(error_message, self)
+              fail TypeError.new(error_message, self)
             end
           end
         end
 
         # application
         class TmApp < Expr
-
           attr_accessor :abs,:subs
-
-          def initialize(abs,subs,node)
+          def initialize(abs, subs, node)
             super(node)
             @abs = abs
             @subs = subs
@@ -252,18 +236,16 @@ module TypedRb
             self
           end
 
-          def substitute(from,to)
-            @abs = @abs.substitute(from,to)
-            @subs = @subs.substitute(from,to)
+          def substitute(from, to)
+            @abs = @abs.substitute(from, to)
+            @subs = @subs.substitute(from, to)
             self
           end
 
           def eval
-            #puts "APP"
-            #puts self.to_s
             reduced_subs = @subs.eval
             if @abs.class == TmAbs
-              @abs = @abs.term.substitute(0, reduced_subs).shift(-1,0)
+              @abs = @abs.term.substitute(0, reduced_subs).shift(-1, 0)
               @abs.eval
             else
               @abs = @abs.eval
@@ -283,10 +265,10 @@ module TypedRb
               if abs_type.from.compatible?(subs_type)
                 abs_type.to
               else
-                raise TypeError.new("Error in application expected #{abs_type.from} got #{subs_type}",self)
+                fail TypeError.new("Error in application expected #{abs_type.from} got #{subs_type}", self)
               end
             else
-              raise TypeError.new("Error in application expected Function type got #{abs_type}",self)
+              fail TypeError.new("Error in application expected Function type got #{abs_type}", self)
             end
           end
         end
