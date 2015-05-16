@@ -1,6 +1,6 @@
 module TypedRb
   module Languages
-    module SimplyTypedLambdaCalculus
+    module TypedLambdaCalculus
       module Types
 
         TYPE_REGISTRY = {} unless defined?(TYPE_REGISTRY)
@@ -72,6 +72,9 @@ module TypedRb
         end
 
         class TyInteger < Type
+
+          Types::TYPE_REGISTRY['Int'] = TyInteger
+
           def initialize
           end
 
@@ -79,9 +82,11 @@ module TypedRb
             "Int"
           end
         end
-        TYPE_REGISTRY['Int'] = TyInteger
 
         class TyBoolean < Type
+
+          Types::TYPE_REGISTRY['Bool'] = TyBoolean
+
           def initialize
           end
 
@@ -89,7 +94,30 @@ module TypedRb
             "Bool"
           end
         end
-        TYPE_REGISTRY['Bool'] = TyBoolean
+
+        class TyString < Type
+
+          Types::TYPE_REGISTRY['String'] = TyString
+
+          def initialize
+          end
+
+          def to_s
+            "String"
+          end
+        end
+
+        class TyFloat < Type
+
+          Types::TYPE_REGISTRY['Float'] = TyFloat
+
+          def initialize
+          end
+
+          def to_s
+            "Float"
+          end
+        end
 
         class TyFunction < Type
           attr_accessor :from, :to
