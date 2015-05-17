@@ -5,11 +5,30 @@ module TypedRb
       module Model
 
         class GenSym
-          def self.next(x="")
-            counter = @count || 1
-            sym = "__gs#{x}_#{counter}"
-            @count = counter + 1
+          COUNTS = {} unless defined?(COUNTS)
+
+          def self.reset
+            COUNTS.clear
+          end
+
+          def self.next(x="_gs")
+            count = COUNTS[x] || 1
+            sym = "#{x}[[#{count}"
+            COUNTS[x] = count + 1
             sym
+          end
+
+          def self.resolve(gx)
+            if gx.index('[[')
+              orig, count = gx.split("[[")
+              if count == '1'
+                orig
+              else
+                gx
+              end
+            else
+              gx
+            end
           end
         end
 
@@ -29,21 +48,13 @@ module TypedRb
             @type = type
           end
 
-          def shift(_displacement, _accum_num_binders)
-            self
-          end
-
-          def substitute(_from, _to)
-            self
-          end
-
-          def eval
-            self
-          end
-
           def check_type(_context)
             fail(TypeError, 'Unknown type', self) if @type.nil?
             @type
+          end
+
+          def rename(_from_binding, _to_binding)
+            self
           end
         end
 
@@ -55,7 +66,7 @@ module TypedRb
             @val = node.children.first
           end
 
-          def to_s(_label = false)
+          def to_s
             "#{@val}"
           end
         end
@@ -68,7 +79,7 @@ module TypedRb
             @val = node.type == 'true' ? true : false
           end
 
-          def to_s(_label=false)
+          def to_s
             if @val
               'True'
             else
@@ -85,7 +96,7 @@ module TypedRb
             @val = node.children.first
           end
 
-          def to_s(_label=false)
+          def to_s
             "'#{@val.gsub("'","\\'")}'"
           end
         end
@@ -98,7 +109,7 @@ module TypedRb
             @val = node.children.first
           end
 
-          def to_s(_label=false)
+          def to_s
             "#{@val}"
           end
         end
@@ -111,25 +122,10 @@ module TypedRb
             @else_expr = else_expr
           end
 
-          def eval
-            if @condition_expr.eval.instance_of?(TmTrue)
-              @then_expr.eval
-            else
-              @else_expr.eval
-            end
-          end
-
-          def shift(displacement, accum_num_binders)
-            @condition_expr.shift(displacement, accum_num_binders)
-            @then_expr.shift(displacement, accum_num_binders)
-            @else_expr.shift(displacement, accum_num_binders)
-            self
-          end
-
-          def substitute(from, to)
-            @condition_expr.substitute(from, to)
-            @then_expr.substitute(from, to)
-            @else_expr.substitute(from, to)
+          def rename(from_binding, to_binding)
+            @condition_expr.rename(from_binding, to_binding)
+            @then_expr.rename(from_binding, to_binding)
+            @else_expr.rename(from_binding, to_binding)
             self
           end
 
@@ -146,6 +142,10 @@ module TypedRb
               fail TypeError.new('Expected Bool type in if conditional expression', @condition_expr)
             end
           end
+
+          def to_s
+            "if #{@condition_expr} then\n  #{@then_expr}\nelse\n  #{@else_expr}\nend\n"
+          end
         end
 
         # variable
@@ -155,27 +155,18 @@ module TypedRb
 
           def initialize(val, node)
             super(node)
-            @val = val
-            @index = nil
+            @val = val.to_s
           end
 
-          def shift(displacement, accum_num_binders)
-            if @index >= accum_num_binders
-              @index += displacement
+          def to_s
+            "#{GenSym.resolve(@val)}"
+          end
+
+          def rename(from_binding, to_binding)
+            if @val == from_binding
+              @val = to_binding
             end
             self
-          end
-
-          def substitute(from, to)
-            if @index == from
-              to
-            else
-              self
-            end
-          end
-
-          def to_s(label = true)
-            "#{label ? @val : @index}"
           end
 
           def check_type(context)
@@ -195,27 +186,15 @@ module TypedRb
             @term = term
           end
 
-          def shift(displacement, accum_num_binders)
-            @term = @term.shift(displacement, accum_num_binders + 1)
-            self
+          def to_s
+              "λ#{GenSym.resolve(@head)}:#{type}.#{@term}"
           end
 
-          def substitute(from,to)
-            @term = @term.substitute(from + 1, to.shift(1, 0))
-            self
-          end
-
-          def eval
-            @term = @term.eval
-            self
-          end
-
-          def to_s(label = true)
-            if label
-              "λ#{@head}:#{type}.#{@term}"
-            else
-              "λ:#{type}.#{@term.to_s(false)}"
+          def rename(from_binding, to_binding)
+            if(@head != from_binding)
+              term.rename(from_binding,to_binding)
             end
+            self
           end
 
           def check_type(context)
@@ -240,32 +219,10 @@ module TypedRb
             @subs = subs
           end
 
-          def shift(displacement, accum_num_binders)
-            @abs = @abs.shift(displacement, accum_num_binders)
-            @subs = @subs.shift(displacement, accum_num_binders)
+          def rename(from_binding, to_binding)
+            @abs.rename(from_binding, to_binding)
+            @subs.rename(from_binding, to_binding)
             self
-          end
-
-          def substitute(from, to)
-            @abs = @abs.substitute(from, to)
-            @subs = @subs.substitute(from, to)
-            self
-          end
-
-          def eval
-            reduced_subs = @subs.eval
-            if @abs.class == TmAbs
-              @abs = @abs.term.substitute(0, reduced_subs).shift(-1, 0)
-              @abs.eval
-            else
-              @abs = @abs.eval
-              @subs = reduced_subs
-              self
-            end
-          end
-
-          def to_s(label = true)
-            "(#{@abs.to_s(label)} #{@subs.to_s(label)})"
           end
 
           def check_type(context)
@@ -281,6 +238,38 @@ module TypedRb
               fail TypeError.new("Error in application expected Function type got #{abs_type}", self)
             end
           end
+
+          def to_s
+            "(#{@abs} #{@subs})"
+          end
+        end
+
+        #TmLet.new(binding, map(term,context), node)
+        class TmLet < Expr
+          attr_accessor :binding, :term
+          def initialize(binding, term, node)
+            super(node)
+            @binding = binding
+            @term = term
+          end
+
+          def to_s
+            "let #{GenSym.resolve(@binding)} = #{@term}"
+          end
+
+          def rename(from_binding, to_binding)
+            # let binding shadows variables in the closure
+            if @binding == from_binding
+              @binding = from_binding
+            end
+            @term.rename(from_binding, to_binding)
+            self
+          end
+
+          def check_type(context)
+            binding_type = @term.check_type(context)
+            context.add_binding!(@binding,binding_type)
+          end
         end
 
         class TmSequencing < Expr
@@ -290,27 +279,18 @@ module TypedRb
             @terms = terms.reject(&:nil?)
           end
 
-          def shift(displacement, accum_num_binders)
-            @terms = terms.map{|term| term.shift(displacement, accum_num_binders) }
-            self
-          end
-
-          def substitute(from, to)
-            @terms = @terms.map{|term| term.substitute(from, to) }
-            self
-          end
-
-          def eval
-            @terms.reduce{|_,term| term.eval }
-          end
-
-          def to_s(label = true)
+          def to_s
             printing_order_terms= @terms.reverse
             initial = "λ:#{GenSym.next}:Unit.#{printing_order_terms.first}"
             printing_order_terms.drop(1).inject(initial) do |acc, term|
               param = GenSym.next
-              "(#{acc} λ:#{param}:Unit.#{term.to_s(label)})"
+              "(#{acc} λ:#{param}:Unit.#{term})"
             end
+          end
+
+          def rename(from_binding, to_binding)
+            @terms.each{|term| term.rename(from_binding, to_binding) }
+            self
           end
 
           def check_type(context)

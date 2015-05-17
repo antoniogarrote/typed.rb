@@ -8,6 +8,7 @@ module TypedRb
         include Types
 
         def parse(expr)
+          Model::GenSym.reset
           parser = Parser.new
           parser.parse(expr)
         end

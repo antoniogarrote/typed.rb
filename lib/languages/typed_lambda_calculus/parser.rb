@@ -28,38 +28,6 @@ module TypedRb
           map(ast(expr),ParsingContext.new)
         end
 
-        def remove_names(ast, context = {})
-          case ast.class
-          when TmVar
-            if context[ast.val]
-              ast.index = context[ast.val]
-            else
-              context[ast.val] = context.keys.length + 1
-              ast.index = context[ast.val]
-            end
-          when TmApp
-            _, context_abs = remove_names(ast.abs, context.dup)
-            context_abs.each_pair do |key,val|
-              context[key] = val if context[key].nil?
-            end
-            _, context = remove_names(ast.subs, context)
-          when  TmAbs
-            to_bind = ast.head
-            if context[to_bind]
-              fail StandardError.new, "Variable #{to_bind} captured, renamining not in place yet"
-            else
-              context.keys.each do |variable|
-                context[variable] = context[variable] + 1
-              end
-              context[to_bind] = 0
-            end
-            remove_names(ast.term, context)
-          else
-            fail StandardError.new,"Unknown AST node #{ast}"
-          end
-          [ast,context]
-        end
-
         private
 
         def map(node, context)
@@ -76,6 +44,8 @@ module TypedRb
             TmFloat.new(node)
           when :if
             parse_if_then_else(node, context)
+          when :lvasgn
+            parse_let(node, context)
           when :block
             parse_lambda(node, context)
           when :send
@@ -89,17 +59,26 @@ module TypedRb
 
         def parse_lambda(node, context)
           args,body  = node.children[1],node.children[2]
-          TmAbs.new(parse_args(args, context),
-                    map(body, context),
+          arg = parse_args(args, context)
+          body = map(body, context)
+          uniq_arg = Model::GenSym.next(arg)
+
+          TmAbs.new(uniq_arg,
+                    body.rename(arg, uniq_arg),
                     context.type,
                     node)
+        end
+
+        def parse_let(node, context)
+          binding, term = node.children
+          TmLet.new(binding, map(term,context), node)
         end
 
         def parse_args(args, _context)
           if args.type != :args || args.children.length != 1
             fail StandardError,"Error parsing lambda args [#{args}]"
           end
-          args.children.first.children.first
+          args.children.first.children.first.to_s
         end
 
         def parse_send(node, context)

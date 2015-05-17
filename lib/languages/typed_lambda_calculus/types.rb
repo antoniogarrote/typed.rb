@@ -15,6 +15,10 @@ module TypedRb
             TypingContext.new(self).push_binding(val,type)
           end
 
+          def add_binding!(val,type)
+            push_binding(val,type)
+          end
+
           def get_type_for(val)
             type = @bindings[val]
             if type.nil?
