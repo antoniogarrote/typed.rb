@@ -215,6 +215,46 @@ __END
 
         }.to raise_error(TypedRb::Languages::TypedLambdaCalculus::Model::TypeError)
       end
+
+      it 'checks expresions including let expressions for functions' do
+        code = <<__END
+        typesig 'Int => Int'
+        id_int = ->(x) { x }
+        my_int = 3
+        my_bool = true
+
+        id_int[my_int]
+__END
+        expect(check[code]).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyInteger)
+      end
+
+      it 'checks missing vars in context' do
+        expect {
+          code = <<__END
+        typesig 'Int => Int'
+        id_int = ->(x) { x }
+        my_int = 3
+        my_bool = true
+
+        id_int[val]
+__END
+          check[code]
+        }.to raise_error(TypedRb::Languages::TypedLambdaCalculus::Model::TypeError)
+      end
+
+      it 'checks type errors with let bindings' do
+        expect {
+          code = <<__END
+        typesig 'Int => Int'
+        id_int = ->(x) { x }
+        my_int = 3
+        my_bool = true
+
+        id_int[my_bool]
+__END
+          check[code]
+        }.to raise_error(TypedRb::Languages::TypedLambdaCalculus::Model::TypeError)
+      end
     end
   end
 end

@@ -170,7 +170,9 @@ module TypedRb
           end
 
           def check_type(context)
-            context.get_type_for(@val)
+            type = context.get_type_for(@val)
+            fail TypeError.new("Cannot find binding for var '#{@val}' in the context", self) if type.nil?
+            type
           end
         end
 
@@ -294,7 +296,9 @@ module TypedRb
           end
 
           def check_type(context)
-            @terms.reduce {|_,term| term.check_type(context) }
+            @terms.drop(1).reduce(@terms.first.check_type(context)) {|_,term|
+              term.check_type(context)
+            }
           end
         end
       end

@@ -71,7 +71,7 @@ module TypedRb
 
         def parse_let(node, context)
           binding, term = node.children
-          TmLet.new(binding, map(term,context), node)
+          TmLet.new(binding.to_s, map(term,context), node)
         end
 
         def parse_args(args, _context)

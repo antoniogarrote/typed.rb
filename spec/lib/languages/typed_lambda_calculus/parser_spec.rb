@@ -49,7 +49,7 @@ describe TypedRb::Languages::TypedLambdaCalculus::Parser do
        )[true]
 __END
 
-      result_expr = /\(\(λ:_gs_\d+:Unit.λy:\(Bool -> Bool\).y λ:_gs_\d+:Unit.λx:\(Int -> Int\).x\) False\)/
+      result_expr = /\(\(λ:_gs\[\[\d+:Unit.λy:\(Bool -> Bool\).y λ:_gs\[\[\d+:Unit.λx:\(Int -> Int\).x\) False\)/
       expect(parse(code).to_s).to match(result_expr)
     end
 
@@ -69,6 +69,16 @@ __END
     it 'renames bindings for function arguments' do
       parsed = parse("typesig 'Int => Bool'; ->(x){ typesig 'Int => Int'; ->(x){ x } }")
       expect(parsed.to_s).to be == 'λx[[2:(Int -> Bool).λx:(Int -> Int).x'
+    end
+
+    it 'parses let bindings' do
+      code = <<__END
+        typesig 'Int => Int'
+        id_int = ->(x) { x }
+
+        id_int[3]
+__END
+      expect(parse(code).to_s).to be == '(λ:_gs[[1:Unit.(id_int 3) λ:_gs[[2:Unit.let id_int = λx:(Int -> Int).x)'
     end
   end
 
