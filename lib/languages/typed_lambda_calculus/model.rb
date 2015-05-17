@@ -8,8 +8,8 @@ module TypedRb
           def self.next(x="")
             counter = @count || 1
             sym = "__gs#{x}_#{counter}"
-            @count += 1
-            counter
+            @count = counter + 1
+            sym
           end
         end
 
@@ -68,7 +68,7 @@ module TypedRb
             @val = node.type == 'true' ? true : false
           end
 
-          def to_s(_label)
+          def to_s(_label=false)
             if @val
               'True'
             else
@@ -85,7 +85,7 @@ module TypedRb
             @val = node.children.first
           end
 
-          def to_s(_label)
+          def to_s(_label=false)
             "'#{@val.gsub("'","\\'")}'"
           end
         end
@@ -98,7 +98,7 @@ module TypedRb
             @val = node.children.first
           end
 
-          def to_s(_label)
+          def to_s(_label=false)
             "#{@val}"
           end
         end
@@ -303,18 +303,19 @@ module TypedRb
           def eval
             @terms.reduce{|_,term| term.eval }
           end
-        end
 
-        def to_s(label = true)
-          initial = "λ:#{GenSym.next}:Unit.#{@terms.first}"
-          @terms.drop(1).reverse.inject(initial) do |acc, term|
-            param = GenSym.next
-            "(#{acc} λ:#{param}:Unit.#{term.to_s(label)})"
+          def to_s(label = true)
+            printing_order_terms= @terms.reverse
+            initial = "λ:#{GenSym.next}:Unit.#{printing_order_terms.first}"
+            printing_order_terms.drop(1).inject(initial) do |acc, term|
+              param = GenSym.next
+              "(#{acc} λ:#{param}:Unit.#{term.to_s(label)})"
+            end
           end
-        end
 
-        def check_type(context)
-          @terms.reduce {|_,term| term.check_type(context) }
+          def check_type(context)
+            @terms.reduce {|_,term| term.check_type(context) }
+          end
         end
       end
     end

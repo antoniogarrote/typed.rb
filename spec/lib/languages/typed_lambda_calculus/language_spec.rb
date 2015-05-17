@@ -111,6 +111,19 @@ describe TypedRb::Languages::TypedLambdaCalculus::Language do
       end
 
 
+      it 'checks the type of expressions containing sequencing' do
+        code = <<__END
+       (
+          typesig 'Int => Int'
+          ->(x) { x }
+          typesig 'Bool => Bool'
+          ->(y) { y }
+       )[true]
+__END
+        type_checked = check[code]
+
+        expect(type_checked).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyBoolean)
+      end
       it 'detects errors in the typing' do
         expect {
           check[%q(

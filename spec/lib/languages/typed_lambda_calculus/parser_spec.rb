@@ -34,6 +34,20 @@ describe TypedRb::Languages::TypedLambdaCalculus::Parser do
         'λy:(Int -> (Bool -> Int)).λx:(Bool -> Int).z'
     end
 
+    it 'supports sequencing of expressions' do
+      code = <<__END
+       (
+          typesig 'Int => Int'
+          ->(x) { x }
+          typesig 'Bool => Bool'
+          ->(y) { y }
+       )[true]
+__END
+
+      result_expr = /\(\(λ:__gs_\d+:Unit.λy:\(Bool -> Bool\).y λ:__gs_\d+:Unit.λx:\(Int -> Int\).x\) False\)/
+      expect(subject.parse(code).to_s).to match(result_expr)
+    end
+
     it 'throws an exception if missing type annotation for lambda' do
       expect{
         subject.parse('->(x){ x }').to_s
