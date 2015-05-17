@@ -2,6 +2,11 @@ require_relative '../../spec_helper'
 
 describe TypedRb::TypeSignature::Parser do
 
+  it 'parses a unit type' do
+    result = described_class.parse('unit')
+    expect(result).to be == :unit
+  end
+
   it 'parses an atomic type' do
     result = described_class.parse('Bool')
     expect(result).to be =='Bool'
@@ -15,6 +20,11 @@ describe TypedRb::TypeSignature::Parser do
   it 'parses a complex type' do
     result = described_class.parse('Bool => Int    => Bool')
     expect(result).to be == ['Bool', ['Int', 'Bool']]
+  end
+
+  it 'parses a complex type using unit' do
+    result = described_class.parse('Bool => Int => unit')
+    expect(result).to be == ['Bool', ['Int', :unit]]
   end
 
   it 'parses a types with parentheses' do

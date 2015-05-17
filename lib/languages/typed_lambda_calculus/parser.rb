@@ -128,11 +128,12 @@ module TypedRb
         def parse_begin(node, context)
           mapped = node.children.map do |child_node|
             map(child_node, context)
-          end.reject(&:nil?)
-          if mapped.size == 1
-            mapped.first
+          end
+          sequencing = TmSequencing.new(mapped,node)
+          if sequencing.terms.size == 1
+            sequencing.terms.first
           else
-            mapped
+            sequencing
           end
         end
 

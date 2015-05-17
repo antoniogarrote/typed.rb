@@ -3,6 +3,16 @@ module TypedRb
   module Languages
     module TypedLambdaCalculus
       module Model
+
+        class GenSym
+          def self.next(x="")
+            counter = @count || 1
+            sym = "__gs#{x}_#{counter}"
+            @count += 1
+            counter
+          end
+        end
+
         class TypeError < StandardError
           attr_reader :term
           def initialize(msg, term)
@@ -271,6 +281,40 @@ module TypedRb
               fail TypeError.new("Error in application expected Function type got #{abs_type}", self)
             end
           end
+        end
+
+        class TmSequencing < Expr
+          attr_accessor :terms
+          def initialize(terms,node)
+            super(node)
+            @terms = terms.reject(&:nil?)
+          end
+
+          def shift(displacement, accum_num_binders)
+            @terms = terms.map{|term| term.shift(displacement, accum_num_binders) }
+            self
+          end
+
+          def substitute(from, to)
+            @terms = @terms.map{|term| term.substitute(from, to) }
+            self
+          end
+
+          def eval
+            @terms.reduce{|_,term| term.eval }
+          end
+        end
+
+        def to_s(label = true)
+          initial = "λ:#{GenSym.next}:Unit.#{@terms.first}"
+          @terms.drop(1).reverse.inject(initial) do |acc, term|
+            param = GenSym.next
+            "(#{acc} λ:#{param}:Unit.#{term.to_s(label)})"
+          end
+        end
+
+        def check_type(context)
+          @terms.reduce {|_,term| term.check_type(context) }
         end
       end
     end

@@ -29,6 +29,8 @@ grammar TypeSignatures
       end
     }
     /
+    unit_type
+    /
     type_name
   end
 
@@ -36,16 +38,24 @@ grammar TypeSignatures
     (ws arrow_symbol ws)
   end
 
+  rule unit_type
+    'unit' {
+        def ast
+          :unit
+        end
+    }
+  end
+
   rule type_name
    [a-zA-Z]+ {
       def ast
-	text_value
+	     text_value
       end
    }
   end
 
   rule arrow_symbol
-    "=>"
+    '=>'
   end
 
   rule open_paren

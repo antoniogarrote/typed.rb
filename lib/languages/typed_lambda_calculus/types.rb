@@ -35,7 +35,9 @@ module TypedRb
         class Type
           def self.parse(type)
             return nil if type.nil?
-            if type.instance_of?(Array)
+            if type == :unit
+              TyUnit.new
+            elsif type.instance_of?(Array)
               from,to = [type.first,type.last]
               parse_function_type(from,to)
             else
@@ -68,6 +70,17 @@ module TypedRb
 
           def self.parse_function_type(from,to)
             TyFunction.new(parse(from),parse(to))
+          end
+        end
+
+        class TyUnit < Type
+          Types::TYPE_REGISTRY['unit'] = TyUnit
+
+          def initialize
+          end
+
+          def to_s
+            'unit'
           end
         end
 

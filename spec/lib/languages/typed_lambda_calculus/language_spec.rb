@@ -110,6 +110,7 @@ describe TypedRb::Languages::TypedLambdaCalculus::Language do
                                                   TypedRb::Languages::TypedLambdaCalculus::Types::TyBoolean,))
       end
 
+
       it 'detects errors in the typing' do
         expect {
           check[%q(
