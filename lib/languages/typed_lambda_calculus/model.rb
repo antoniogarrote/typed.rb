@@ -269,8 +269,14 @@ module TypedRb
           end
 
           def check_type(context)
-            binding_type = @term.check_type(context)
-            context.add_binding!(@binding,binding_type)
+            if @term.instance_of?(TmAbs)
+              # we take care of recursion here
+              context.add_binding!(@binding, @term.type)
+              @term.check_type(context)
+            else
+              binding_type = @term.check_type(context)
+              context.add_binding!(@binding,binding_type)
+            end
           end
         end
 

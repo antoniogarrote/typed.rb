@@ -255,6 +255,15 @@ __END
           check[code]
         }.to raise_error(TypedRb::Languages::TypedLambdaCalculus::Model::TypeError)
       end
+
+      it 'checks recursive functions' do
+        code = <<__END
+         typesig 'Int => Int'
+         rec = ->(x) { rec[3] }
+         rec[3]
+__END
+        expect(check[code]).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyInteger)
+      end
     end
   end
 end
