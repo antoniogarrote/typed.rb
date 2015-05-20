@@ -80,6 +80,21 @@ __END
 __END
       expect(parse(code).to_s).to be == '(λ:_gs[[1:Unit.(id_int 3) λ:_gs[[2:Unit.let id_int = λx:(Int -> Int).x)'
     end
+
+    it 'parses error raising' do
+      expect(parse('raise StandardError, "error"').to_s).to be == 'error'
+      expect(parse('raise StandardError.new').to_s).to be == 'error'
+      expect(parse('raise StandardError').to_s).to be == 'error'
+      expect(parse('fail StandardError, "error"').to_s).to be == 'error'
+      expect(parse('fail StandardError.new').to_s).to be == 'error'
+      expect(parse('fail StandardError').to_s).to be == 'error'
+    end
+
+    it 'parses begin/rescue statements' do
+      expect(parse('begin; x; rescue StandardError; e; end').to_s).to be == 'try x with e'
+      expect(parse('begin; x; rescue StandardError; e; rescue; f; end').to_s).to be == 'try x with e with f'
+      expect(parse('begin; x; rescue StandardError; e; rescue ex; end').to_s).to be == 'try x with e with unit'
+    end
   end
 
 end

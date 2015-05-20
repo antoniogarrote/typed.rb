@@ -264,6 +264,39 @@ __END
 __END
         expect(check[code]).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyInteger)
       end
+
+      it 'checks the type of an error type' do
+        expect(check['raise Exception.new']).to be_instance_of(TypedRb::Languages::TypedLambdaCalculus::Types::TyError)
+      end
+
+      it 'returns the right type when mixing errors with other types in conditionals' do
+        code = <<__END
+          if true
+             1
+          else
+             fail Exception, 'test'
+          end
+__END
+        expect(check[code]).to be_instance_of(TypedRb::Languages::TypedLambdaCalculus::Types::TyInteger)
+      end
+
+      it 'returns the right type when mixing errors with function abstraction' do
+        code = <<__END
+          typesig 'Bool => Int'
+          ->(x) { raise(Error,'error') }
+__END
+        expect(check[code]).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyFunction.new(
+                                                 TypedRb::Languages::TypedLambdaCalculus::Types::TyBoolean,
+                                                 TypedRb::Languages::TypedLambdaCalculus::Types::TyInteger))
+
+        expect {
+          code = <<__END
+          typesig 'Bool => Int'
+          ->(x) { raise(Error,'error'); false }
+__END
+          check[code]
+        }.to raise_error(TypedRb::Languages::TypedLambdaCalculus::Model::TypeError)
+      end
     end
   end
 end

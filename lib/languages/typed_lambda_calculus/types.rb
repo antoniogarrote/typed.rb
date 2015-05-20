@@ -51,9 +51,9 @@ module TypedRb
 
           def compatible?(other_type)
             if other_type.instance_of?(Class)
-              self.instance_of?(other_type)
+              self.instance_of?(other_type) || other_type == TyError
             else
-              other_type.instance_of?(self.class)
+              other_type.instance_of?(self.class) || other_type.instance_of?(TyError)
             end
           end
 
@@ -80,9 +80,6 @@ module TypedRb
         class TyUnit < Type
           Types::TYPE_REGISTRY['unit'] = TyUnit
 
-          def initialize
-          end
-
           def to_s
             'unit'
           end
@@ -100,12 +97,25 @@ module TypedRb
           end
         end
 
+        class TyError < Type
+          Types::TYPE_REGISTRY['error'] = TyError
+
+          def to_s
+            'error'
+          end
+
+          def compatible?(other_type)
+            true
+          end
+
+          def self.is?(type)
+            type == TyError || type.instance_of?(TypeError)
+          end
+        end
+
         class TyBoolean < Type
 
           Types::TYPE_REGISTRY['Bool'] = TyBoolean
-
-          def initialize
-          end
 
           def to_s
             'Bool'
@@ -116,9 +126,6 @@ module TypedRb
 
           Types::TYPE_REGISTRY['String'] = TyString
 
-          def initialize
-          end
-
           def to_s
             'String'
           end
@@ -127,9 +134,6 @@ module TypedRb
         class TyFloat < Type
 
           Types::TYPE_REGISTRY['Float'] = TyFloat
-
-          def initialize
-          end
 
           def to_s
             'Float'

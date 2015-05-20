@@ -134,7 +134,7 @@ module TypedRb
               then_expr_type = @then_expr.check_type(context)
               else_expr_type = @else_expr.check_type(context)
               if then_expr_type.compatible?(else_expr_type)
-                else_expr_type
+                Types::TyError.is?(then_expr_type) ? else_expr_type : then_expr_type
               else
               fail TypeError.new('Arms of conditional have different types', self)
               end
@@ -305,6 +305,54 @@ module TypedRb
             @terms.drop(1).reduce(@terms.first.check_type(context)) {|_,term|
               term.check_type(context)
             }
+          end
+        end
+
+        class TmTry < Expr
+          def initialize(try_term, rescue_terms, node)
+            super(node)
+            @try_term = try_term
+            @rescue_terms = rescue_terms
+          end
+
+          def to_s
+            "try #{@try_term} #{@rescue_terms.map{|rescue_term| 'with '+(rescue_term||'unit').to_s }.join(' ')}"
+          end
+
+          def rename(from_binding, to_binding)
+            @try_term.rename(from_binding, to_binding)
+            @rescue_terms.each{|term| term.rename(from_binding, to_binding) }
+          end
+
+          def check_type(context)
+            try_term_type = @try_term.check_type(context)
+            rescue_term_types = @rescue_terms.map do |term|
+              if term.nil?
+                TyUnit.new
+              else
+                term.check_type(context)
+              end
+            end
+            incompatible_type = rescue_term_types.detect{|term_type| !try_term_type.compatible?(term_type) }
+            if incompatible_type
+              fail TypeError.new("Error in rescue clause, expected type #{try_term_type} got #{incompatible_type}", self)
+            else
+              try_term_type
+            end
+          end
+        end
+
+        class TmError < Expr
+          def initialize(node)
+            super(node)
+          end
+
+          def to_s
+            'error'
+          end
+
+          def check_type(_context)
+            Types::TyError.new
           end
         end
       end

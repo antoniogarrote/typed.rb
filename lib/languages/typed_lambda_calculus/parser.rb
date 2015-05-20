@@ -32,8 +32,12 @@ module TypedRb
 
         def map(node, context)
           case node.type
-          when :begin
+          when :begin, :kwbegin
             parse_begin(node, context)
+          when :rescue
+            parse_try(node, context)
+          when :resbody
+            parse_rescue(node, context)
           when :int
             TmInt.new(node)
           when :true,:false
@@ -87,7 +91,11 @@ module TypedRb
             parse_type(node, context)
           else
             if receiver.nil?
-              TmVar.new(message,node)
+              if message == :fail || message == :raise
+                TmError.new(node)
+              else
+                TmVar.new(message,node)
+              end
             else
               TmApp.new(map(receiver, context),
                         map(content, context),
@@ -113,6 +121,21 @@ module TypedRb
             sequencing.terms.first
           else
             sequencing
+          end
+        end
+
+        def parse_try(node, context)
+          try_term = map(node.children.first, context)
+          rescue_terms = node.children.drop(1).compact.map{|term| map(term, context) }
+          TmTry.new(try_term, rescue_terms, node)
+        end
+
+        def parse_rescue(node, context)
+          rescue_body = node.children[2]
+          if rescue_body.nil?
+            nil
+          else
+            map(rescue_body, context)
           end
         end
 
