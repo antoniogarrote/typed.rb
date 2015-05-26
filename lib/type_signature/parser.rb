@@ -7,7 +7,7 @@ module TypedRb
   module TypeSignature
     class Parser
 
-      PARSER = TypeSignaturesParser.new
+      PARSER = TypeSignaturesParser.new unless defined?(PARSER)
 
       def self.parse(expr)
         PARSER.parse(expr).ast

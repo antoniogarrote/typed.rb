@@ -55,7 +55,7 @@ grammar TypeSignatures
   end
 
   rule arrow_symbol
-    '=>'
+    '->'
   end
 
   rule open_paren

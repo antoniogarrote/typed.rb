@@ -82,7 +82,7 @@ describe TypedRb::Languages::TypedLambdaCalculus::Language do
     context 'Abstractions' do
       it 'checks the type of a lambda function' do
         type_checked = check[%q(
-            typesig 'Bool => Int'
+            typesig 'Bool -> Int'
             ->(x) { 3 }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyFunction.new(
@@ -92,7 +92,7 @@ describe TypedRb::Languages::TypedLambdaCalculus::Language do
 
       it 'supports optional return types' do
         type_checked = check[%q(
-            typesig 'Bool => Int'
+            typesig 'Bool -> Int'
             ->(x) { 3 }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyFunction.new(
@@ -102,7 +102,7 @@ describe TypedRb::Languages::TypedLambdaCalculus::Language do
 
       it 'checks the type of a lambda function using the context' do
         type_checked = check[%q(
-            typesig 'Bool => Bool'
+            typesig 'Bool -> Bool'
             ->(x) { x }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyFunction.new(
@@ -114,9 +114,9 @@ describe TypedRb::Languages::TypedLambdaCalculus::Language do
       it 'checks the type of expressions containing sequencing' do
         code = <<__END
        (
-          typesig 'Int => Int'
+          typesig 'Int -> Int'
           ->(x) { x }
-          typesig 'Bool => Bool'
+          typesig 'Bool -> Bool'
           ->(y) { y }
        )[true]
 __END
@@ -127,7 +127,7 @@ __END
       it 'detects errors in the typing' do
         expect {
           check[%q(
-            typesig 'Bool => Int'
+            typesig 'Bool -> Int'
             ->(x) { true }
                              )]
         }.to raise_error(TypedRb::Languages::TypedLambdaCalculus::Model::TypeError)
@@ -136,13 +136,13 @@ __END
 
       it 'checks the type of a complex abstraction' do
         type_checked = check[%q(
-              typesig 'Bool => Int => (Bool => Int) => Int'
+              typesig 'Bool -> Int -> (Bool -> Int) -> Int'
               ->(x) {
 
-                 typesig 'Int => (Bool => Int) => Int'
+                 typesig 'Int -> (Bool -> Int) -> Int'
                  ->(y) {
 
-                    typesig '(Bool => Int) => Int'
+                    typesig '(Bool -> Int) -> Int'
                     ->(z) { z[x] }
                  }
               }
@@ -165,13 +165,13 @@ __END
       it 'checks errors in complex abstraction' do
         expect {
           check[%q(
-              typesig 'Bool => Int => (Bool => Int) => Int'
+              typesig 'Bool -> Int -> (Bool -> Int) -> Int'
               ->(x) {
 
-                 typesig 'Int => (Bool => Int) => Int'
+                 typesig 'Int -> (Bool -> Int) -> Int'
                  ->(y) {
 
-                    typesig '(Bool => Int) => Bool'
+                    typesig '(Bool -> Int) -> Bool'
                     ->(z) { z[x] }
                  }
               }
@@ -180,13 +180,13 @@ __END
 
         expect {
           check[%q(
-              typesig 'Bool => Int => (Bool => Int) => Int'
+              typesig 'Bool -> Int -> (Bool -> Int) -> Int'
               ->(x) {
 
-                 typesig 'Int => (Bool => Int) => Int'
+                 typesig 'Int -> (Bool -> Int) -> Int'
                  ->(y) {
 
-                    typesig '(Bool => Int) => Int'
+                    typesig '(Bool -> Int) -> Int'
                     ->(z) { z[y] }
                  }
               }
@@ -199,7 +199,7 @@ __END
 
       it 'checks function application' do
         type_checked = check[%q(
-              typesig 'Bool => Int'
+              typesig 'Bool -> Int'
               ->(x) { 0 }[true]
          )]
 
@@ -209,7 +209,7 @@ __END
       it 'checks errors in function application' do
         expect {
           check[%q(
-              typesig 'Bool => Int'
+              typesig 'Bool -> Int'
               ->(x) { 0 }[3434]
          )]
 
@@ -218,7 +218,7 @@ __END
 
       it 'checks expresions including let expressions for functions' do
         code = <<__END
-        typesig 'Int => Int'
+        typesig 'Int -> Int'
         id_int = ->(x) { x }
         my_int = 3
         my_bool = true
@@ -231,7 +231,7 @@ __END
       it 'checks missing vars in context' do
         expect {
           code = <<__END
-        typesig 'Int => Int'
+        typesig 'Int -> Int'
         id_int = ->(x) { x }
         my_int = 3
         my_bool = true
@@ -245,7 +245,7 @@ __END
       it 'checks type errors with let bindings' do
         expect {
           code = <<__END
-        typesig 'Int => Int'
+        typesig 'Int -> Int'
         id_int = ->(x) { x }
         my_int = 3
         my_bool = true
@@ -258,7 +258,7 @@ __END
 
       it 'checks recursive functions' do
         code = <<__END
-         typesig 'Int => Int'
+         typesig 'Int -> Int'
          rec = ->(x) { rec[3] }
          rec[3]
 __END
@@ -282,7 +282,7 @@ __END
 
       it 'returns the right type when mixing errors with function abstraction' do
         code = <<__END
-          typesig 'Bool => Int'
+          typesig 'Bool -> Int'
           ->(x) { raise(Error,'error') }
 __END
         expect(check[code]).to be_compatible(TypedRb::Languages::TypedLambdaCalculus::Types::TyFunction.new(
@@ -291,7 +291,7 @@ __END
 
         expect {
           code = <<__END
-          typesig 'Bool => Int'
+          typesig 'Bool -> Int'
           ->(x) { raise(Error,'error'); false }
 __END
           check[code]

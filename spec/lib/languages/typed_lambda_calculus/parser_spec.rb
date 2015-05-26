@@ -33,18 +33,18 @@ describe TypedRb::Languages::TypedLambdaCalculus::Parser do
     end
 
     it 'supports lambda expression' do
-      expect(parse("typesig 'Int => Bool'; ->(x){ x }").to_s).to be == 'λx:(Int -> Bool).x'
-      expect(parse("typesig 'Int => Bool'; ->(x){ y }").to_s).to be == 'λx:(Int -> Bool).y'
-      expect(parse("typesig 'Int => (Bool => Int)'; ->(y){ typesig 'Bool => Int'; ->(x){ z } }").to_s).to be ==
+      expect(parse("typesig 'Int -> Bool'; ->(x){ x }").to_s).to be == 'λx:(Int -> Bool).x'
+      expect(parse("typesig 'Int -> Bool'; ->(x){ y }").to_s).to be == 'λx:(Int -> Bool).y'
+      expect(parse("typesig 'Int -> (Bool -> Int)'; ->(y){ typesig 'Bool -> Int'; ->(x){ z } }").to_s).to be ==
         'λy:(Int -> (Bool -> Int)).λx:(Bool -> Int).z'
     end
 
     it 'supports sequencing of expressions' do
       code = <<__END
        (
-          typesig 'Int => Int'
+          typesig 'Int -> Int'
           ->(x) { x }
-          typesig 'Bool => Bool'
+          typesig 'Bool -> Bool'
           ->(y) { y }
        )[true]
 __END
@@ -58,22 +58,22 @@ __END
         parse('->(x){ x }').to_s
       }.to raise_error
       expect {
-        parse('typesig Int => [Bool => Int]; ->(y){ ->(x){ z } }').to_s
+        parse('typesig \'Int -> [Bool -> Int]\'; ->(y){ ->(x){ z } }').to_s
       }.to raise_error
     end
 
     it 'supports application of lambda expressions' do
-      expect(parse("typesig 'Int => Bool'; ->(x){ x }[z]").to_s).to be == '(λx:(Int -> Bool).x z)'
+      expect(parse("typesig 'Int -> Bool'; ->(x){ x }[z]").to_s).to be == '(λx:(Int -> Bool).x z)'
     end
 
     it 'renames bindings for function arguments' do
-      parsed = parse("typesig 'Int => Bool'; ->(x){ typesig 'Int => Int'; ->(x){ x } }")
+      parsed = parse("typesig 'Int -> Bool'; ->(x){ typesig 'Int -> Int'; ->(x){ x } }")
       expect(parsed.to_s).to be == 'λx[[2:(Int -> Bool).λx:(Int -> Int).x'
     end
 
     it 'parses let bindings' do
       code = <<__END
-        typesig 'Int => Int'
+        typesig 'Int -> Int'
         id_int = ->(x) { x }
 
         id_int[3]

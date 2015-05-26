@@ -82,7 +82,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
     context 'Abstractions' do
       it 'checks the type of a lambda function' do
         type_checked = check[%q(
-            typesig 'Bool => Int'
+            typesig 'Bool -> Int'
             ->(x) { 3 }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
@@ -92,7 +92,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
       it 'supports optional return types' do
         type_checked = check[%q(
-            typesig 'Bool => Int'
+            typesig 'Bool -> Int'
             ->(x) { 3 }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
@@ -102,7 +102,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
       it 'checks the type of a lambda function using the context' do
         type_checked = check[%q(
-            typesig 'Bool => Bool'
+            typesig 'Bool -> Bool'
             ->(x) { x }
                              )]
         expect(type_checked).to be_compatible(TypedRb::Languages::SimplyTypedLambdaCalculus::Types::TyFunction.new(
@@ -113,7 +113,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
       it 'detects errors in the typing' do
         expect {
           check[%q(
-            typesig 'Bool => Int'
+            typesig 'Bool -> Int'
             ->(x) { true }
                              )]
         }.to raise_error(TypedRb::Languages::SimplyTypedLambdaCalculus::Model::TypeError)
@@ -122,13 +122,13 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
       it 'checks the type of a complex abstraction' do
         type_checked = check[%q(
-              typesig 'Bool => Int => (Bool => Int) => Int'
+              typesig 'Bool -> Int -> (Bool -> Int) -> Int'
               ->(x) {
 
-                 typesig 'Int => (Bool => Int) => Int'
+                 typesig 'Int -> (Bool -> Int) -> Int'
                  ->(y) {
 
-                    typesig '(Bool => Int) => Int'
+                    typesig '(Bool -> Int) -> Int'
                     ->(z) { z[x] }
                  }
               }
@@ -151,13 +151,13 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
       it 'checks errors in complex abstraction' do
         expect {
           check[%q(
-              typesig 'Bool => Int => (Bool => Int) => Int'
+              typesig 'Bool -> Int -> (Bool -> Int) -> Int'
               ->(x) {
 
-                 typesig 'Int => (Bool => Int) => Int'
+                 typesig 'Int -> (Bool -> Int) -> Int'
                  ->(y) {
 
-                    typesig '(Bool => Int) => Bool'
+                    typesig '(Bool -> Int) -> Bool'
                     ->(z) { z[x] }
                  }
               }
@@ -166,13 +166,13 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
         expect {
           check[%q(
-              typesig 'Bool => Int => (Bool => Int) => Int'
+              typesig 'Bool -> Int -> (Bool -> Int) -> Int'
               ->(x) {
 
-                 typesig 'Int => (Bool => Int) => Int'
+                 typesig 'Int -> (Bool -> Int) -> Int'
                  ->(y) {
 
-                    typesig '(Bool => Int) => Int'
+                    typesig '(Bool -> Int) -> Int'
                     ->(z) { z[y] }
                  }
               }
@@ -185,7 +185,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
 
       it 'checks function application' do
         type_checked = check[%q(
-              typesig 'Bool => Int'
+              typesig 'Bool -> Int'
               ->(x) { 0 }[true]
          )]
 
@@ -195,7 +195,7 @@ describe TypedRb::Languages::SimplyTypedLambdaCalculus::Language do
       it 'checks errors in function application' do
         expect {
           check[%q(
-              typesig 'Bool => Int'
+              typesig 'Bool -> Int'
               ->(x) { 0 }[3434]
          )]
 
