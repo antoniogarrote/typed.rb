@@ -6,7 +6,7 @@ describe BasicObject do
     ::BasicObject::TypeRegistry.registry.clear
   end
 
-  it 'parses typesignatures and store data into the type registry' do
+  it 'parses type signatures and store data into the type registry' do
     $TYPECHECK = true
     code = <<__END
     class A
@@ -67,5 +67,50 @@ __END
     expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["inc"]).to eq([Integer, Integer])
     expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_a"]).to eq([A, Integer])
     expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"]).to eq([:unit, :bool])
+  end
+
+  it 'parses field type signatures and store the result in the registry' do
+    $TYPECHECK = true
+    code = <<__END
+     class A
+       ts 'A\#@a / Integer'
+       attr_accessor :a
+
+       ts '#inc / Integer -> Integer'
+       def inc(i)
+         @a = i+ 1
+         @a
+       end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry
+
+    puts ::BasicObject::TypeRegistry.registry.inspect
+    expect(::BasicObject::TypeRegistry.registry['instance_variable_A']['@a']).to eq('Integer')
+  end
+
+  it 'normalizes types signatures for fields and store the result in the registry' do
+    $TYPECHECK = true
+    code = <<__END
+     class A
+       ts 'A\#@a / Integer'
+       attr_accessor :a
+
+       ts '#inc / Integer -> Integer'
+       def inc(i)
+         @a = i+ 1
+         @a
+       end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    expect(::BasicObject::TypeRegistry.registry[[:instance_variable,A]]["@a"]).to eq(Integer)
   end
 end

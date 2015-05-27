@@ -16,7 +16,7 @@ class BasicObject
       end
 
       def object_key(kind,receiver)
-        "#{kind}_#{receiver}"
+        "#{kind}|#{receiver}"
       end
 
       def methods_for(kind, receiver)
@@ -28,17 +28,17 @@ class BasicObject
       def normalize_types!
         normalized = {}
         @registry.each_pair do |kind_receiver, method_signatures|
-          parts = kind_receiver.split('_')
+          parts = kind_receiver.split('|')
           type = parts.take(1).first.to_sym
           klass = Object.const_get(parts.drop(1).join('_'))
           method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
             if type == :instance
               unless klass.instance_methods.include?(method.to_sym)
-                fail TypeParsingError, "Declared typed instance method '#{method}' not found for class '#{klass}'"
+                fail ::TypeParsingError, "Declared typed instance method '#{method}' not found for class '#{klass}'"
               end
-            else
+            elsif type == :class
               unless klass.methods.include?(method.to_sym)
-                fail TypeParsingError, "Declared typed class method '#{method}' not found for class '#{klass}'"
+                fail ::TypeParsingError, "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
             signatures_acc[method] = normalize_signature!(signature)
@@ -69,19 +69,22 @@ class BasicObject
     if $TYPECHECK
       method, signature = signature.split(/\s+\/\s+/)
 
-      kind, receiver, method_name = if method.index('#')
-                                      [:instance] + method.split('#')
-                                    elsif method.index('.')
-                                      [:class] + method.split('.')
-                                    else
-                                      fail TypeParsingError, "Error parsing receiver, method signature: #{signature}"
-                                    end
+      kind, receiver, message = if method.index('#')
+                                  [:instance] + method.split('#')
+                                elsif method.index('.')
+                                  [:class] + method.split('.')
+                                else
+                                  fail ::TypeParsingError, "Error parsing receiver, method signature: #{signature}"
+                                end
 
       receiver = self.name if receiver == ''
 
+
+      kind = :"#{kind}_variable" if message.index('@')
+
       type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
 
-      TypeRegistry.register_type_information(kind, receiver, method_name, type_ast)
+      TypeRegistry.register_type_information(kind, receiver, message, type_ast)
     end
   end
 
