@@ -32,6 +32,8 @@ module TypedRb
 
         def map(node, context)
           case node.type
+          when :class
+            parse_class(node,context)
           when :begin, :kwbegin
             parse_begin(node, context)
           when :rescue
@@ -101,6 +103,23 @@ module TypedRb
                         map(content, context),
                         node)
             end
+          end
+        end
+
+        def parse_class(node,context)
+          class_description = parse_class_name(node.children[0])
+          super_class_description = parse_class_name(node.children[1])
+          class_body = map(node.children.last, context)
+          TmClass.new(class_description, super_class_description, class_body)
+        end
+
+        def parse_class_name(class_node, accum = [])
+          return 'Object' if class_node.nil? # No explicit class -> Object by default
+          accum << class_node.children.last
+          if(class_node.children.first.nil?)
+            accum.reverse.join('::')
+          else
+            parse_class_name(class_node.children.first, accum)
           end
         end
 
