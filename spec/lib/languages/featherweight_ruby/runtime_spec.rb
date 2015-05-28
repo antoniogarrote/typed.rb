@@ -28,12 +28,12 @@ __END
 
     eval(code)
 
-    expect(::BasicObject::TypeRegistry.registry['instance_A']['test']).to eq(['String', :unit])
-    expect(::BasicObject::TypeRegistry.registry['class_A']['class_method']).to eq(['Int', 'Int'])
-    expect(::BasicObject::TypeRegistry.registry['instance_B']['other_test']).to eq(['Int', :unit])
-    expect(::BasicObject::TypeRegistry.registry['instance_A']['other_test']).to eq(['Int', :unit])
-    expect(::BasicObject::TypeRegistry.registry['instance_A']['abbrev']).to eq(['String', 'String'])
-    expect(::BasicObject::TypeRegistry.registry['class_A']['abbrev']).to eq(['String', 'String'])
+    expect(::BasicObject::TypeRegistry.registry['instance|A']['test']).to eq(['String', :unit])
+    expect(::BasicObject::TypeRegistry.registry['class|A']['class_method']).to eq(['Int', 'Int'])
+    expect(::BasicObject::TypeRegistry.registry['instance|B']['other_test']).to eq(['Int', :unit])
+    expect(::BasicObject::TypeRegistry.registry['instance|A']['other_test']).to eq(['Int', :unit])
+    expect(::BasicObject::TypeRegistry.registry['instance|A']['abbrev']).to eq(['String', 'String'])
+    expect(::BasicObject::TypeRegistry.registry['class|A']['abbrev']).to eq(['String', 'String'])
   end
 
   it 'normalizes the parsed types with information about the defined classes' do
@@ -89,7 +89,7 @@ __END
     ::BasicObject::TypeRegistry
 
     puts ::BasicObject::TypeRegistry.registry.inspect
-    expect(::BasicObject::TypeRegistry.registry['instance_variable_A']['@a']).to eq('Integer')
+    expect(::BasicObject::TypeRegistry.registry['instance_variable|A']['@a']).to eq('Integer')
   end
 
   it 'normalizes types signatures for fields and store the result in the registry' do

@@ -33,7 +33,9 @@ module TypedRb
         def map(node, context)
           case node.type
           when :class
-            parse_class(node,context)
+            parse_class(node, context)
+          when :def
+            parse_def(node, context)
           when :begin, :kwbegin
             parse_begin(node, context)
           when :rescue
@@ -64,6 +66,7 @@ module TypedRb
         end
 
         def parse_lambda(node, context)
+          fail "Not implemented yet"
           args,body  = node.children[1],node.children[2]
           arg = parse_args(args, context)
           body = map(body, context)
@@ -80,11 +83,20 @@ module TypedRb
           TmLet.new(binding.to_s, map(term,context), node)
         end
 
-        def parse_args(args, _context)
-          if args.type != :args || args.children.length != 1
-            fail StandardError,"Error parsing lambda args [#{args}]"
+        def parse_args(args, context)
+          if args.type != :args
+            fail StandardError,"Error parsing function args [#{args}]"
           end
-          args.children.first.children.first.to_s
+          args.children.map do |arg|
+            case arg.type
+            when :arg
+              [:arg, arg.children.last]
+            when :optarg
+              [:optarg, arg.children.first, map(arg.children.last, context).type]
+            when :blockarg
+              [:blockarg, arg.children.first]
+            end
+          end
         end
 
         def parse_send(node, context)
@@ -106,22 +118,28 @@ module TypedRb
           end
         end
 
-        def parse_class(node,context)
+        def parse_class(node, context)
           class_description = parse_class_name(node.children[0])
           super_class_description = parse_class_name(node.children[1])
           class_body = map(node.children.last, context)
-          TmClass.new(class_description, super_class_description, class_body)
+          TmClass.new(class_description, super_class_description, class_body, node)
         end
 
         def parse_class_name(class_node, accum = [])
           return 'Object' if class_node.nil? # No explicit class -> Object by default
           accum << class_node.children.last
-          if(class_node.children.first.nil?)
+          if class_node.children.first.nil?
             accum.reverse.join('::')
           else
             parse_class_name(class_node.children.first, accum)
           end
         end
+
+        def parse_def(node, context)
+          fun_name, args, body = node.children
+          TmFun.new(fun_name, parse_args(args, context), map(body, context), node)
+        end
+
 
         def parse_if_then_else(node, context)
           cond_expr, then_expr, else_expr = node.children

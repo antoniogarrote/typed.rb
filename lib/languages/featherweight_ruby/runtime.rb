@@ -12,16 +12,16 @@ class BasicObject
       end
 
       def register_type_information(kind, receiver, method, type_ast)
-        methods_for(kind,receiver)[method] = type_ast
+        methods_for(kind, receiver)[method] = type_ast
       end
 
-      def object_key(kind,receiver)
+      def object_key(kind, receiver)
         "#{kind}|#{receiver}"
       end
 
       def methods_for(kind, receiver)
-        method_registry = registry[object_key(kind,receiver)] || {}
-        registry[object_key(kind,receiver)] = method_registry
+        method_registry = registry[object_key(kind, receiver)] || {}
+        registry[object_key(kind, receiver)] = method_registry
         method_registry
       end
 
