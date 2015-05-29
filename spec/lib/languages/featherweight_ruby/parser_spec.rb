@@ -39,6 +39,7 @@ describe TypedRb::Languages::FeatherweightRuby::Parser do
       expect(parsed.args.size).to be == 1
       expect(parsed.args.first.first).to be == :arg
       expect(parsed.body.to_s).to be == 'x'
+      expect(parsed.owner).to be_nil
     end
 
     it 'should parse definition of functions with optional args' do
@@ -50,16 +51,27 @@ describe TypedRb::Languages::FeatherweightRuby::Parser do
       expect(parsed.args[1].first).to be == :optarg
       expect(parsed.args[1].last).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Types::TyInteger)
       expect(parsed.body.to_s).to be == 'x'
+      expect(parsed.owner).to be_nil
     end
 
     it 'should parse definition of functions with block args' do
       parsed = parse('def f(x, &b); x; end')
-         expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmFun)
+      expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmFun)
       expect(parsed.name).to be == :f
       expect(parsed.args.size).to be == 2
       expect(parsed.args.first.first).to be == :arg
       expect(parsed.args[1].first).to be == :blockarg
       expect(parsed.body.to_s).to be == 'x'
+      expect(parsed.owner).to be_nil
+    end
+
+    it 'should parse definition of self functions' do
+      parsed = parse('def self.f(x); x; end')
+      expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmFun)
+      expect(parsed.name).to be == :f
+      expect(parsed.args.size).to be == 1
+      expect(parsed.args.first.first).to be == :arg
+      expect(parsed.owner).to be == :self
     end
   end
 end

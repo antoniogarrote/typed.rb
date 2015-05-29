@@ -36,6 +36,8 @@ module TypedRb
             parse_class(node, context)
           when :def
             parse_def(node, context)
+          when :defs
+            parse_defs(node,context)
           when :begin, :kwbegin
             parse_begin(node, context)
           when :rescue
@@ -137,9 +139,13 @@ module TypedRb
 
         def parse_def(node, context)
           fun_name, args, body = node.children
-          TmFun.new(fun_name, parse_args(args, context), map(body, context), node)
+          TmFun.new(nil, fun_name, parse_args(args, context), map(body, context), node)
         end
 
+        def parse_defs(node, context)
+          owner, fun_name, args, body = node.children
+          TmFun.new(owner, fun_name, parse_args(args, context), map(body, context), node)
+        end
 
         def parse_if_then_else(node, context)
           cond_expr, then_expr, else_expr = node.children

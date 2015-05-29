@@ -6,9 +6,10 @@ module TypedRb
     module FeatherweightRuby
       module Model
         class TmFun < Expr
-          attr_accessor :name, :args, :body
-          def initialize(name, args, body, node)
+          attr_accessor :name, :args, :body, :owner
+          def initialize(owner, name, args, body, node)
             super(node)
+            @owner = parse_owner(owner)
             @name = name
             rename = {}
             @args = args.map do |arg|
@@ -45,6 +46,18 @@ module TypedRb
           def check_type(context)
             @terms.drop(1).reduce(@terms.first.check_type(context)) do |_,term|
               term.check_type(context)
+            end
+          end
+
+          private
+
+          def parse_owner(owner)
+            if owner.nil?
+              nil
+            elsif owner.type == :self
+              :self
+            else
+              fail RuntimeError.new("Unsupported receiver for function definition #{owner}")
             end
           end
         end
