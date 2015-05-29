@@ -70,7 +70,10 @@ module TypedRb
         def parse_lambda(node, context)
           fail "Not implemented yet"
           args,body  = node.children[1],node.children[2]
-          arg = parse_args(args, context)
+          if args.type != :args
+            fail StandardError,"Error parsing function args [#{args}]"
+          end
+          arg = parse_args(args.children, context)
           body = map(body, context)
           uniq_arg = Model::GenSym.next(arg)
 
@@ -86,10 +89,7 @@ module TypedRb
         end
 
         def parse_args(args, context)
-          if args.type != :args
-            fail StandardError,"Error parsing function args [#{args}]"
-          end
-          args.children.map do |arg|
+          args.map do |arg|
             case arg.type
             when :arg
               [:arg, arg.children.last]
@@ -102,20 +102,17 @@ module TypedRb
         end
 
         def parse_send(node, context)
-          receiver, message, content = node.children
+          children = node.children
+          receiver = children[0]
+          message = children[1]
+          args = children.drop(2) || []
           if message == :typesig
-            parse_type(node, context)
+            # ignore
           else
-            if receiver.nil?
-              if message == :fail || message == :raise
+            if receiver.nil? && (message == :fail || message == :raise)
                 TmError.new(node)
-              else
-                TmVar.new(message,node)
-              end
             else
-              TmApp.new(map(receiver, context),
-                        map(content, context),
-                        node)
+              TmSend(parse_receiver(receiver, context), message, parse_args(args, context), node)
             end
           end
         end
@@ -139,12 +136,18 @@ module TypedRb
 
         def parse_def(node, context)
           fun_name, args, body = node.children
-          TmFun.new(nil, fun_name, parse_args(args, context), map(body, context), node)
+          if args.type != :args
+            fail StandardError,"Error parsing function args [#{args}]"
+          end
+          TmFun.new(nil, fun_name, parse_args(args.children, context), map(body, context), node)
         end
 
         def parse_defs(node, context)
           owner, fun_name, args, body = node.children
-          TmFun.new(owner, fun_name, parse_args(args, context), map(body, context), node)
+          if args.type != :args
+            fail StandardError,"Error parsing function args [#{args}]"
+          end
+          TmFun.new(owner, fun_name, parse_args(args.children, context), map(body, context), node)
         end
 
         def parse_if_then_else(node, context)
@@ -180,18 +183,6 @@ module TypedRb
           else
             map(rescue_body, context)
           end
-        end
-
-        def parse_type(node,context)
-          # send -> hash
-          signature = node.children[2]
-          type_ast = TypedRb::TypeSignature::Parser.parse(signature.children.first.to_s)
-          type = Types::Type.parse(type_ast)
-          unless type.compatible?(Types::TyFunction)
-            type = Types::TyFunction.new(type,nil)
-          end
-          context.type = type
-          nil
         end
       end
     end
