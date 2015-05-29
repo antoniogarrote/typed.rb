@@ -94,7 +94,7 @@ module TypedRb
             when :arg
               [:arg, arg.children.last]
             when :optarg
-              [:optarg, arg.children.first, map(arg.children.last, context).type]
+              [:optarg, arg.children.first, map(arg.children.last, context)]
             when :blockarg
               [:blockarg, arg.children.first]
             end
@@ -112,7 +112,7 @@ module TypedRb
             if receiver.nil? && (message == :fail || message == :raise)
                 TmError.new(node)
             else
-              TmSend(parse_receiver(receiver, context), message, parse_args(args, context), node)
+              TmSend(map(receiver, context), message, parse_args(args, context), node)
             end
           end
         end

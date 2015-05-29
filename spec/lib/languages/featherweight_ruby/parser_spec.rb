@@ -49,7 +49,7 @@ describe TypedRb::Languages::FeatherweightRuby::Parser do
       expect(parsed.args.size).to be == 2
       expect(parsed.args.first.first).to be == :arg
       expect(parsed.args[1].first).to be == :optarg
-      expect(parsed.args[1].last).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Types::TyInteger)
+      expect(parsed.args[1].last).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInt)
       expect(parsed.body.to_s).to be == 'x'
       expect(parsed.owner).to be_nil
     end
