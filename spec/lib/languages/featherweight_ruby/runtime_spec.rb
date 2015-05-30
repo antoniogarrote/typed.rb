@@ -64,9 +64,9 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["inc"]).to eq([Integer, Integer])
-    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_a"]).to eq([A, Integer])
-    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"]).to eq([:unit, :bool])
+    expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["inc"].to_s).to eq("(Integer -> Integer)")
+    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_a"].to_s).to eq("(A -> Integer)")
+    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"].to_s).to eq("(unit -> Bool)")
   end
 
   it 'parses field type signatures and store the result in the registry' do
@@ -86,9 +86,7 @@ __END
 
     eval(code)
 
-    ::BasicObject::TypeRegistry
 
-    puts ::BasicObject::TypeRegistry.registry.inspect
     expect(::BasicObject::TypeRegistry.registry['instance_variable|A']['@a']).to eq('Integer')
   end
 
@@ -111,6 +109,43 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.registry[[:instance_variable,A]]["@a"]).to eq(Integer)
+    expect(::BasicObject::TypeRegistry.registry[[:instance_variable,A]]["@a"].to_s).to eq('Integer')
+  end
+
+  it 'parses type function with multiple arguments' do
+    $TYPECHECK = true
+    code = <<__END
+     class A
+       ts '#func / Integer -> Integer -> Integer -> Integer'
+       def func(i,j,k)
+         i + j + k
+       end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('(Integer,Integer,Integer -> Integer)')
+  end
+
+
+  it 'parses type function with multiple arguments' do
+    $TYPECHECK = true
+    code = <<__END
+     class A
+       ts '#func / Integer -> (Integer -> Integer -> Integer) -> Integer'
+       def func(i)
+         yield i, i
+       end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('(Integer,(Integer,Integer -> Integer) -> Integer)')
   end
 end

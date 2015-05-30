@@ -1,6 +1,5 @@
 require_relative('../../../lib/type_signature/parser')
-
-class TypeParsingError < StandardError; end
+require_relative('./types')
 
 class BasicObject
 
@@ -34,11 +33,13 @@ class BasicObject
           method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
             if type == :instance
               unless klass.instance_methods.include?(method.to_sym)
-                fail ::TypeParsingError, "Declared typed instance method '#{method}' not found for class '#{klass}'"
+                fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
+                     "Declared typed instance method '#{method}' not found for class '#{klass}'"
               end
             elsif type == :class
               unless klass.methods.include?(method.to_sym)
-                fail ::TypeParsingError, "Declared typed class method '#{method}' not found for class '#{klass}'"
+                fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
+                     "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
             signatures_acc[method] = normalize_signature!(signature)
@@ -50,17 +51,7 @@ class BasicObject
       end
 
       def normalize_signature!(type)
-        if type.instance_of?(Array)
-          [normalize_signature!(type.first), normalize_signature!(type.last)]
-        else
-          if type == 'unit'
-            :unit
-          elsif type == 'Bool'
-            :bool
-          else
-            Object.const_get(type)
-          end
-        end
+        ::TypedRb::Languages::FeatherweightRuby::Types::Type.parse(type)
       end
     end
   end
@@ -74,7 +65,8 @@ class BasicObject
                                 elsif method.index('.')
                                   [:class] + method.split('.')
                                 else
-                                  fail ::TypeParsingError, "Error parsing receiver, method signature: #{signature}"
+                                  fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
+                                       "Error parsing receiver, method signature: #{signature}"
                                 end
 
       receiver = self.name if receiver == ''

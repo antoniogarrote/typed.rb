@@ -5,31 +5,27 @@ module TypedRb
   module Languages
     module FeatherweightRuby
       module Model
-        # variable
-        class TmVar < Expr
+        # instance variable
+        class TmInstanceVar < Expr
 
           attr_accessor :val
 
           def initialize(val, node)
             super(node)
-            @val = val.to_s
+            @val = val
           end
 
           def to_s
-            "#{GenSym.resolve(@val)}"
+            "#{val}"
           end
 
           def rename(from_binding, to_binding)
-            if @val == from_binding
-              @val = to_binding
-            end
+            # instance vars cannot be captured
             self
           end
 
           def check_type(context)
-            type = context.get_type_for(@val)
-            fail TypeError.new("Cannot find binding for var '#{@val}' in the context", self) if type.nil?
-            type
+            fail "Not implemented yet"
           end
         end
       end

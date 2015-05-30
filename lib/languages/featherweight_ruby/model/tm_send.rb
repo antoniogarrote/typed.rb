@@ -24,9 +24,15 @@ module TypedRb
           end
 
           def rename(from_binding, to_binding)
-            fail StandardError, "Not implemented yet"
-            if(@head != from_binding)
-              term.rename(from_binding,to_binding)
+            # rename receiver
+            if !@receiver.nil? && @receiver != :self
+              @receiver = @receiver.rename(from_binding, to_binding)
+            end
+            # rename default args
+            args.each do |arg|
+              if arg.first == :optarg
+                arg[2] = arg[2].rename(from_binding, to_binding)
+              end
             end
             self
           end

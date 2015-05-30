@@ -37,7 +37,11 @@ module TypedRb
           when :def
             parse_def(node, context)
           when :defs
-            parse_defs(node,context)
+            parse_defs(node, context)
+          when :ivar
+            parse_instance_var(node, context)
+          when :ivasgn
+            parse_instance_var_assign(node, context)
           when :begin, :kwbegin
             parse_begin(node, context)
           when :rescue
@@ -65,6 +69,15 @@ module TypedRb
           else
             fail StandardError, "Unknown term #{node.type}: #{node}"
           end
+        end
+
+        def parse_instance_var(node, _context)
+          TmInstanceVar.new(node.children.first, node)
+        end
+
+        def parse_instance_var_assign(node, context)
+          ivar = TmInstanceVar.new(node.children.first, node)
+          TmInstanceVarAssignation.new(ivar, map(node.children.last, context), node)
         end
 
         def parse_lambda(node, context)

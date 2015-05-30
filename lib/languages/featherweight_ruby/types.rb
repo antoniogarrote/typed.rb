@@ -3,7 +3,7 @@ module TypedRb
     module FeatherweightRuby
       module Types
 
-        TYPE_REGISTRY = {} unless defined?(TYPE_REGISTRY)
+        class TypeParsingError < StandardError; end
 
         class TypingContext
           def initialize(parent=nil)
@@ -38,14 +38,15 @@ module TypedRb
 
         class Type
           def self.parse(type)
-            return nil if type.nil?
-            if type == :unit
+            fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
+            if type == 'unit'
               TyUnit.new
+            elsif type == 'Bool'
+              TyBoolean.new
             elsif type.instance_of?(Array)
-              from,to = [type.first,type.last]
-              parse_function_type(from,to)
+              parse_function_type(type)
             else
-              parse_atomic_type(type)
+              parse_object_type(type)
             end
           end
 
@@ -59,47 +60,57 @@ module TypedRb
 
           protected
 
-          def self.parse_atomic_type(type)
-            parsed_type = TYPE_REGISTRY[type]
-            if parsed_type.nil?
+          def self.parse_object_type(type)
+            begin
+              ruby_type = Object.const_get(type)
+              TyObject.new(ruby_type)
+            rescue StandardError => e
+              puts e.message
               #puts "ERROR"
               #puts type
               #puts type.inspect
               #puts "==========================================="
-              raise StandardError, "Unknown type #{type}"
-            else
-              parsed_type.new
+              fail TypeParsingError, "Unknown Ruby type #{type}"
             end
           end
 
-          def self.parse_function_type(from,to)
-            TyFunction.new(parse(from),parse(to))
+          def self.parse_function_type(arg_types)
+            walk_args = ->((head,tail),parsed_arg_types=[]) do
+              parsed_arg_types << parse(head)
+              if tail.instance_of?(Array)
+                walk_args[tail, parsed_arg_types]
+              elsif tail != nil
+                parsed_arg_types + [parse(tail)]
+              end
+            end
+
+            parsed_arg_types = walk_args[arg_types]
+            return_type = parsed_arg_types.pop
+
+            TyFunction.new(parsed_arg_types, return_type)
           end
         end
 
         class TyUnit < Type
-          Types::TYPE_REGISTRY['unit'] = TyUnit
-
           def to_s
             'unit'
           end
         end
 
-        class TyInteger < Type
+        class TyObject < Type
 
-          Types::TYPE_REGISTRY['Int'] = TyInteger
+          attr_reader :ruby_type
 
-          def initialize
+          def initialize(ruby_type)
+            @ruby_type = ruby_type
           end
 
           def to_s
-            'Int'
+            @ruby_type.name
           end
         end
 
         class TyError < Type
-          Types::TYPE_REGISTRY['error'] = TyError
-
           def to_s
             'error'
           end
@@ -114,29 +125,8 @@ module TypedRb
         end
 
         class TyBoolean < Type
-
-          Types::TYPE_REGISTRY['Bool'] = TyBoolean
-
           def to_s
             'Bool'
-          end
-        end
-
-        class TyString < Type
-
-          Types::TYPE_REGISTRY['String'] = TyString
-
-          def to_s
-            'String'
-          end
-        end
-
-        class TyFloat < Type
-
-          Types::TYPE_REGISTRY['Float'] = TyFloat
-
-          def to_s
-            'Float'
           end
         end
 
@@ -148,11 +138,27 @@ module TypedRb
           end
 
           def to_s
-            if @to.nil?
-              "#{@from}"
-            else
-              "(#{@from} -> #{@to})"
-            end
+            "(#{@from.map(&:to_s).join(',')} -> #{@to})"
+          end
+        end
+
+        # Aliases for different basic types
+
+        class TyInteger < TyObject
+          def initialize
+            super(Integer)
+          end
+        end
+
+        class TyFloat < TyObject
+          def initialize
+            super(Float)
+          end
+        end
+
+        class TyString < TyObject
+          def initialize
+            super(String)
           end
         end
       end

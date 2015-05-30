@@ -73,5 +73,19 @@ describe TypedRb::Languages::FeatherweightRuby::Parser do
       expect(parsed.args.first.first).to be == :arg
       expect(parsed.owner).to be == :self
     end
+
+    it 'should parse the use of instance variables' do
+      parsed = parse('@a')
+      expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVar)
+      expect(parsed.val).to be == :@a
+    end
+
+    it 'should parse instance variable assginations' do
+      parsed = parse('@a = 3')
+      expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVarAssignation)
+      expect(parsed.lvalue).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVar)
+      expect(parsed.lvalue.val).to be == :@a
+      expect(parsed.rvalue).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInt)
+    end
   end
 end

@@ -43,7 +43,7 @@ module TypedRb
           def rename(from_binding, to_binding)
             # rename receiver
             if !owner.nil? && owner != :self
-              owner = owner.rename(from_binding, to_binding)
+              @owner = @owner.rename(from_binding, to_binding)
             end
             # rename default args
             args.each do |arg|
@@ -52,7 +52,7 @@ module TypedRb
               end
             end
             #rename free variables -> not bound (and already renamed) in args
-            body.rename(from, to_binding)
+            @body = @body.rename(from, to_binding)
             self
           end
 
