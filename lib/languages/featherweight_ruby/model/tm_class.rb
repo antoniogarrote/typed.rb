@@ -26,7 +26,10 @@ module TypedRb
           end
 
           def check_type(context)
-            fail 'Not implemented yet'
+            class_type = ruby_type(class_name)
+            context = context.add_binding(:self, class_type)
+            body.check_type(context)
+            class_type
           end
         end
 

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+require_relative('./types')
+
 module TypedRb
   module Languages
     module FeatherweightRuby
@@ -55,6 +57,10 @@ module TypedRb
 
           def rename(_from_binding, _to_binding)
             self
+          end
+
+          def ruby_type(const_string)
+            TypedRb::Languages::FeatherweightRuby::Types::Type.parse_object_type(const_string)
           end
         end
       end

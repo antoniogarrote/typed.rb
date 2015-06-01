@@ -7,6 +7,7 @@ module TypedRb
       module Model
         class TmFun < Expr
           attr_accessor :name, :args, :body, :owner
+
           def initialize(owner, name, args, body, node)
             super(node)
             @owner = parse_owner(owner)
@@ -29,12 +30,12 @@ module TypedRb
           def to_s
             args_str = args.map do |arg|
               case arg.first
-              when :arg
-                GenSym.resolve(arg.last)
-              when :optarg
-                "#{GenSym.resolve(arg[1])}:#{arg[2].type}"
-              when :blockarg
-                "&#{GenSym.resolve(arg.last)}"
+                when :arg
+                  GenSym.resolve(arg.last)
+                when :optarg
+                  "#{GenSym.resolve(arg[1])}:#{arg[2].type}"
+                when :blockarg
+                  "&#{GenSym.resolve(arg.last)}"
               end
             end
             "#{name}(#{args_str.join(',')}){ \n\t#{body}\n }"
@@ -42,7 +43,7 @@ module TypedRb
 
           def rename(from_binding, to_binding)
             # rename receiver
-            if !owner.nil? && owner != :self
+            if owner != :self
               @owner = @owner.rename(from_binding, to_binding)
             end
             # rename default args
@@ -57,9 +58,56 @@ module TypedRb
           end
 
           def check_type(context)
-            fail 'Not implemented yet'
-            @terms.drop(1).reduce(@terms.first.check_type(context)) do |_,term|
-              term.check_type(context)
+            owner_type = if owner == :self
+                           context.get_self(:self)
+                         else
+                           owner.check_type(context)
+                         end
+
+            if owner_type.nil?
+              fail TypeError.new("Function #{owner}##{name} cannot find owner type for #{owner}", self)
+            end
+
+            function_type = find_function_type(owner_type, name)
+            if function_type.nil?
+              fail TypeError, "Function #{owner}##{name} cannot find function type information for owner."
+            end
+
+            # check matching args
+            if function_type.from.size != args.size
+              fail TypeError, "Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}."
+            end
+
+
+            orig_context = context.dup
+
+            args.each_with_index do |arg, i|
+              function_arg_type = function_type.from[i]
+              context = case arg.first
+                          when :arg
+                            context.add_binding(arg, function_arg_type)
+                          when :optarg
+                            declared_arg_type = arg.last.check_type(orig_context)
+                            if declared_arg_type.compatible?(function_arg_type)
+                              context.add_binding(arg, function_arg_type)
+                            else
+                              fail TypeError, "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
+                            end
+                          when :blockarg
+                            fail "Block args not implemented yet"
+                          else
+                            fail TypeError, "Function #{owner}##{name} unknown type of arg #{arg.first}"
+                        end
+            end
+
+
+            # check the body with the new bindings for the args
+            body_return_type = body.check_type(context)
+
+            if body_return_type.compatible?(function_type.to)
+              function_type
+            else
+              fail TypeError, "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
             end
           end
 
@@ -67,11 +115,11 @@ module TypedRb
 
           def parse_owner(owner)
             if owner.nil?
-              nil
+              :self
             elsif owner.type == :self
               :self
-            else
-              fail RuntimeError.new("Unsupported receiver for function definition #{owner}")
+            else # must be a class or other expression we can check the type
+              owner
             end
           end
         end

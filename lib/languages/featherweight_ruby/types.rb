@@ -28,6 +28,10 @@ module TypedRb
             end
           end
 
+          def get_self
+            Self.new(@bindings[:self])
+          end
+
           protected
 
           def push_binding(val,type)
@@ -50,6 +54,7 @@ module TypedRb
             end
           end
 
+          # other_type is a meta-type not a ruby type
           def compatible?(other_type)
             if other_type.instance_of?(Class)
               self.instance_of?(other_type) || other_type == TyError
@@ -60,10 +65,10 @@ module TypedRb
 
           protected
 
-          def self.parse_object_type(type)
+          def self.parse_object_type(type, level=:instance)
             begin
               ruby_type = Object.const_get(type)
-              TyObject.new(ruby_type)
+              TyObject.new(ruby_type, level)
             rescue StandardError => e
               puts e.message
               #puts "ERROR"
@@ -99,14 +104,51 @@ module TypedRb
 
         class TyObject < Type
 
-          attr_reader :ruby_type
+          attr_reader :hierarchy, :classes, :modules, :ruby_type
 
           def initialize(ruby_type)
             @ruby_type = ruby_type
+            @hierarchy = if ruby_type.instance_of?(Array)
+                           ruby_type
+                         else
+                           ruby_type.ancestors
+                         end
+            @classes = @hierarchy.detect{|klass| klass.instance_of?(Class) }
+            @modules = @hierarchy.detect{|klass| klass.instance_of?(Module) }
+          end
+
+          def compatible?(other_type)
+            if other_type.instance_of?(TyObject)
+              @hierarchy.include?(other_type.ruby_type)
+            else
+              other_type.compatible?(self)
+            end
+          end
+
+          def find_function_type(owner_type, message)
+            methods = BasicObject::TypeRegistry.methods_for(:instance, owner_type)
+            methods[message.to_s]
           end
 
           def to_s
             @ruby_type.name
+          end
+
+        end
+
+        class TyClass < TyObject
+
+          def initialize(ruby_type)
+            super(ruby_type)
+          end
+
+          def find_function_type(owner_type, message)
+            methods = BasicObject::TypeRegistry.methods_for(:class, owner_type)
+            methods[message.to_s]
+          end
+
+          def to_s
+            "Class<#{@ruby_type.name}>"
           end
         end
 

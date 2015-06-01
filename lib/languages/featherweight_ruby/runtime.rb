@@ -30,14 +30,16 @@ class BasicObject
           parts = kind_receiver.split('|')
           type = parts.take(1).first.to_sym
           klass = Object.const_get(parts.drop(1).join('_'))
+          all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods
+          all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
           method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
             if type == :instance
-              unless klass.instance_methods.include?(method.to_sym)
+              unless (all_instance_methods).include?(method.to_sym)
                 fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
                      "Declared typed instance method '#{method}' not found for class '#{klass}'"
               end
             elsif type == :class
-              unless klass.methods.include?(method.to_sym)
+              unless all_methods.include?(method.to_sym)
                 fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
                      "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
