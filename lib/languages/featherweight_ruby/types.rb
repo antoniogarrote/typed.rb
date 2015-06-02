@@ -209,6 +209,10 @@ module TypedRb
           def to_s
             "(#{@from.map(&:to_s).join(',')} -> #{@to})"
           end
+
+          def can_apply?(arg_types)
+
+          end
         end
 
         # Aliases for different basic types

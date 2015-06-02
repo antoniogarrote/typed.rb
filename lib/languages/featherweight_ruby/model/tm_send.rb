@@ -39,18 +39,32 @@ module TypedRb
 
           def check_type(context)
             if receiver == :self || receiver.nil?
-              # check message in self type -> application
-              self_type = context.get_type_for(:self)
+              # self.m(args), m(args), m
+              self_type = context.get_type_for(:self) # check message in self type -> application
               function_type = self_type.find_function_type(message)
               if function_type.nil?
-                error_message = "Error typing message, type information for #{self_type}:#{message} found."
+                if context.get_type_for(message) && args.size == 0
+                  # m -> m is local variable
+                  context.get_ttype_for(message)
+                else
+                  error_message = "Error typing message, type information for #{self_type}:#{message} found."
+                  fail TypeError.new(error_message, self)
+                end
+              else
+                # function application
+                check_application(self_type, function_type)
+              end
+            else
+              # x.m(args)
+              receiver_type = receiver.check_type(context)
+              function_type = receiver_type.find_function_type(message)
+              if function_type.nil?
+                error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
                 fail TypeError.new(error_message, self)
               else
                 # function application
+                check_application(receiver_type, function_type)
               end
-            else
-              receiver_type = receiver.check_type(context)
-              # function application
             end
 
 =begin
@@ -64,6 +78,10 @@ module TypedRb
               fail TypeError.new(error_message, self)
             end
 =end
+          end
+
+          def check_application(receiver_type, function_type)
+
           end
         end
       end
