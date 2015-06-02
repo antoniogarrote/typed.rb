@@ -141,12 +141,11 @@ module TypedRb
 
 
           def find_function_type(message)
-            methods = BasicObject::TypeRegistry.methods_for(:instance, ruby_type)
-            methods[message.to_s]
+            BasicObject::TypeRegistry.find(:instance, ruby_type, message)
           end
 
           def find_var_type(var)
-            BasicObject::TypeRegistry.methods_for(:instance_var, ruby_type)[var]
+            BasicObject::TypeRegistry.find(:instance_var, ruby_type, var)
           end
 
           def to_s
@@ -162,12 +161,11 @@ module TypedRb
           end
 
           def find_function_type(message)
-            methods = BasicObject::TypeRegistry.methods_for(:class, ruby_type)
-            methods[message.to_s]
+            BasicObject::TypeRegistry.find(:class, ruby_type, message)
           end
 
           def find_var_type(var)
-            BasicObject::TypeRegistry.methods_for(:class_var, ruby_type)[var]
+            BasicObject::TypeRegistry.find(:class_var, ruby_type, var)
           end
 
           def as_object_type

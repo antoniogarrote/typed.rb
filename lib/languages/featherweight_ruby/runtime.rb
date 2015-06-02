@@ -24,6 +24,10 @@ class BasicObject
         method_registry
       end
 
+      def find(kind, klass, message)
+        registry[[kind, klass]][message.to_s]
+      end
+
       def normalize_types!
         normalized = {}
         @registry.each_pair do |kind_receiver, method_signatures|
