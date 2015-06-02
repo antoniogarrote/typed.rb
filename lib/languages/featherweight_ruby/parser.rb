@@ -77,7 +77,7 @@ module TypedRb
 
         def parse_instance_var_assign(node, context)
           ivar = TmInstanceVar.new(node.children.first, node)
-          TmInstanceVarAssignation.new(ivar, map(node.children.last, context), node)
+          TmInstanceVarAssignment.new(ivar, map(node.children.last, context), node)
         end
 
         def parse_lambda(node, context)
@@ -130,14 +130,16 @@ module TypedRb
           end
         end
 
-        def parse_class(node, _context)
+        def parse_class(node, context)
           fail StandardError, "Nil value parsing class" if node.nil? # No explicit class -> Object by default
-          class_name = parse_const(node)
-          TmClass.new(class_name, super_class_description, class_body, node)
+          class_name = parse_const(node.children[0])
+          super_class_name = parse_const(node.children[1]) || 'Object'
+          class_body = map(node.children[2], context)
+          TmClass.new(class_name, super_class_name, class_body, node)
         end
 
         def parse_const(const_node, accum = [])
-          nil if const_node.nil?
+          return nil if const_node.nil?
           accum << const_node.children.last
           if const_node.children.first.nil?
             accum.reverse.join('::')

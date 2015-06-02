@@ -5,7 +5,7 @@ module TypedRb
   module Languages
     module FeatherweightRuby
       module Model
-# application
+        # application
         class TmApp < Expr
           attr_accessor :abs,:subs
           def initialize(abs, subs, node)

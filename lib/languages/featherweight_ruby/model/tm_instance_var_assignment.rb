@@ -6,7 +6,7 @@ module TypedRb
     module FeatherweightRuby
       module Model
         # instance variable assignation
-        class TmInstanceVarAssignation < Expr
+        class TmInstanceVarAssignment < Expr
 
           attr_accessor :lvalue,:rvalue
 
@@ -26,7 +26,16 @@ module TypedRb
           end
 
           def check_type(context)
-            fail "Not implemented yet"
+            rvalue_type = @rvalue.check_type(context)
+
+            self_type = context.get_type_for(:self)
+            lvalue_type = self_type.find_var_type(val)
+            fail TypeError.new("Cannot find type for variable #{val}", self) if type.nil?
+            if lvalue_type.compatible?(rvalue_type)
+              lvalue
+            else
+              fail TypeError.new('Errror finding compatible instance variable check #{val}', self)
+            end
           end
         end
       end

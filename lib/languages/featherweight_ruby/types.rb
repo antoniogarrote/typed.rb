@@ -65,10 +65,24 @@ module TypedRb
 
           protected
 
-          def self.parse_object_type(type, level=:instance)
+          def self.parse_object_type(type)
             begin
               ruby_type = Object.const_get(type)
-              TyObject.new(ruby_type, level)
+              TyObject.new(ruby_type)
+            rescue StandardError => e
+              puts e.message
+              #puts "ERROR"
+              #puts type
+              #puts type.inspect
+              #puts "==========================================="
+              fail TypeParsingError, "Unknown Ruby type #{type}"
+            end
+          end
+
+          def self.parse_singleton_object_type(type)
+            begin
+              ruby_type = Object.const_get(type)
+              TySingletonObject.new(ruby_type)
             rescue StandardError => e
               puts e.message
               #puts "ERROR"
@@ -108,11 +122,7 @@ module TypedRb
 
           def initialize(ruby_type)
             @ruby_type = ruby_type
-            @hierarchy = if ruby_type.instance_of?(Array)
-                           ruby_type
-                         else
-                           ruby_type.ancestors
-                         end
+            @hierarchy = ruby_type.ancestors
             @classes = @hierarchy.detect{|klass| klass.instance_of?(Class) }
             @modules = @hierarchy.detect{|klass| klass.instance_of?(Module) }
           end
@@ -125,9 +135,18 @@ module TypedRb
             end
           end
 
-          def find_function_type(owner_type, message)
-            methods = BasicObject::TypeRegistry.methods_for(:instance, owner_type)
+          def as_object_type
+            self
+          end
+
+
+          def find_function_type(message)
+            methods = BasicObject::TypeRegistry.methods_for(:instance, ruby_type)
             methods[message.to_s]
+          end
+
+          def find_var_type(var)
+            BasicObject::TypeRegistry.methods_for(:instance_var, ruby_type)[var]
           end
 
           def to_s
@@ -136,19 +155,27 @@ module TypedRb
 
         end
 
-        class TyClass < TyObject
+        class TySingletonObject < TyObject
 
           def initialize(ruby_type)
             super(ruby_type)
           end
 
-          def find_function_type(owner_type, message)
-            methods = BasicObject::TypeRegistry.methods_for(:class, owner_type)
+          def find_function_type(message)
+            methods = BasicObject::TypeRegistry.methods_for(:class, ruby_type)
             methods[message.to_s]
           end
 
+          def find_var_type(var)
+            BasicObject::TypeRegistry.methods_for(:class_var, ruby_type)[var]
+          end
+
+          def as_object_type
+            TyObject.new(ruby_type)
+          end
+
           def to_s
-            "Class<#{@ruby_type.name}>"
+            "Class[#{@ruby_type.name}]"
           end
         end
 

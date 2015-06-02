@@ -60,6 +60,8 @@ module TypedRb
           def check_type(context)
             owner_type = if owner == :self
                            context.get_self(:self)
+                         elsif owner.nil?
+                           context.get_self(:self).as_object_type
                          else
                            owner.check_type(context)
                          end
@@ -68,7 +70,7 @@ module TypedRb
               fail TypeError.new("Function #{owner}##{name} cannot find owner type for #{owner}", self)
             end
 
-            function_type = find_function_type(owner_type, name)
+            function_type = owner_type.find_function_type(name)
             if function_type.nil?
               fail TypeError, "Function #{owner}##{name} cannot find function type information for owner."
             end
@@ -100,6 +102,9 @@ module TypedRb
                         end
             end
 
+            # pointing self to the right type
+            context = context.add_binding(:self, owner_type)
+
 
             # check the body with the new bindings for the args
             body_return_type = body.check_type(context)
@@ -115,7 +120,7 @@ module TypedRb
 
           def parse_owner(owner)
             if owner.nil?
-              :self
+              nil
             elsif owner.type == :self
               :self
             else # must be a class or other expression we can check the type

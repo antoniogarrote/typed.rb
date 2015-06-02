@@ -38,7 +38,22 @@ module TypedRb
           end
 
           def check_type(context)
-            fail StandardError, "Not implemented yet"
+            if receiver == :self || receiver.nil?
+              # check message in self type -> application
+              self_type = context.get_type_for(:self)
+              function_type = self_type.find_function_type(message)
+              if function_type.nil?
+                error_message = "Error typing message, type information for #{self_type}:#{message} found."
+                fail TypeError.new(error_message, self)
+              else
+                # function application
+              end
+            else
+              receiver_type = receiver.check_type(context)
+              # function application
+            end
+
+=begin
             context = context.add_binding(head,type.from)
             type_term = term.check_type(context)
             if type.to.nil? || type_term.compatible?(type.to)
@@ -48,6 +63,7 @@ module TypedRb
               error_message = "Error abstraction type, exepcted #{type} got #{type.from} -> #{type_term}"
               fail TypeError.new(error_message, self)
             end
+=end
           end
         end
       end

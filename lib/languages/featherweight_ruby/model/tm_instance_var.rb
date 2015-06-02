@@ -25,7 +25,10 @@ module TypedRb
           end
 
           def check_type(context)
-            fail "Not implemented yet"
+            self_type = context.get_type_for(:self)
+            type = self_type.find_var_type(val)
+            fail TypeError.new("Cannot find type for variable #{val}", self) if type.nil?
+            type
           end
         end
       end

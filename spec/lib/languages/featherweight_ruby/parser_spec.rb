@@ -82,7 +82,7 @@ describe TypedRb::Languages::FeatherweightRuby::Parser do
 
     it 'should parse instance variable assginations' do
       parsed = parse('@a = 3')
-      expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVarAssignation)
+      expect(parsed).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVarAssignment)
       expect(parsed.lvalue).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVar)
       expect(parsed.lvalue.val).to be == :@a
       expect(parsed.rvalue).to be_instance_of(TypedRb::Languages::FeatherweightRuby::Model::TmInt)
