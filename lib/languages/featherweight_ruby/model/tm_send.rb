@@ -29,16 +29,14 @@ module TypedRb
               @receiver = @receiver.rename(from_binding, to_binding)
             end
             # rename default args
-            args.each do |arg|
-              if arg.first == :optarg
-                arg[2] = arg[2].rename(from_binding, to_binding)
-              end
-            end
+            @args = @args.map { |arg| arg.rename(from_binding, to_binding) }
             self
           end
 
           def check_type(context)
-            if receiver == :self || receiver.nil?
+            if receiver.nil? && message.to_s == 'ts'
+              # ignore, => type annotation
+            elsif receiver == :self || receiver.nil?
               # self.m(args), m(args), m
               self_type = context.get_type_for(:self) # check message in self type -> application
               function_type = self_type.find_function_type(message)
@@ -52,7 +50,7 @@ module TypedRb
                 end
               else
                 # function application
-                check_application(self_type, function_type)
+                check_application(self_type, function_type, context)
               end
             else
               # x.m(args)
@@ -63,25 +61,30 @@ module TypedRb
                 fail TypeError.new(error_message, self)
               else
                 # function application
-                check_application(receiver_type, function_type)
+                check_application(receiver_type, function_type, context)
               end
             end
-
-=begin
-            context = context.add_binding(head,type.from)
-            type_term = term.check_type(context)
-            if type.to.nil? || type_term.compatible?(type.to)
-              type.to = type_term
-              type
-            else
-              error_message = "Error abstraction type, exepcted #{type} got #{type.from} -> #{type_term}"
-              fail TypeError.new(error_message, self)
-            end
-=end
           end
 
-          def check_application(receiver_type, function_type)
-
+          def check_application(receiver_type, function_type, context)
+            function_arg_types = function_type.from
+            function_return_type = function_type.to
+            method = receiver_type.resolve_ruby_method(message)
+            method.parameters.each_with_index do |(arg_type, arg_name), index|
+              argument = args[index]
+              function_arg_type = function_arg_types[index]
+              if argument.nil? && arg_type != :opt
+                fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
+              else
+                argument_type = argument.check_type(context)
+                unless function_arg_type.compatible?(argument_type)
+                  error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
+                  error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
+                  fail TypeError.new(error_message, self)
+                end
+              end
+            end
+            function_return_type
           end
         end
       end

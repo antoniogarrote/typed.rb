@@ -29,7 +29,7 @@ module TypedRb
           end
 
           def get_self
-            Self.new(@bindings[:self])
+            @bindings[:self]
           end
 
           protected
@@ -63,8 +63,6 @@ module TypedRb
             end
           end
 
-          protected
-
           def self.parse_object_type(type)
             begin
               ruby_type = Object.const_get(type)
@@ -92,6 +90,8 @@ module TypedRb
               fail TypeParsingError, "Unknown Ruby type #{type}"
             end
           end
+
+          protected
 
           def self.parse_function_type(arg_types)
             walk_args = ->((head,tail),parsed_arg_types=[]) do
@@ -148,6 +148,10 @@ module TypedRb
             BasicObject::TypeRegistry.find(:instance_var, ruby_type, var)
           end
 
+          def resolve_ruby_method(message)
+            @ruby_type.instance_method(message)
+          end
+
           def to_s
             @ruby_type.name
           end
@@ -166,6 +170,10 @@ module TypedRb
 
           def find_var_type(var)
             BasicObject::TypeRegistry.find(:class_var, ruby_type, var)
+          end
+
+          def resolve_ruby_method(message)
+            @ruby_type.singleton_method(message)
           end
 
           def as_object_type

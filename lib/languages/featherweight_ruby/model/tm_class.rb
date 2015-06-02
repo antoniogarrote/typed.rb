@@ -26,7 +26,7 @@ module TypedRb
           end
 
           def check_type(context)
-            class_type = TypedRb::Languages::FeatherweightRuby::Types::Type.parse_singleto_object_type(class_name)
+            class_type = TypedRb::Languages::FeatherweightRuby::Types::Type.parse_singleton_object_type(class_name)
             context = context.add_binding(:self, class_type)
             body.check_type(context)
             class_type

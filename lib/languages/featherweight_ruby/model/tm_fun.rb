@@ -59,9 +59,9 @@ module TypedRb
 
           def check_type(context)
             owner_type = if owner == :self
-                           context.get_self(:self)
+                           context.get_self
                          elsif owner.nil?
-                           context.get_self(:self).as_object_type
+                           context.get_self.as_object_type
                          else
                            owner.check_type(context)
                          end
@@ -87,18 +87,19 @@ module TypedRb
               function_arg_type = function_type.from[i]
               context = case arg.first
                           when :arg
-                            context.add_binding(arg, function_arg_type)
+                            context.add_binding(arg[1], function_arg_type)
                           when :optarg
                             declared_arg_type = arg.last.check_type(orig_context)
                             if declared_arg_type.compatible?(function_arg_type)
-                              context.add_binding(arg, function_arg_type)
+                              context.add_binding(arg[1], function_arg_type)
                             else
-                              fail TypeError, "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
+                              error_message = "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
+                              fail TypeError.new(error_message, self)
                             end
                           when :blockarg
                             fail "Block args not implemented yet"
                           else
-                            fail TypeError, "Function #{owner}##{name} unknown type of arg #{arg.first}"
+                            fail TypeError.new("Function #{owner}##{name} unknown type of arg #{arg.first}", self)
                         end
             end
 
@@ -112,7 +113,8 @@ module TypedRb
             if body_return_type.compatible?(function_type.to)
               function_type
             else
-              fail TypeError, "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
+              error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
+              fail TypeError.new(error_message, self)
             end
           end
 

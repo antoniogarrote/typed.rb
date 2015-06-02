@@ -125,7 +125,8 @@ module TypedRb
             if receiver.nil? && (message == :fail || message == :raise)
                 TmError.new(node)
             else
-              TmSend(map(receiver, context), message, parse_args(args, context), node)
+              receiver = receiver.nil? ? receiver : map(receiver, context)
+              TmSend.new(receiver, message, args.map { |arg| map(arg,context) }, node)
             end
           end
         end
