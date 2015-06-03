@@ -6,6 +6,12 @@ module TypedRb
         class TypeParsingError < StandardError; end
 
         class TypingContext
+
+          def self.top_level
+            top_level = TyObject.new(TOPLEVEL_BINDING.class)
+            TypingContext.new.add_binding!(:self, top_level)
+          end
+
           def initialize(parent=nil)
             @parent = parent
             @bindings = {}

@@ -10,7 +10,9 @@ module TypedRb
       PARSER = TypeSignaturesParser.new unless defined?(PARSER)
 
       def self.parse(expr)
-        PARSER.parse(expr).ast
+        result = PARSER.parse(expr)
+        fail "Error parsing type expression '#{expr}'" if result.nil?
+        result.ast
       end
     end
   end

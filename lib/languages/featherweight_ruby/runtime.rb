@@ -78,8 +78,13 @@ class BasicObject
                                        "Error parsing receiver, method signature: #{signature}"
                                 end
 
-      receiver = self.name if receiver == ''
-
+      if receiver == ''
+        if self.instance_of?(::Class)
+          receiver = self.name
+        else
+          receiver = self.class.name
+        end
+      end
 
       kind = :"#{kind}_variable" if message.index('@')
 
