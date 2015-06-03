@@ -25,7 +25,7 @@ __CODE
 
   let(:typed_code) do
     $TYPECHECK = true
-    eval(code)
+    eval(code, TOPLEVEL_BINDING)
     ::BasicObject::TypeRegistry.normalize_types!
     code
   end

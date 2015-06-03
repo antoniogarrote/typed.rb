@@ -76,11 +76,13 @@ module TypedRb
               if argument.nil? && arg_type != :opt
                 fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
               else
-                argument_type = argument.check_type(context)
-                unless function_arg_type.compatible?(argument_type)
-                  error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
-                  error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
-                  fail TypeError.new(error_message, self)
+                unless argument.nil? # opt if this is nil
+                  argument_type = argument.check_type(context)
+                  unless function_arg_type.compatible?(argument_type)
+                    error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
+                    error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
+                    fail TypeError.new(error_message, self)
+                  end
                 end
               end
             end

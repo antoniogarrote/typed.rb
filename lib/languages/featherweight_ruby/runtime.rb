@@ -27,7 +27,6 @@ class BasicObject
       def find(kind, klass, message)
         registry[[kind, klass]][message.to_s]
       rescue Exception => e
-        puts [kind, klass,message].inspect
         raise e
       end
 
@@ -36,9 +35,16 @@ class BasicObject
         @registry.each_pair do |kind_receiver, method_signatures|
           parts = kind_receiver.split('|')
           type = parts.take(1).first.to_sym
-          klass = Object.const_get(parts.drop(1).join('_'))
-          all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods
-          all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
+          klass_name = parts.drop(1).join('_')
+          if klass_name == 'main'
+            klass = :main
+            all_instance_methods = TOPLEVEL_BINDING.public_methods + TOPLEVEL_BINDING.protected_methods + TOPLEVEL_BINDING.private_methods
+            all_methods = TOPLEVEL_BINDING.receiver.class.public_methods + TOPLEVEL_BINDING.receiver.class.protected_methods + TOPLEVEL_BINDING.receiver.class.private_methods
+          else
+            klass = Object.const_get(klass_name)
+            all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods
+            all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
+          end
           method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
             if type == :instance
               unless (all_instance_methods).include?(method.to_sym)
@@ -79,7 +85,9 @@ class BasicObject
                                 end
 
       if receiver == ''
-        if self.instance_of?(::Class)
+        if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
+          receiver = :main
+        elsif self.instance_of?(::Class)
           receiver = self.name
         else
           receiver = self.class.name
