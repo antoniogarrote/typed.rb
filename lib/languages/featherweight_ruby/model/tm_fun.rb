@@ -58,13 +58,23 @@ module TypedRb
           end
 
           def check_type(context)
-            owner_type = if owner == :self
-                           context.get_self
-                         elsif owner.nil?
-                           context.get_self.as_object_type
-                         else
-                           owner.check_type(context)
-                         end
+            owner_type, is_constructor  = if owner == :self
+                                            [context.get_self,
+                                             (name == :initialize &&
+                                                 context.get_self.instance_of?(
+                                                     TypedRb::Languages::FeatherweightRuby::Types::TySingletonObject))]
+                                          elsif owner.nil?
+                                            [context.get_self.as_object_type,
+                                             (name == :initialize &&
+                                                 context.get_self.instance_of?(
+                                                     TypedRb::Languages::FeatherweightRuby::Types::TySingletonObject))]
+                                          else
+                                            [owner.check_type(context),
+                                             (name == :initialize &&
+                                                 owner.instance_of?(
+                                                     TypedRb::Languages::FeatherweightRuby::Types::TySingletonObject))]
+                                          end
+
 
             if owner_type.nil?
               fail TypeError.new("Function #{owner}##{name} cannot find owner type for #{owner}", self)
@@ -107,14 +117,19 @@ module TypedRb
             context = context.add_binding(:self, owner_type)
 
 
-            # check the body with the new bindings for the args
-            body_return_type = body.check_type(context)
-
-            if body_return_type.compatible?(function_type.to)
+            if is_constructor
+              # constructor
               function_type
             else
-              error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
-              fail TypeError.new(error_message, self)
+              # check the body with the new bindings for the args
+              body_return_type = body.check_type(context)
+
+              if body_return_type.compatible?(function_type.to)
+                function_type
+              else
+                error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
+                fail TypeError.new(error_message, self)
+              end
             end
           end
 

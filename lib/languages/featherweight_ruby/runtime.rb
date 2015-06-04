@@ -46,18 +46,22 @@ class BasicObject
             all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
           end
           method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
-            if type == :instance
-              unless (all_instance_methods).include?(method.to_sym)
-                fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
-                     "Declared typed instance method '#{method}' not found for class '#{klass}'"
-              end
-            elsif type == :class
-              unless all_methods.include?(method.to_sym)
-                fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
-                     "Declared typed class method '#{method}' not found for class '#{klass}'"
-              end
-            end
-            signatures_acc[method] = normalize_signature!(signature)
+            is_function = if type == :instance
+                            unless (all_instance_methods).include?(method.to_sym)
+                              fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
+                                   "Declared typed instance method '#{method}' not found for class '#{klass}'"
+                            end
+                            true
+                          elsif type == :class
+                            unless all_methods.include?(method.to_sym)
+                              fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
+                                   "Declared typed class method '#{method}' not found for class '#{klass}'"
+                            end
+                            true
+                          else
+                            false
+                          end
+            signatures_acc[method] = normalize_signature!(signature, is_function)
             signatures_acc
           end
           normalized[[type,klass]] = method_signatures
@@ -65,8 +69,8 @@ class BasicObject
         @registry = normalized
       end
 
-      def normalize_signature!(type)
-        ::TypedRb::Languages::FeatherweightRuby::Types::Type.parse(type)
+      def normalize_signature!(type, is_function)
+        ::TypedRb::Languages::FeatherweightRuby::Types::Type.parse(type, is_function)
       end
     end
   end

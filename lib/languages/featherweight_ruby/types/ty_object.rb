@@ -14,7 +14,7 @@ module TypedRb
           end
 
           def compatible?(other_type)
-            if other_type.instance_of?(TyObject)
+            if other_type.is_a?(TyObject)
               @hierarchy.include?(other_type.ruby_type)
             else
               other_type.compatible?(self)

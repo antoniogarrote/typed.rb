@@ -66,7 +66,7 @@ __END
 
     expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["inc"].to_s).to eq("(Integer -> Integer)")
     expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_a"].to_s).to eq("(A -> Integer)")
-    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"].to_s).to eq("(unit -> Bool)")
+    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"].to_s).to eq("(NilClass -> Bool)")
   end
 
   it 'parses field type signatures and store the result in the registry' do
@@ -147,5 +147,41 @@ __END
     ::BasicObject::TypeRegistry.normalize_types!
 
     expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('(Integer,(Integer,Integer -> Integer) -> Integer)')
+  end
+
+  it 'parses type functions with no arguments' do
+    $TYPECHECK = true
+    code = <<__END
+     class A
+       ts '#func / -> Integer'
+       def func(i)
+         1
+       end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('( -> Integer)')
+  end
+
+  it 'parses type functions with functions with no arguments as argument' do
+    $TYPECHECK = true
+    code = <<__END
+     class A
+       ts '#func / Integer -> ( -> Integer) -> Integer'
+       def func(i, f)
+         f[]
+       end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('(Integer,( -> Integer) -> Integer)')
   end
 end

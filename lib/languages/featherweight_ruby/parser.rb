@@ -66,6 +66,8 @@ module TypedRb
             parse_send(node, context)
           when :lvar
             TmVar.new(node.children.first,node)
+          when :const
+            TmConst.new(parse_const(node), node)
           else
             fail StandardError, "Unknown term #{node.type}: #{node}"
           end

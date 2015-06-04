@@ -36,7 +36,7 @@ module TypedRb
           def check_type(context)
             if receiver.nil? && message.to_s == 'ts'
               # ignore, => type annotation
-            elsif message.to_s == 'new' && !singleton_object_type(receiver, context).nil?
+            elsif message == :new && !singleton_object_type(receiver, context).nil?
               check_instantiation(context)
             elsif receiver == :self || receiver.nil?
               # self.m(args), m(args), m
@@ -60,15 +60,22 @@ module TypedRb
             end
           end
 
+          # we received new, but we look for initialize in the class,
+          # not the singleton class.
+          # we then run the regular application,
+          # but we return the class type instead of the return type
+          # for the constructor application (should be unit/nil).
           def check_instantiation(context)
-            self_type = singleton_object_type?(receiver,context)
+            self_type = singleton_object_type(receiver,context).as_object_type
             function_type = self_type.find_function_type(:initialize)
             if function_type.nil?
               error_message = "Error typing message, type information for #{receiver_type} constructor found."
               fail TypeError.new(error_message, self)
             else
               # function application
-              check_application(receiver_type, function_type, context)
+              @message = :initialize
+              check_application(self_type, function_type, context)
+              self_type
             end
           end
 

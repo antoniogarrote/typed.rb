@@ -15,7 +15,7 @@ describe TypedRb::Languages::FeatherweightRuby::Model::TmSend do
           'String'
         end
 
-        ts '#a / unit -> Integer'
+        ts '#a / Integer'
         def a
           1
         end

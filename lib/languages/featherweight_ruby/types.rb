@@ -46,14 +46,14 @@ module TypedRb
         end
 
         class Type
-          def self.parse(type)
+          def self.parse(type, is_function=false)
             fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
             if type == 'unit'
               TyUnit.new
             elsif type == 'Bool'
               TyBoolean.new
-            elsif type.instance_of?(Array)
-              parse_function_type(type)
+            elsif is_function || type.is_a?(Array)
+              parse_function_type(type.is_a?(Array) ? type : [type])
             else
               parse_object_type(type)
             end
@@ -70,8 +70,12 @@ module TypedRb
 
           def self.parse_object_type(type)
             begin
-              ruby_type = Object.const_get(type)
-              TyObject.new(ruby_type)
+              if type == :unit
+                TyUnit.new
+              else
+                ruby_type = Object.const_get(type)
+                TyObject.new(ruby_type)
+              end
             rescue StandardError => e
               puts e.message
               #puts "ERROR"
@@ -99,19 +103,23 @@ module TypedRb
           protected
 
           def self.parse_function_type(arg_types)
-            walk_args = ->((head,tail),parsed_arg_types=[]) do
-              parsed_arg_types << parse(head)
-              if tail.instance_of?(Array)
-                walk_args[tail, parsed_arg_types]
-              elsif tail != nil
-                parsed_arg_types + [parse(tail)]
+            if arg_types.size == 1
+              TyFunction.new([], parse(arg_types.first))
+            else
+              walk_args = ->((head,tail),parsed_arg_types=[]) do
+                parsed_arg_types << parse(head)
+                if tail.instance_of?(Array)
+                  walk_args[tail, parsed_arg_types]
+                elsif tail != nil
+                  parsed_arg_types + [parse(tail)]
+                end
               end
+
+              parsed_arg_types = walk_args[arg_types]
+              return_type = parsed_arg_types.pop
+
+              TyFunction.new(parsed_arg_types, return_type)
             end
-
-            parsed_arg_types = walk_args[arg_types]
-            return_type = parsed_arg_types.pop
-
-            TyFunction.new(parsed_arg_types, return_type)
           end
         end
 
@@ -137,6 +145,12 @@ module TypedRb
         class TyString < TyObject
           def initialize
             super(String)
+          end
+        end
+
+        class TyUnit < TyObject
+          def initialize
+            super(NilClass)
           end
         end
       end
