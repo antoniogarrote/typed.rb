@@ -65,6 +65,6 @@ module TypedRb
 end
 
 # load term files
-Dir[File.join(File.dirname(__FILE__),'model','*.rb')].each do |term_file|
+Dir[File.join(File.dirname(__FILE__),'typing','*.rb')].each do |term_file|
   load(term_file)
 end

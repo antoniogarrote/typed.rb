@@ -36,33 +36,68 @@ module TypedRb
           def check_type(context)
             if receiver.nil? && message.to_s == 'ts'
               # ignore, => type annotation
+            elsif message.to_s == 'new' && !singleton_object_type(receiver, context).nil?
+              check_instantiation(context)
             elsif receiver == :self || receiver.nil?
               # self.m(args), m(args), m
-              self_type = context.get_type_for(:self) # check message in self type -> application
-              function_type = self_type.find_function_type(message)
-              if function_type.nil?
-                if context.get_type_for(message) && args.size == 0
-                  # m -> m is local variable
-                  context.get_ttype_for(message)
-                else
-                  error_message = "Error typing message, type information for #{self_type}:#{message} found."
-                  fail TypeError.new(error_message, self)
-                end
-              else
-                # function application
-                check_application(self_type, function_type, context)
-              end
+              check_type_no_explicit_receiver(context)
             else
               # x.m(args)
-              receiver_type = receiver.check_type(context)
-              function_type = receiver_type.find_function_type(message)
-              if function_type.nil?
-                error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
-                fail TypeError.new(error_message, self)
+              check_type_explicit_receiver(context)
+            end
+          end
+
+          def singleton_object_type(receiver,context)
+            receiver_type = if (receiver.nil? || receiver == :self)
+                              context.get_type_for(:self)
+                            else
+                              receiver.check_type(context)
+                            end
+            if receiver_type.instance_of?(TypedRb::Languages::FeatherweightRuby::Types::TySingletonObject)
+              receiver_type
+            else
+              nil
+            end
+          end
+
+          def check_instantiation(context)
+            self_type = singleton_object_type?(receiver,context)
+            function_type = self_type.find_function_type(:initialize)
+            if function_type.nil?
+              error_message = "Error typing message, type information for #{receiver_type} constructor found."
+              fail TypeError.new(error_message, self)
+            else
+              # function application
+              check_application(receiver_type, function_type, context)
+            end
+          end
+
+          def check_type_no_explicit_receiver(context)
+            self_type = context.get_type_for(:self) # check message in self type -> application
+            function_type = self_type.find_function_type(message)
+            if function_type.nil?
+              if context.get_type_for(message) && args.size == 0
+                # m -> m is local variable
+                context.get_type_for(message)
               else
-                # function application
-                check_application(receiver_type, function_type, context)
+                error_message = "Error typing message, type information for #{self_type}:#{message} found."
+                fail TypeError.new(error_message, self)
               end
+            else
+              # function application
+              check_application(self_type, function_type, context)
+            end
+          end
+
+          def check_type_explicit_receiver(context)
+            receiver_type = receiver.check_type(context)
+            function_type = receiver_type.find_function_type(message)
+            if function_type.nil?
+              error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
+              fail TypeError.new(error_message, self)
+            else
+              # function application
+              check_application(receiver_type, function_type, context)
             end
           end
 
