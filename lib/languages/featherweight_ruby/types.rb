@@ -46,13 +46,13 @@ module TypedRb
         end
 
         class Type
-          def self.parse(type, is_function=false)
+          def self.parse(type)
             fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
             if type == 'unit'
               TyUnit.new
             elsif type == 'Bool'
               TyBoolean.new
-            elsif is_function || type.is_a?(Array)
+            elsif type.is_a?(Array)
               parse_function_type(type.is_a?(Array) ? type : [type])
             else
               parse_object_type(type)

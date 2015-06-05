@@ -7,7 +7,7 @@ module TypedRb
             'error'
           end
 
-          def compatible?(other_type)
+          def compatible?(_other_type)
             true
           end
 
