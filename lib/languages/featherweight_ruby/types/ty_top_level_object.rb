@@ -21,7 +21,7 @@ module TypedRb
           end
 
           def find_var_type(var)
-            BasicObject::TypeRegistry.find(:instance_var, :main, var)
+            BasicObject::TypeRegistry.find(:instance_variable, :main, var)
           end
 
           def resolve_ruby_method(message)

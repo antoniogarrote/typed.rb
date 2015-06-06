@@ -119,6 +119,7 @@ module TypedRb
 
             if is_constructor
               # constructor
+              body.check_type(context)
               function_type
             else
               # check the body with the new bindings for the args

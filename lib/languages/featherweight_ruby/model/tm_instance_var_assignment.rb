@@ -29,12 +29,13 @@ module TypedRb
             rvalue_type = @rvalue.check_type(context)
 
             self_type = context.get_type_for(:self)
-            lvalue_type = self_type.find_var_type(val)
-            fail TypeError.new("Cannot find type for variable #{val}", self) if type.nil?
+            lvalue_type = self_type.find_var_type(@lvalue)
+            fail TypeError.new("Cannot find type for variable #{lvalue}", self) if lvalue_type.nil?
             if lvalue_type.compatible?(rvalue_type)
               lvalue
             else
-              fail TypeError.new('Errror finding compatible instance variable check #{val}', self)
+              error_message = "Errror finding compatible instance variable check #{lvalue}, expected #{lvalue_type} found #{rvalue_type}"
+              fail TypeError.new(error_message, self)
             end
           end
         end
