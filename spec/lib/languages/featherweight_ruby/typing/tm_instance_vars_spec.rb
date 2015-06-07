@@ -68,6 +68,53 @@ __CODE
       }.to_not raise_error
     end
   end
+
+  context 'with a valid singleton class instance variable' do
+    let(:code) do
+      <<__CODE
+        class A
+          ts '.@a / Integer'
+
+          ts 'A.a / -> Integer'
+          def self.a
+            @a
+          end
+        end
+
+        A.a
+__CODE
+    end
+
+    it 'should not raise a type error' do
+      expect {
+        result = ast.check_type(TypedRb::Languages::FeatherweightRuby::Types::TypingContext.new)
+        expect(result.to_s).to eq('Integer')
+      }.to_not raise_error
+    end
+  end
+
+  context 'with an invalid type annotation' do
+    let(:code) do
+      <<__CODE
+        class A
+          ts '.@a / Integer'
+
+          ts 'A.a / -> String'
+          def self.a
+            @a
+          end
+        end
+
+        A.a
+__CODE
+    end
+
+    it 'should raise a type error' do
+      expect {
+        ast.check_type(TypedRb::Languages::FeatherweightRuby::Types::TypingContext.new)
+      }.to raise_error(TypedRb::Languages::FeatherweightRuby::Model::TypeError)
+    end
+  end
 end
 
 

@@ -13,7 +13,7 @@ module TypedRb
           end
 
           def find_var_type(var)
-            BasicObject::TypeRegistry.find(:class_var, ruby_type, var)
+            BasicObject::TypeRegistry.find(:class_variable, ruby_type, var)
           end
 
           def resolve_ruby_method(message)
