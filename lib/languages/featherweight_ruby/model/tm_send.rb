@@ -120,7 +120,7 @@ module TypedRb
               else
                 unless argument.nil? # opt if this is nil
                   argument_type = argument.check_type(context)
-                  unless function_arg_type.compatible?(argument_type)
+                  unless argument_type.compatible?(function_arg_type)
                     error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
                     error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
                     fail TypeError.new(error_message, self)

@@ -50,7 +50,7 @@ module TypedRb
             fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
             if type == 'unit'
               TyUnit.new
-            elsif type == 'Bool'
+            elsif type == 'Boolean'
               TyBoolean.new
             elsif type.is_a?(Array)
               parse_function_type(type.is_a?(Array) ? type : [type])

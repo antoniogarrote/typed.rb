@@ -55,6 +55,26 @@ __CODE
     end
   end
 
+  context 'with  a super-type argument' do
+    let(:code) do
+      text =<<__CODE
+        ts '#test / Numeric -> Numeric'
+        def test(x)
+          x
+        end
+
+        test(1)
+__CODE
+      text
+    end
+
+    it 'should not raise a type error' do
+      expect {
+        ast.check_type(TypedRb::Languages::FeatherweightRuby::Types::TypingContext.top_level)
+      }.to_not raise_error
+    end
+  end
+
   context 'with  a sub-type class' do
     let(:code) do
       text =<<__CODE
@@ -66,10 +86,28 @@ __CODE
       text
     end
 
-    it 'should not raise a type error' do
+    it 'should raise a type error' do
       expect {
         ast.check_type(TypedRb::Languages::FeatherweightRuby::Types::TypingContext.top_level)
       }.to raise_error(TypedRb::Languages::FeatherweightRuby::Model::TypeError)
+    end
+  end
+
+  context 'with  a sub-type optional argument' do
+    let(:code) do
+      text =<<__CODE
+        ts '#test / Numeric -> Numeric'
+        def test(x = 1)
+          x
+        end
+__CODE
+      text
+    end
+
+    it 'should not raise a type error' do
+      expect {
+        ast.check_type(TypedRb::Languages::FeatherweightRuby::Types::TypingContext.top_level)
+      }.to_not raise_error
     end
   end
 end

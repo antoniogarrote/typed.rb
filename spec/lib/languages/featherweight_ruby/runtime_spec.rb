@@ -53,7 +53,7 @@ __END
          0
        end
 
-       ts '#consume_b / unit -> Bool'
+       ts '#consume_b / unit -> Boolean'
        def consume_b
          1
        end
@@ -66,7 +66,7 @@ __END
 
     expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["inc"].to_s).to eq("(Integer -> Integer)")
     expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_a"].to_s).to eq("(A -> Integer)")
-    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"].to_s).to eq("(NilClass -> Bool)")
+    expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"].to_s).to eq("(NilClass -> Boolean)")
   end
 
   it 'parses field type signatures and store the result in the registry' do
