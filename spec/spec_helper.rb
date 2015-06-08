@@ -45,7 +45,6 @@ RSpec.configure do |config|
 end
 
 # Load all files
-path_expr = (File.join(File.dirname(__FILE__), '..', 'lib')) + '/**/*.rb'
-Dir[path_expr].each do |file|
-  load file
+def load_family(family)
+  require_relative "../lib/languages/#{family}/init"
 end

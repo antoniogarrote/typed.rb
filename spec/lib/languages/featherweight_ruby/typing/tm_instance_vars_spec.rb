@@ -1,4 +1,4 @@
-require_relative '../../../../spec_helper'
+require_relative '../spec_helper'
 
 describe TypedRb::Languages::FeatherweightRuby::Model::TmInstanceVar do
 
@@ -116,5 +116,3 @@ __CODE
     end
   end
 end
-
-
