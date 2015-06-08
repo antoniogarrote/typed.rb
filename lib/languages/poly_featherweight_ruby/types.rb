@@ -7,6 +7,22 @@ module TypedRb
 
         class TypingContext
 
+          # work with constraints
+          class << self
+
+            def type_variable_for(type, variable)
+              type_var = type_variables_register[[type, variable]] || TypedRb::Languages::Types::Polymorphism::TypeVariable.new("#{type}:#{variable}")
+              type_variables_register[[type, variable]] = type_var
+              type_var
+            end
+
+            def type_variables_register
+              @type_variable_register ||= {}
+              @type_variable_register
+            end
+          end
+
+          # work with types
           def self.top_level
             TypingContext.new.add_binding!(:self, TyTopLevelObject.new)
           end
