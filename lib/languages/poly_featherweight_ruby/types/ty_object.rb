@@ -6,11 +6,20 @@ module TypedRb
 
           attr_reader :hierarchy, :classes, :modules, :ruby_type
 
-          def initialize(ruby_type)
-            @ruby_type = ruby_type
-            @hierarchy = ruby_type.ancestors
-            @classes = @hierarchy.detect{|klass| klass.instance_of?(Class) }
-            @modules = @hierarchy.detect{|klass| klass.instance_of?(Module) }
+          def initialize(ruby_type, classes=[], module=[])
+            if ruby_type
+              @ruby_type = ruby_type
+              @hierarchy = ruby_type.ancestors
+              @classes = @hierarchy.detect{|klass| klass.instance_of?(Class) }
+              @modules = @hierarchy.detect{|klass| klass.instance_of?(Module) }
+              @with_ruby_type = true
+            else
+              @ruby_type = Object
+              @classes = @classes
+              @modules = @modules
+              @hierarchy = @modules + @classes
+              @with_ruby_type = false
+            end
           end
 
           def compatible?(other_type)
@@ -31,7 +40,8 @@ module TypedRb
           end
 
           def find_var_type(var)
-            BasicObject::TypeRegistry.find(:instance_variable, ruby_type, var)
+            variable = "#{ruby_type}::#{var}"
+            TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variable_for(:instance_variable, variable)
           end
 
           def resolve_ruby_method(message)
@@ -39,7 +49,17 @@ module TypedRb
           end
 
           def to_s
-            @ruby_type.name
+            if @with_ruby_type
+              @ruby_type.name
+            else
+              "#{@classes.first.to_s} with [#{@modules.map(&:to_s).join(',')}]"
+            end
+          end
+
+          def join(other_type)
+            this_classes = classes.reverse
+            other_classes = other_type.classes.reverse
+            
           end
         end
       end

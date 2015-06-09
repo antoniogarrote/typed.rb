@@ -11,14 +11,25 @@ module TypedRb
           class << self
 
             def type_variable_for(type, variable)
-              type_var = type_variables_register[[type, variable]] || TypedRb::Languages::Types::Polymorphism::TypeVariable.new("#{type}:#{variable}")
+              type_var = type_variables_register[[type, variable]]
+              if type_var.nil?
+                new_var_name = "#{type}:#{variable}"
+                type_var = TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVariable.new(new_var_name)
+              end
               type_variables_register[[type, variable]] = type_var
               type_var
             end
 
             def type_variables_register
               @type_variable_register ||= {}
-              @type_variable_register
+            end
+
+            def constraints_for(type, klass)
+              type_variables_register.reduce([]) do |acc, ((type_key, variable), value)|
+                if type_key == type && variable.index(/^#{klass}/) == 0
+                  acc << value.constraints
+                end
+              end
             end
           end
 
