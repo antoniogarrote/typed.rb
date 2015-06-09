@@ -87,11 +87,12 @@ module TypedRb
           end
 
           # other_type is a meta-type not a ruby type
-          def compatible?(other_type)
+          def compatible?(other_type, relation = :lt)
             if other_type.instance_of?(Class)
               self.instance_of?(other_type) || other_type == TyError
             else
-              other_type.instance_of?(self.class) || other_type.instance_of?(TyError)
+              relation = (relation == :lt ? :gt : lt)
+              other_type.instance_of?(self.class, relation) || other_type.instance_of?(TyError)
             end
           end
 

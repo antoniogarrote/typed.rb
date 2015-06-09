@@ -3,10 +3,11 @@ module TypedRb
     module PolyFeatherweightRuby
       module Types
         class TyObject < Type
+          include Comparable
 
           attr_reader :hierarchy, :classes, :modules, :ruby_type
 
-          def initialize(ruby_type, classes=[], module=[])
+          def initialize(ruby_type, classes=[], modules=[])
             if ruby_type
               @ruby_type = ruby_type
               @hierarchy = ruby_type.ancestors
@@ -15,18 +16,22 @@ module TypedRb
               @with_ruby_type = true
             else
               @ruby_type = Object
-              @classes = @classes
-              @modules = @modules
-              @hierarchy = @modules + @classes
+              @classes = classes
+              @modules = modules
+              @hierarchy = modules + classes
               @with_ruby_type = false
             end
           end
 
-          def compatible?(other_type)
+          def compatible?(other_type, relation = :lt)
             if other_type.is_a?(TyObject)
-              @hierarchy.include?(other_type.ruby_type)
+              if relation == :gt
+                self >= other_type
+              elsif relation == :lt
+                self <= other_type
+              end
             else
-              other_type.compatible?(self)
+              other_type.compatible?(relation, self)
             end
           end
 
@@ -56,10 +61,18 @@ module TypedRb
             end
           end
 
-          def join(other_type)
-            this_classes = classes.reverse
-            other_classes = other_type.classes.reverse
-            
+          def <=>(other)
+            if other.is_a?(TyObject)
+              if other.hierarchy.include?(ruby_type)
+                1
+              elsif other.ruby_type == ruby_type
+                0
+              else
+                -1
+              end
+            else
+              nil
+            end
           end
         end
       end

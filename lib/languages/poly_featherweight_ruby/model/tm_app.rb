@@ -24,7 +24,7 @@ module TypedRb
             abs_type = abs.check_type(context)
             subs_type = subs.check_type(context)
             if abs_type.compatible?(Types::TyFunction)
-              if abs_type.from.compatible?(subs_type)
+              if subs_type.compatible?(abs_type.from)
                 abs_type.to
               else
                 fail TypeError.new("Error in application expected #{abs_type.from} got #{subs_type}", self)
