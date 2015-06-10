@@ -2,6 +2,14 @@ module TypedRb
   module Languages
     module PolyFeatherweightRuby
       module Types
+
+        class UncomparableTypes < StandardError
+          attr_reader :from, :to
+          def initialize(from, to)
+            super("Cannot compare types #{from} <=> #{to}")
+          end
+        end
+
         class TyObject < Type
           include Comparable
 
@@ -67,8 +75,10 @@ module TypedRb
                 1
               elsif other.ruby_type == ruby_type
                 0
-              else
+              elsif hierarchy.include?(other.ruby_type)
                 -1
+              else
+                raise UncomparableTypes.new(self, other)
               end
             else
               nil

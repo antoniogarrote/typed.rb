@@ -107,7 +107,7 @@ module TypedRb
             end
 
             def find_bound_var(var)
-              key = @bindings.keys.detect { |key| key.include?(var) } || {var => true}
+              key = @bindings.keys.detect { |var_group| var_group.include?(var) } || {var => true}
               [key, @bindings[key]]
             end
 
