@@ -30,9 +30,13 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject do
     expect{ ty_integer > ty_string }.to raise_error TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes
 
 
-    #expect(ty_numeric <= ty_numeric).to be_truthy
-    #expect(ty_integer <= ty_integer).to be_truthy
-    #expect(ty_object <= ty_object).to be_truthy
+    expect(ty_numeric <= ty_numeric).to be_truthy
+    expect(ty_integer <= ty_integer).to be_truthy
+    expect(ty_object <= ty_object).to be_truthy
+
+    expect(ty_numeric >= ty_numeric).to be_truthy
+    expect(ty_integer >= ty_integer).to be_truthy
+    expect(ty_object >= ty_object).to be_truthy
 
 
     expect([ty_numeric, ty_integer, ty_object].sort).to  eq([ty_integer, ty_numeric, ty_object])

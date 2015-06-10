@@ -117,9 +117,13 @@ module TypedRb
               else
                 case t
                 when :gt # assignations, e.g v = Int, v = Num => v : Num
+                  begin
                     value_l > value_r ? value_l : value_r
+                  rescue TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes
+                    value_l.join(value_r)
+                  end
                 when :lt # applications, return e.g. return Int, return Num => => v : Int
-                    value_l < value_r ? value_l : fail(RuntimeError.new("Error checking type #{value_l} > #{value_r}"))
+                    value_l < value_r || value_l == value_r ? value_l : fail(RuntimeError.new("Error checking type #{value_l} > #{value_r}"))
                 else
                   fail StandardError, "Unknown type constraint #{t}"
                 end
