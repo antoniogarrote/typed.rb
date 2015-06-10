@@ -34,7 +34,7 @@ module TypedRb
             if lvalue_type.compatible?(rvalue_type)
               lvalue
             else
-              error_message = "Errror finding compatible instance variable check #{lvalue}, expected #{lvalue_type} found #{rvalue_type}"
+              error_message = "Error finding compatible instance variable check #{lvalue}, expected #{lvalue_type} found #{rvalue_type}"
               fail TypeError.new(error_message, self)
             end
           end

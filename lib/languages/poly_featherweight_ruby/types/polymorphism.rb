@@ -4,9 +4,11 @@ module TypedRb
       module Types
         module Polymorphism
           class TypeVariable
+            attr_reader :bound
             def initialize(var_name)
               @constraints = []
               @variable = TypedRb::Languages::PolyFeatherweightRuby::Model::GenSym.next("TV_#{var_name}")
+              @bound = nil
             end
 
             def add_constraint(relation, type)
@@ -14,7 +16,11 @@ module TypedRb
             end
 
             def compatible?(type, relation = :lt)
-              add_constraint(relation, type)
+              if @bound
+                @bound.compatible?(type,relation)
+              else
+                add_constraint(relation, type)
+              end
               self
             end
 
@@ -22,13 +28,21 @@ module TypedRb
               @constraints.map { |(t,c)| [self, t, c] }
             end
 
+            def bind(type)
+              @bound = type
+            end
+
+            def unbind
+              @bound = nil
+            end
+
             def to_s
-              @variable
+              "#{@variable}:#{@bound || '?'}"
             end
           end
 
           class Unification
-            attr_reader :constraints
+            attr_reader :constraints, :bindings
             def initialize(constraints)
               @constraints = constraints.sort do |(_la, ta, _ra), (_lb, tb, _rb)|
                 if ta == :gt && tb == :lt
@@ -39,11 +53,20 @@ module TypedRb
                   0
                 end
               end
+              @variables = constraints.map { |(l, _t, _r)| l }.uniq
             end
 
-            def run
+            def run(bind_variables = true)
               @bindings = {}
               unify(@constraints)
+              if bind_variables
+                @variables.each do |variable|
+                  @bindings.each do |(key, value)|
+                    variable.bind(value) if key[variable]
+                  end
+                end
+              end
+              self
             end
 
             protected
@@ -77,14 +100,14 @@ module TypedRb
                 # this should throw an exception if types no compatible
                 @bindings[group_union] = compatible_type?(value_l, t, value_r)
               else
-                group_l, value_l = find_bound(var(l))
+                group_l, value_l = find_bound_var(l)
                 # this should throw an exception if types no compatible
                 @bindings[group_l] = compatible_type?(value_l, t, r)
               end
             end
 
             def find_bound_var(var)
-              key = @bindings.keys.detect { |key| key.include?(var) } || {}
+              key = @bindings.keys.detect { |key| key.include?(var) } || {var => true}
               [key, @bindings[key]]
             end
 
