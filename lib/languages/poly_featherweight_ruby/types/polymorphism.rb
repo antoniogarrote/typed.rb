@@ -44,25 +44,21 @@ module TypedRb
           class Unification
             attr_reader :constraints, :bindings
             def initialize(constraints)
-              @constraints = constraints.sort do |(_la, ta, _ra), (_lb, tb, _rb)|
-                if ta == :gt && tb == :lt
-                  -1
-                elsif ta == :lt && tb == :gt
-                  1
-                else
-                  0
-                end
-              end
+              @constraints = constraints
               @variables = constraints.map { |(l, _t, _r)| l }.uniq
             end
 
             def run(bind_variables = true)
               @bindings = {}
-              unify(@constraints)
+              @graph = {}
+              unify(@constraints.select { |(_, t, _r)| t == :gt })
+              lt_constraints = @constraints.select { |(_, t, _r)| t == :lt }
+              lt_constraints = unify_variables_graph(lt_constraints)
+              unify(lt_constraints)
               if bind_variables
                 @variables.each do |variable|
                   @bindings.each do |(key, value)|
-                    variable.bind(value) if key[variable]
+                    variable.bind(value) if key == variable || key[variable]
                   end
                 end
               end
@@ -77,38 +73,41 @@ module TypedRb
                 if l == r
                   unify(rest)
                 else
-                  bind(l, t, r)
-                  if l.is_a?(TypeVariable) && r.is_a?(TypeVariable) && free?(r)
-                    rest = replace(rest, l, r)
+                  if l.is_a?(TypeVariable) && r.is_a?(TypeVariable)
+                    # this is only going to happen in the first invocation to unify
+                    link(l, r)
+                  else
+                    # in the first invocation to unify, l must always be a TypeVar, t :gt and r a type variable or a type,
+                    # in the second invocation to unify, l must always be a group, t :lt and r a type variable,
+                    bind(l, t, r)
                   end
                   unify(rest)
                 end
               end
             end
 
-            def free?(var)
-              @bindings[var].nil?
+            def unify_variables_graph(constraints)
+              @graph.each do |(group, links)|
+                # links include the vars in group
+                join_type = (group.keys + links.keys).map{ |var| @bindings[var] }.uniq.reduce do |ta, tb|
+                  compatible_type? ta, :gt, tb
+                end
+                group.keys.each do |l|
+                  constraints = replace(constraints, l, group)
+                  @bindings.delete(l)
+                end
+                @bindings[group] = join_type
+              end
+              @bindings.keys.select{ |k| !k.is_a?(Hash) }.each do |key|
+                @bindings[{key => true}] = @bindings.delete(key)
+              end
+              constraints
             end
 
             def bind(l, t, r)
-              if r.is_a?(TypeVariable)
-                group_l, value_l = find_bound_var(l)
-                group_r, value_r = find_bound_var(r)
-                group_union = group_l.merge(group_r)
-                @binddings.delete(group_l)
-                @binddings.delete(group_r)
-                # this should throw an exception if types no compatible
-                @bindings[group_union] = compatible_type?(value_l, t, value_r)
-              else
-                group_l, value_l = find_bound_var(l)
-                # this should throw an exception if types no compatible
-                @bindings[group_l] = compatible_type?(value_l, t, r)
-              end
-            end
-
-            def find_bound_var(var)
-              key = @bindings.keys.detect { |var_group| var_group.include?(var) } || {var => true}
-              [key, @bindings[key]]
+              value_l = (@bindings.detect{ |(key,_value)| key.is_a?(Hash) ? key.include?(l) : key == l } || []).last
+              # this will throw an exception if types no compatible
+              @bindings[l] = compatible_type?(value_l, t, r)
             end
 
             def compatible_type?(value_l, t, value_r)
@@ -123,10 +122,28 @@ module TypedRb
                     value_l.join(value_r)
                   end
                 when :lt # applications, return e.g. return Int, return Num => => v : Int
-                    value_l < value_r || value_l == value_r ? value_l : fail(RuntimeError.new("Error checking type #{value_l} > #{value_r}"))
+                    value_l <= value_r ? value_l : fail(RuntimeError.new("Error checking type #{value_l} > #{value_r}"))
                 else
                   fail StandardError, "Unknown type constraint #{t}"
                 end
+              end
+            end
+
+            def link(l,r)
+              group_l, links_l = @graph.detect{ |(group,_links)| group[l] } || [{l => true}, {r => true}]
+              group_r, links_r = @graph.detect{ |(group,_links)| group[r] } || [{r => true}, {}]
+
+              if links_r[l] && links_l[r]
+                # merge groups, variables are the same type
+                group_common = group_l.merge(group_r)
+                links_common = links_l.merge(links_r)
+                @graph.delete(group_l)
+                @graph.delete(group_r)
+                @graph[group_common] = links_common
+              else
+                # addthe arc => l < r
+                links_l[r] = true
+                @graph[group_l] = links_l
               end
             end
 
@@ -134,8 +151,8 @@ module TypedRb
               if rest.empty?
                 acc
               else
-                a,b = rest.first
-                replace(rest.drop(1), l, r, acc << [a == l ? r : a, b == l ? r : b])
+                a, t, b = rest.first
+                replace(rest.drop(1), l, r, acc << [a == l ? r : a, t, b == l ? r : b])
               end
             end
           end

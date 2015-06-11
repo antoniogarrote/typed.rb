@@ -47,6 +47,76 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::Unifica
       expect(type_var.bound.modules).to include(Comparable)
       expect(type_var.bound.modules).to include(Kernel)
     end
+
+    it 'should be possible to unify multiple assignations' do
+      type_var = tyvariable('@a')
+      integer = tyobject(Integer)
+      string = tyobject(String)
+      type_var2 = tyvariable('@b')
+      type_var3 = tyvariable('@c')
+
+      # @a = Integer
+      type_var.compatible?(integer, :gt)
+      # @b = @a
+      type_var2.compatible?(type_var, :gt)
+      # @c = String
+      type_var3.compatible?(string, :gt)
+
+      unification = described_class.new(type_var.constraints + type_var2.constraints + type_var3.constraints)
+      unification.run.bindings
+
+      # @a = @b = Integer
+      # @c = String
+      expect(type_var.bound).to eq(integer)
+      expect(type_var2.bound).to eq(integer)
+      expect(type_var3.bound).to eq(string)
+    end
+
+    it 'should be possible to unify multiple assignations' do
+      type_var = tyvariable('@a')
+      type_var2 = tyvariable('@b')
+      integer = tyobject(Integer)
+      numeric = tyobject(Numeric)
+
+
+      # @a = Numeric
+      type_var.compatible?(numeric, :gt)
+      # @b = @a
+      type_var2.compatible?(type_var, :gt)
+      # @b = Integer
+      type_var2.compatible?(integer, :gt)
+
+      unification = described_class.new(type_var.constraints + type_var2.constraints)
+      unification.run.bindings
+
+      # @a = @b = Integer
+      # @c = String
+      expect(type_var.bound).to eq(numeric)
+      expect(type_var2.bound).to eq(numeric)
+    end
+
+    it 'should be possible to unify multiple assignations' do
+      type_var = tyvariable('@a')
+      type_var2 = tyvariable('@b')
+      integer = tyobject(Integer)
+      numeric = tyobject(Numeric)
+
+
+      # @a = Integer
+      type_var.compatible?(integer, :gt)
+      # @b = @a
+      type_var2.compatible?(type_var, :gt)
+      # @b = Numeric
+      type_var2.compatible?(numeric, :gt)
+
+      unification = described_class.new(type_var.constraints + type_var2.constraints)
+      unification.run.bindings
+
+      # @a = @b = Numeric
+      expect(type_var.bound).to eq(integer)
+      expect(type_var2.bound).to eq(numeric)
+    end
+
   end
 
   context 'with variable instance application' do

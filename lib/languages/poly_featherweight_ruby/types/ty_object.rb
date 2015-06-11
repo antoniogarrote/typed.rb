@@ -85,7 +85,7 @@ module TypedRb
                 end
               end
             else
-              raise StandardError, "Cannot compare TyObject with no TyObject #{other.class}"
+              nil
             end
           end
 
@@ -102,10 +102,10 @@ module TypedRb
           protected
 
           def compare_ruby_ruby(other)
-            if other.hierarchy.include?(ruby_type)
-              1
-            elsif other.ruby_type == ruby_type
+            if other.ruby_type == ruby_type
               0
+            elsif other.hierarchy.include?(ruby_type)
+              1
             elsif hierarchy.include?(other.ruby_type)
               -1
             else
