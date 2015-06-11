@@ -45,16 +45,17 @@ module TypedRb
             attr_reader :constraints, :bindings
             def initialize(constraints)
               @constraints = constraints
+              @gt_constraints = @constraints.select { |(_, t, _r)| t == :gt }
+              @lt_constraints = @constraints.select { |(_, t, _r)| t == :lt }
               @variables = constraints.map { |(l, _t, _r)| l }.uniq
             end
 
             def run(bind_variables = true)
               @bindings = {}
               @graph = {}
-              unify(@constraints.select { |(_, t, _r)| t == :gt })
-              lt_constraints = @constraints.select { |(_, t, _r)| t == :lt }
-              lt_constraints = unify_variables_graph(lt_constraints)
-              unify(lt_constraints)
+              unify(@gt_constraints)
+              @lt_constraints = unify_variables_graph(@lt_constraints)
+              unify(@lt_constraints)
               if bind_variables
                 @variables.each do |variable|
                   @bindings.each do |(key, value)|
@@ -88,7 +89,7 @@ module TypedRb
 
             def unify_variables_graph(constraints)
               @graph.each do |(group, links)|
-                # links include the vars in group
+
                 join_type = (group.keys + links.keys).map{ |var| @bindings[var] }.uniq.reduce do |ta, tb|
                   compatible_type? ta, :gt, tb
                 end
@@ -141,7 +142,7 @@ module TypedRb
                 @graph.delete(group_r)
                 @graph[group_common] = links_common
               else
-                # addthe arc => l < r
+                # add the arc => l < r
                 links_l[r] = true
                 @graph[group_l] = links_l
               end
