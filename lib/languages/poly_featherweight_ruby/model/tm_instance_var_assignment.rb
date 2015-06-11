@@ -32,7 +32,7 @@ module TypedRb
             lvalue_type = self_type.find_var_type(@lvalue)
             fail TypeError.new("Cannot find type for variable #{lvalue}", self) if lvalue_type.nil?
             if lvalue_type.compatible?(rvalue_type)
-              lvalue
+              TmInstanceVar.new(lvalue)
             else
               error_message = "Error finding compatible instance variable check #{lvalue}, expected #{lvalue_type} found #{rvalue_type}"
               fail TypeError.new(error_message, self)
