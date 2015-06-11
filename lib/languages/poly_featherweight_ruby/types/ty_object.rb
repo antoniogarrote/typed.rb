@@ -26,7 +26,7 @@ module TypedRb
               @ruby_type = classes.first
               @classes = classes
               @modules = modules
-              @hierarchy = modules + classes
+              @hierarchy = (modules + classes).uniq
               @with_ruby_type = false
             end
           end
@@ -49,12 +49,22 @@ module TypedRb
 
 
           def find_function_type(message)
-            BasicObject::TypeRegistry.find(:instance, ruby_type, message)
+            find_function_type_in_hierarchy(:instance, message)
           end
 
           def find_var_type(var)
             variable = "#{ruby_type}::#{var}"
             TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variable_for(:instance_variable, variable)
+          end
+
+          def find_function_type_in_hierarchy(kind, message)
+            @hierarchy.inject(nil) do |acc, type|
+              if acc
+                acc
+              else
+                BasicObject::TypeRegistry.find(kind, type, message)
+              end
+            end
           end
 
           def resolve_ruby_method(message)
