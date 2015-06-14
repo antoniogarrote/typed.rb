@@ -69,35 +69,31 @@ module TypedRb
           end
 
           def self.parse_object_type(type)
-            begin
-              if type == :unit
-                TyUnit.new
-              else
-                ruby_type = Object.const_get(type)
-                TyObject.new(ruby_type)
-              end
-            rescue StandardError => e
-              puts e.message
-              #puts "ERROR"
-              #puts type
-              #puts type.inspect
-              #puts "==========================================="
-              fail TypeParsingError, "Unknown Ruby type #{type}"
+            if type == :unit
+              TyUnit.new
+            else
+              ruby_type = Object.const_get(type)
+              TyObject.new(ruby_type)
             end
+          rescue StandardError => e
+            puts e.message
+            # puts "ERROR"
+            # puts type
+            # puts type.inspect
+            # puts "==========================================="
+            raise TypeParsingError, "Unknown Ruby type #{type}"
           end
 
           def self.parse_singleton_object_type(type)
-            begin
-              ruby_type = Object.const_get(type)
-              TySingletonObject.new(ruby_type)
-            rescue StandardError => e
-              puts e.message
-              #puts "ERROR"
-              #puts type
-              #puts type.inspect
-              #puts "==========================================="
-              fail TypeParsingError, "Unknown Ruby type #{type}"
-            end
+            ruby_type = Object.const_get(type)
+            TySingletonObject.new(ruby_type)
+          rescue StandardError => e
+            puts e.message
+            # puts "ERROR"
+            # puts type
+            # puts type.inspect
+            # puts "==========================================="
+            raise TypeParsingError, "Unknown Ruby type #{type}"
           end
 
           protected
@@ -106,11 +102,11 @@ module TypedRb
             if arg_types.size == 1
               TyFunction.new([], parse(arg_types.first))
             else
-              walk_args = ->((head,tail),parsed_arg_types=[]) do
+              walk_args = lambda do |(head, tail), parsed_arg_types = []|
                 parsed_arg_types << parse(head)
                 if tail.instance_of?(Array)
                   walk_args[tail, parsed_arg_types]
-                elsif tail != nil
+                elsif !tail.nil?
                   parsed_arg_types + [parse(tail)]
                 end
               end

@@ -28,6 +28,10 @@ module TypedRb
               @constraints.map { |(t,c)| [self, t, c] }
             end
 
+            def check_type(_context)
+              self
+            end
+
             def bind(type)
               @bound = type
             end

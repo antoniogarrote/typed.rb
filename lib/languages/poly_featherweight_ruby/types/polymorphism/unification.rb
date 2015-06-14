@@ -18,21 +18,60 @@ module TypedRb
                   compatible_gt_type?(value_l, value_r)
                 when :lt # applications, return e.g. return (Int, Num) => Int
                   compatible_lt_type?(value_l, value_r)
+                when :send
+                  compatible_send_type?(value_l, value_r)
                 else
                   fail StandardError, "Unknown type constraint #{t}"
                 end
               end
             end
 
-            def compatible_gt_type?(value_l, value_r)
+            def compatible_gt_type?(value_l, value_r, join_if_false = true)
               value_l > value_r ? value_l : value_r
-            rescue Types::UncomparableTypes
-              value_l.join(value_r)
+            rescue Types::UncomparableTypes => error
+              if join_if_false
+                value_l.join(value_r)
+              else
+                raise error
+              end
             end
 
             def compatible_lt_type?(value_l, value_r)
               error_message = "Error checking type #{value_l} > #{value_r}"
               value_l <= value_r ? value_l : fail(error_message)
+            end
+
+            def compatible_send_type?(receiver, send_args)
+              return_type = send_args[:return]
+              arg_types = send_args[:args]
+              message = send_args[:message]
+
+              if receiver
+                function = receiver.find_function_type(message)
+                if function && can_apply?(function, arg_types)
+                  if return_type && graph[return_type][:type]
+                    compatible_gt_type?(graph[return_type][:type], function.to, false)
+                  else
+                    graph[return_type][:type] = function.to
+                  end
+                else
+                  fail StandardError, "Message #{message} not found for type variable #{message}"
+                end
+              else
+                fail StandardError, "Unbound variable #{receiver} type acting as receiver for #{message}"
+              end
+            end
+
+            def can_apply?(fn, arg_types)
+              arg_types.each_with_index do |arg, i|
+                fn_arg = fn.from[i]
+                if arg.is_a?(TypeVariable)
+                  type = compatible_lt_type?(graph[arg.bound][:type], fn_arg)
+                  graph[return_type][:type] = type
+                else
+                  compatible_lt_type?(arg, fn_arg)
+                end
+              end
             end
           end
 
@@ -100,6 +139,15 @@ module TypedRb
               end
             end
 
+            def print_groups
+              groups.values.uniq.each do |group|
+                vars = group[:vars].keys.map(&:to_s).join(',')
+                type = group[:type] ? group[:type].to_s : '?'
+                links = group[:links].map(&:to_s).join(' < ')
+                puts "#{vars}:#{type} => #{links}"
+              end
+            end
+
             protected
 
             def make_group(vars, links = {})
@@ -154,12 +202,43 @@ module TypedRb
               unify(@gt_constraints)
               @lt_constraints = graph.fold_groups.replace_groups(@lt_constraints)
               unify(@lt_constraints)
+              unify(@send_constraints)
               graph.do_bindings! if bind_variables
               self
             end
 
             def bindings
               graph.vars
+            end
+
+            def print_constraints
+              @gt_constraints.each do |(l, t, r)|
+                l = if l.is_a?(Hash)
+                      l.keys.map(&:to_s).join(',')
+                    else
+                      l.to_s
+                    end
+                puts "#{l} :gt #{r}"
+              end
+              @lt_constraints.each do |(l, t, r)|
+                l = if l.is_a?(Hash)
+                      l.keys.map(&:to_s).join(',')
+                    else
+                      l.to_s
+                    end
+                puts "#{l} :lt #{r}"
+              end
+              @send_constraints.each do |(l, t, send)|
+                return_type = send[:return]
+                arg_types = send[:args].map(&:to_s)
+                message = send[:message]
+                l = if l.is_a?(Hash)
+                      l.keys.map(&:to_s).join(',')
+                    else
+                      l.to_s
+                    end
+                puts "#{l} :send #{message}[ #{arg_types.join(',')} -> #{return_type}]"
+              end
             end
 
             protected
@@ -178,16 +257,17 @@ module TypedRb
                   #   t :gt and r a type variable or a type,
                   # - In the second invocation to unify, l must always be a group
                   #   t :lt and r a type variable,
-                  bind(l, t, r)
+                  check_constraint(l, t, r, t != :send) # we don't binc if constraint is send
                 end
                 unify(rest)
               end
             end
 
-            def bind(l, t, r)
+            def check_constraint(l, t, r, bind = true)
               value_l = graph[l][:type]
               # this will throw an exception if types no compatible
-              graph[l][:type] = compatible_type?(value_l, t, r)
+              compatible_type = compatible_type?(value_l, t, r)
+              graph[l][:type] = compatible_type if bind
             end
           end
         end

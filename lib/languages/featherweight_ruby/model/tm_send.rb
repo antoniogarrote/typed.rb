@@ -122,7 +122,9 @@ module TypedRb
             end
             return_variable_name = "##{type_variable.variable}::#{message}"
             return_variable = context.type_variable_for(:send, return_variable_name)
-            send_types = argument_types << return_variable
+            send_types = { args: argument_types,
+                           return: return_variable,
+                           message: message }
             type_variable.add_constraint(:send, send_types)
             return_variable
           end
