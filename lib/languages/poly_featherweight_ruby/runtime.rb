@@ -25,9 +25,12 @@ class BasicObject
       end
 
       def find(kind, klass, message)
-        registry[[kind, klass]][message.to_s]
-      rescue Exception => e
-        raise e
+        class_data = registry[[kind, klass]]
+        if class_data
+          class_data[message.to_s]
+        else
+          nil
+        end
       end
 
       def normalize_types!
