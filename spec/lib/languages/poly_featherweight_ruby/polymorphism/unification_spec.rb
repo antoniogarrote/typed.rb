@@ -1,6 +1,5 @@
 require_relative '../spec_helper'
 
-
 describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::Unification do
   it 'should be able to unify a simple constraint' do
     type_var = tyvariable('@a')
@@ -113,7 +112,7 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::Unifica
       unification.run.bindings
 
       # @a = @b = Numeric
-      expect(type_var.bound).to eq(integer)
+      expect(type_var.bound).to eq(numeric)
       expect(type_var2.bound).to eq(numeric)
     end
 
@@ -161,10 +160,10 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::Unifica
       type_var.compatible?(numeric, :lt)
 
       unification = described_class.new(type_var.constraints)
-      expect {
+      expect do
         # @a = min(String, Numeric) if String < Numeric => FAIL
         unification.run.bindings
-      }.to raise_error TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes
+      end.to raise_error TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes
     end
   end
 end

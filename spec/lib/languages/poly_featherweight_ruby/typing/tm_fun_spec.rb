@@ -1,13 +1,12 @@
 require_relative '../spec_helper'
 
 describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmFun do
-
   before :each do
     ::BasicObject::TypeRegistry.registry.clear
   end
 
   let(:code) do
-    text =<<__CODE
+    text = <<__CODE
       class A
         ts '#f1 / Integer -> String'
         def f1(num)
@@ -38,16 +37,15 @@ __CODE
 
   context 'with validly typed code' do
     it 'should be possible to type check a method and method application' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      }.to_not raise_error
+      end.to_not raise_error
     end
   end
 
   context 'with not matching arg type in function definition' do
-
     let(:code) do
-      text =<<__CODE
+      text = <<__CODE
       class A
         ts '#f1 / Integer -> String'
         def f1(num='text')
@@ -64,14 +62,13 @@ __CODE
     end
 
     it 'should raise a type error' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+      end.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
     end
   end
 
   context 'with not matching return type in function definition' do
-
     let(:code) do
       text =<<__CODE
       class A
@@ -90,9 +87,9 @@ __CODE
     end
 
     it 'should raise a type error' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+      end.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
     end
   end
 
@@ -112,10 +109,9 @@ __CODE
     end
 
     it 'should not raise a type error' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.top_level)
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
-
 end

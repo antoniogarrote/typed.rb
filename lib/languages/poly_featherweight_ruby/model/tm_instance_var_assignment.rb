@@ -27,10 +27,11 @@ module TypedRb
 
           def check_type(context)
             rvalue_type = @rvalue.check_type(context)
-
             self_type = context.get_type_for(:self)
             lvalue_type = self_type.find_var_type(@lvalue)
-            fail TypeError.new("Cannot find type for variable #{lvalue}", self) if lvalue_type.nil?
+            if lvalue_type.nil?
+              fail TypeError.new("Cannot find type for variable #{lvalue}", self)
+            end
             if lvalue_type.compatible?(rvalue_type)
               lvalue
             else

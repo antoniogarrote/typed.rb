@@ -5,6 +5,7 @@ module TypedRb
   module Languages
     module PolyFeatherweightRuby
       module Model
+        # A instance/class function definition expression
         class TmFun < Expr
           attr_accessor :name, :args, :body, :owner
 
@@ -30,12 +31,12 @@ module TypedRb
           def to_s
             args_str = args.map do |arg|
               case arg.first
-                when :arg
-                  GenSym.resolve(arg.last)
-                when :optarg
-                  "#{GenSym.resolve(arg[1])}:#{arg[2].type}"
-                when :blockarg
-                  "&#{GenSym.resolve(arg.last)}"
+              when :arg
+                GenSym.resolve(arg.last)
+              when :optarg
+                "#{GenSym.resolve(arg[1])}:#{arg[2].type}"
+              when :blockarg
+                "&#{GenSym.resolve(arg.last)}"
               end
             end
             "#{name}(#{args_str.join(',')}){ \n\t#{body}\n }"
@@ -61,18 +62,18 @@ module TypedRb
             owner_type, is_constructor  = if owner == :self
                                             [context.get_self,
                                              (name == :initialize &&
-                                                 context.get_self.instance_of?(
-                                                     TypedRb::Languages::PolyFeatherweightRuby::Types::TySingletonObject))]
+                                              context.get_self.instance_of?(
+                                                Types::TySingletonObject))]
                                           elsif owner.nil?
                                             [context.get_self.as_object_type,
                                              (name == :initialize &&
-                                                 context.get_self.instance_of?(
-                                                     TypedRb::Languages::PolyFeatherweightRuby::Types::TySingletonObject))]
+                                              context.get_self.instance_of?(
+                                                Types::TySingletonObject))]
                                           else
                                             [owner.check_type(context),
                                              (name == :initialize &&
-                                                 owner.instance_of?(
-                                                     TypedRb::Languages::PolyFeatherweightRuby::Types::TySingletonObject))]
+                                              owner.instance_of?(
+                                                Types::TySingletonObject))]
                                           end
 
 
@@ -96,20 +97,20 @@ module TypedRb
             args.each_with_index do |arg, i|
               function_arg_type = function_type.from[i]
               context = case arg.first
-                          when :arg
+                        when :arg
+                          context.add_binding(arg[1], function_arg_type)
+                        when :optarg
+                          declared_arg_type = arg.last.check_type(orig_context)
+                          if declared_arg_type.compatible?(function_arg_type)
                             context.add_binding(arg[1], function_arg_type)
-                          when :optarg
-                            declared_arg_type = arg.last.check_type(orig_context)
-                            if declared_arg_type.compatible?(function_arg_type)
-                              context.add_binding(arg[1], function_arg_type)
-                            else
-                              error_message = "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
-                              fail TypeError.new(error_message, self)
-                            end
-                          when :blockarg
-                            fail "Block args not implemented yet"
                           else
-                            fail TypeError.new("Function #{owner}##{name} unknown type of arg #{arg.first}", self)
+                            error_message = "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
+                            fail TypeError.new(error_message, self)
+                          end
+                        when :blockarg
+                          fail "Block args not implemented yet"
+                        else
+                          fail TypeError.new("Function #{owner}##{name} unknown type of arg #{arg.first}", self)
                         end
             end
 

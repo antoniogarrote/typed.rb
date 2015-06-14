@@ -1,7 +1,6 @@
 require_relative '../spec_helper'
 
 describe TypedRb::Languages::PolyFeatherweightRuby::Types::Type do
-
   before :each do
     ::BasicObject::TypeRegistry.registry.clear
   end
@@ -21,7 +20,7 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Type do
 
   context 'with valid exact type' do
     let(:code) do
-      text =<<__CODE
+      text = <<__CODE
         ts '#test / Integer -> Integer'
         def test(x)
           x
@@ -31,15 +30,15 @@ __CODE
     end
 
     it 'should not raise a type error' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.top_level)
-      }.to_not raise_error
+      end.to_not raise_error
     end
   end
 
   context 'with  a super-type class' do
     let(:code) do
-      text =<<__CODE
+      text = <<__CODE
         ts '#test / Integer -> Numeric'
         def test(x)
           x
@@ -49,15 +48,15 @@ __CODE
     end
 
     it 'should not raise a type error' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.top_level)
-      }.to_not raise_error
+      end.to_not raise_error
     end
   end
 
   context 'with  a super-type argument' do
     let(:code) do
-      text =<<__CODE
+      text = <<__CODE
         ts '#test / Numeric -> Numeric'
         def test(x)
           x
@@ -77,7 +76,7 @@ __CODE
 
   context 'with  a sub-type class' do
     let(:code) do
-      text =<<__CODE
+      text = <<__CODE
         ts '#test / Numeric -> Integer'
         def test(x)
           x
@@ -95,7 +94,7 @@ __CODE
 
   context 'with  a sub-type optional argument' do
     let(:code) do
-      text =<<__CODE
+      text = <<__CODE
         ts '#test / Numeric -> Numeric'
         def test(x = 1)
           x
@@ -105,9 +104,9 @@ __CODE
     end
 
     it 'should not raise a type error' do
-      expect {
+      expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.top_level)
-      }.to_not raise_error
+      end.to_not raise_error
     end
   end
 end

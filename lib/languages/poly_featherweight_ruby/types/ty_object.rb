@@ -54,7 +54,7 @@ module TypedRb
 
           def find_var_type(var)
             variable = "#{ruby_type}::#{var}"
-            TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variable_for(:instance_variable, variable)
+            Types::TypingContext.type_variable_for(:instance_variable, variable)
           end
 
           def resolve_ruby_method(message)

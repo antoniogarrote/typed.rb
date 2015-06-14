@@ -14,7 +14,7 @@ module TypedRb
               type_var = type_variables_register[[type, variable]]
               if type_var.nil?
                 new_var_name = "#{type}:#{variable}"
-                type_var = TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVariable.new(new_var_name)
+                type_var = Polymorphism::TypeVariable.new(new_var_name)
               end
               type_variables_register[[type, variable]] = type_var
               type_var

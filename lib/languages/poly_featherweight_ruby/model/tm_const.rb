@@ -4,8 +4,8 @@ module TypedRb
   module Languages
     module PolyFeatherweightRuby
       module Model
+        # A constant expression
         class TmConst < Expr
-
           attr_reader :val
 
           def initialize(val, node)
@@ -17,16 +17,16 @@ module TypedRb
             "const #{class_name}"
           end
 
-          def rename(from_binding, to_binding)
+          def rename(_from_binding, _to_binding)
             self
           end
 
-          def check_type(context)
+          def check_type(_context)
             value = Object.const_get(@val)
             if value.instance_of?(Class)
-              TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse_singleton_object_type(value.name)
+              Types::Type.parse_singleton_object_type(value.name)
             else
-              TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse_object_type(value.name)
+              Types::Type.parse_object_type(value.name)
             end
           end
         end

@@ -19,7 +19,7 @@ module TypedRb
             "#{val}"
           end
 
-          def rename(from_binding, to_binding)
+          def rename(_from_binding, _to_binding)
             # instance vars cannot be captured
             self
           end
@@ -27,7 +27,9 @@ module TypedRb
           def check_type(context)
             self_type = context.get_type_for(:self)
             type = self_type.find_var_type(val)
-            fail TypeError.new("Cannot find type for variable #{val}", self) if type.nil?
+            if type.nil?
+              fail TypeError.new("Cannot find type for variable #{val}", self)
+            end
             type
           end
         end

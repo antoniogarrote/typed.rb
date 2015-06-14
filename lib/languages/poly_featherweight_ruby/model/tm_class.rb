@@ -5,8 +5,8 @@ module TypedRb
   module Languages
     module PolyFeatherweightRuby
       module Model
+        # Class expression
         class TmClass < Expr
-
           attr_reader :class_name, :super_class_name, :body
 
           def initialize(class_name, super_class_name, body, node)
@@ -35,6 +35,7 @@ module TypedRb
           end
 
           def unify_constraints(type)
+            # TODO
             constraints = TypedRb::Languages::PolyFeatherweightRuby::Types::Type.constraints_for(type, class_name)
           end
         end
