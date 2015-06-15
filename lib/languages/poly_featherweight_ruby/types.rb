@@ -10,13 +10,18 @@ module TypedRb
           # work with constraints
           class << self
 
-            def type_variable_for(type, variable)
-              type_var = type_variables_register[[type, variable]]
-              if type_var.nil?
-                new_var_name = "#{type}:#{variable}"
-                type_var = Polymorphism::TypeVariable.new(new_var_name)
+            def type_variable_for(type, variable, hierarchy)
+              type_var = hierarchy.detect do |ruby_type|
+                type_variables_register[[type, ruby_type, variable]]
               end
-              type_variables_register[[type, variable]] = type_var
+
+              type_var = if type_var.nil?
+                           new_var_name = "#{hierarchy.first}:#{variable}"
+                           Polymorphism::TypeVariable.new(new_var_name)
+                         else
+                           type_variables_register[[type, type_var, variable]]
+                         end
+              type_variables_register[[type, hierarchy.first, variable]] = type_var
               type_var
             end
 

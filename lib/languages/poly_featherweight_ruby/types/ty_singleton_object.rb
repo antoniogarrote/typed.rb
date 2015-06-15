@@ -13,8 +13,7 @@ module TypedRb
           end
 
           def find_var_type(var)
-            variable = "#{ruby_type}::#{var}"
-            TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variable_for(:class_variable, variable)
+            TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variable_for(:class_variable, variable, hierarchy)
           end
 
           def resolve_ruby_method(message)

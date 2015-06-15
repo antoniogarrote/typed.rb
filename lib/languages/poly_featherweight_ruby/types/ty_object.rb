@@ -47,14 +47,12 @@ module TypedRb
             self
           end
 
-
           def find_function_type(message)
             find_function_type_in_hierarchy(:instance, message)
           end
 
           def find_var_type(var)
-            variable = "#{ruby_type}::#{var}"
-            Types::TypingContext.type_variable_for(:instance_variable, variable)
+            Types::TypingContext.type_variable_for(:instance_variable, var, hierarchy)
           end
 
           def find_function_type_in_hierarchy(kind, message)
@@ -119,7 +117,7 @@ module TypedRb
             elsif hierarchy.include?(other.ruby_type)
               -1
             else
-              raise UncomparableTypes.new(self, other)
+              fail UncomparableTypes.new(self, other)
             end
           end
 
@@ -134,7 +132,7 @@ module TypedRb
             elsif hierarchy.include?(ruby_type) && all_those_modules_included && !all_these_modules_included
               -1
             else
-              raise UncomparableTypes.new(self, other)
+              fail UncomparableTypes.new(self, other)
             end
           end
         end
