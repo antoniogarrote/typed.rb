@@ -7,6 +7,14 @@ module TypedRb
         include Model
         include Types
 
+        def check(expr)
+          ::BasicObject::TypeRegistry.registry.clear
+          eval(expr)
+          ::BasicObject::TypeRegistry.normalize_types!
+          TypingContext.type_variables_register.clear
+          check_type(parse(expr))
+        end
+
         def parse(expr)
           Model::GenSym.reset
           parser = Parser.new
@@ -14,7 +22,7 @@ module TypedRb
         end
 
         def check_type(expr)
-          expr.check_type(TypingContext.new)
+          expr.check_type(TypingContext.toplevel_binding)
         end
       end
     end

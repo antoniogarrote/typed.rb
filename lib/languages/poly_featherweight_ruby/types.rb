@@ -25,6 +25,16 @@ module TypedRb
               type_var
             end
 
+            def type_variable_for_message(variable, message)
+              new_var_name = "#{variable}:#{message}"
+              type_var = type_variables_registertype_var[[:return, new_var_name]]
+              if type_var.nil?
+                type_var = Polymorphism::TypeVariable.new(new_var_name)
+                type_variables_registertype_var[[:return, new_var_name]] = type_var
+              end
+              type_var
+            end
+
             def type_variables_register
               @type_variable_register ||= {}
             end

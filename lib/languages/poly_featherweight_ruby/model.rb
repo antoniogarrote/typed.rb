@@ -43,8 +43,9 @@ module TypedRb
         end
 
         class Expr
-          attr_reader :line, :col, :type
+          attr_reader :line, :col, :type, :node
           def initialize(node, type = nil)
+            @node = node
             @line = node.location.line
             @col = node.location.column
             @type = type

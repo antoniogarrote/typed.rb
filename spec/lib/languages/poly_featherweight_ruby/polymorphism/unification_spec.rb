@@ -167,17 +167,17 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::Unifica
   end
 
   context 'with send constraints' do
-=begin
+
     it 'should unify method invocations and detect errors' do
       code = <<__CODE
-class ClassV
+class ClassV1
   ts '#initialize / -> unit'
 
-  ts '#go! / String -> ClassP'
+  ts '#go! / String -> ClassP1'
   def go!(s); end
 end
 
-class ClassP
+class ClassP1
   ts '#initialize / String -> unit'
   def initialize(s); end
 
@@ -185,8 +185,8 @@ class ClassP
   def reached?; end
 end
 
-class A
-  ts '#initialize / ClassV -> unit'
+class A1
+  ts '#initialize / ClassV1 -> unit'
   def initialize(cv); end
 
   ts '#do! / Integer -> Boolean'
@@ -197,7 +197,7 @@ __CODE
       eval_with_ts(code)
       string = tyobject(String)
       integer = tyobject(Integer)
-      classv = tyobject(ClassV)
+      classv = tyobject(ClassV1)
 
       # @iv1 = String
       iv1 = tyvariable('@iv1')
@@ -229,7 +229,7 @@ __CODE
         unification.run.bindings
       end.to raise_error TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes
     end
-=end
+
     it 'should unify method invocations and accept valid inputs' do
       code = <<__CODE
 class ClassV
@@ -264,6 +264,7 @@ __CODE
       string = tyobject(String)
       integer = tyobject(Integer)
       classv = tyobject(ClassV)
+      classp = tyobject(ClassP)
 
       # @iv1 = String
       iv1 = tyvariable('@iv1')
@@ -289,10 +290,13 @@ __CODE
 
 
       constraints = iv1.constraints + iv2.constraints + rt1.constraints + rt2.constraints
-      unification = described_class.new(constraints)
-      result = unification.run.bindings
-      # TODO add the expectations
-      puts result.map(&:to_s)
+
+      described_class.new(constraints).run.bindings
+
+      expect(iv1.bound).to eq(string)
+      expect(iv2.bound).to eq(classv)
+      expect(rt1.bound).to eq(classp)
+      expect(rt2.bound).to eq(tyboolean)
     end
   end
 end

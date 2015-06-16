@@ -52,7 +52,12 @@ module TypedRb
           end
 
           def find_var_type(var)
-            Types::TypingContext.type_variable_for(:instance_variable, var, hierarchy)
+            var_type = BasicObject::TypeRegistry.find(:instance_variable, ruby_type, var)
+            if var_type
+              var_type
+            else
+              Types::TypingContext.type_variable_for(:instance_variable, var, hierarchy)
+            end
           end
 
           def find_function_type_in_hierarchy(kind, message)

@@ -18,6 +18,7 @@ def tyvariable(name)
 end
 
 def eval_with_ts(code)
+  ::BasicObject::TypeRegistry.registry.clear
   $TYPECHECK = true
   eval(code)
   ::BasicObject::TypeRegistry.normalize_types!

@@ -9,6 +9,7 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmInstanceVar do
   let(:code) do
     text =<<__CODE
       class A
+        ts '\#@a / Integer'
         ts '#initialize / -> unit'
         def initialize
           @a = 'error'
@@ -35,7 +36,7 @@ __CODE
     it 'should raise a type error' do
       expect {
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+      }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes)
     end
   end
 
@@ -95,6 +96,8 @@ __CODE
     let(:code) do
       <<__CODE
         class A
+          ts '.@a / Integer'
+
           ts 'A.a / -> String'
           def self.a
             @a
@@ -108,7 +111,7 @@ __CODE
     it 'should raise a type error' do
       expect {
         result = ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+      }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes)
     end
   end
 end

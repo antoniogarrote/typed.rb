@@ -112,7 +112,7 @@ __CODE
       it 'should be possible to be passed as an argument to a function' do
         expect {
           ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.top_level)
-        }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+        }.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes)
       end
     end
   end

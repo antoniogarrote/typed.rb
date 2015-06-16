@@ -53,7 +53,7 @@ grammar TypeSignatures
   end
 
   rule type_name
-   [a-zA-Z]+ {
+   [a-zA-Z\d]+ {
       def ast
 	     text_value
       end

@@ -36,7 +36,7 @@ module TypedRb
 
           def unify_constraints(type)
             # TODO
-            constraints = TypedRb::Languages::PolyFeatherweightRuby::Types::Type.constraints_for(type, class_name)
+            #constraints = TypedRb::Languages::PolyFeatherweightRuby::Types::Type.constraints_for(type, class_name)
           end
         end
       end

@@ -15,6 +15,14 @@ module TypedRb
               @constraints << [relation, type]
             end
 
+            def add_message_constraint(message, args, context)
+              return_type = context.type_variable_for_message(variable, message)
+              # add constraint for this
+              add_constraint(:send, args: args, return: return_type, mesage: message)
+              # return return type
+              return_type
+            end
+
             def compatible?(type, relation = :lt)
               if @bound
                 @bound.compatible?(type,relation)

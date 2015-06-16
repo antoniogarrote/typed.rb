@@ -57,13 +57,13 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject do
       $TYPECHECK = true
       code = <<__END
 
-         class A
-            ts 'A#a / String -> unit'
+         class A1
+            ts 'A1#a / String -> unit'
             def a; puts 'a'; end
          end
 
-         class B < A
-            ts 'B#b / Numeric -> unit'
+         class B1 < A1
+            ts 'B1#b / Numeric -> unit'
             def b; puts 'a'; end
          end
 __END
@@ -71,7 +71,7 @@ __END
       eval(code)
       ::BasicObject::TypeRegistry.normalize_types!
 
-      ty_b = described_class.new(B)
+      ty_b = described_class.new(B1)
 
       method = ty_b.find_function_type(:a)
       expect(method.to_s).to eq('(String -> NilClass)')

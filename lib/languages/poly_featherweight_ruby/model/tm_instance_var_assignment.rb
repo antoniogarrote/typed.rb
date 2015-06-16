@@ -21,19 +21,19 @@ module TypedRb
           end
 
           def rename(from_binding, to_binding)
-            @rvalue = @rvalue.rename(from_binding, to_binding)
+            @rvalue = rvalue.rename(from_binding, to_binding)
             self
           end
 
           def check_type(context)
-            rvalue_type = @rvalue.check_type(context)
+            rvalue_type = rvalue.check_type(context)
             self_type = context.get_type_for(:self)
-            lvalue_type = self_type.find_var_type(@lvalue)
+            lvalue_type = self_type.find_var_type(lvalue)
             if lvalue_type.nil?
               fail TypeError.new("Cannot find type for variable #{lvalue}", self)
             end
             if lvalue_type.compatible?(rvalue_type)
-              TmInstanceVar.new(lvalue)
+              TmInstanceVar.new(lvalue, node)
             else
               error_message = "Error finding compatible instance variable check #{lvalue}, expected #{lvalue_type} found #{rvalue_type}"
               fail TypeError.new(error_message, self)

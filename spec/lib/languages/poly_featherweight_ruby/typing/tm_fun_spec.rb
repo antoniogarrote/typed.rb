@@ -64,7 +64,7 @@ __CODE
     it 'should raise a type error' do
       expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      end.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+      end.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes)
     end
   end
 
@@ -89,7 +89,7 @@ __CODE
     it 'should raise a type error' do
       expect do
         ast.check_type(TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.new)
-      end.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Model::TypeError)
+      end.to raise_error(TypedRb::Languages::PolyFeatherweightRuby::Types::UncomparableTypes)
     end
   end
 
