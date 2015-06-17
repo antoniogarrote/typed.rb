@@ -1,6 +1,15 @@
 require_relative('../../../lib/type_signature/parser')
 require_relative('./types')
 
+class Integer
+  def +(other)
+    raise StandardError.new('Error invoking abstract method Integer#+')
+  end
+
+  # TODO
+  # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
+end
+
 class BasicObject
 
   class TypeRegistry

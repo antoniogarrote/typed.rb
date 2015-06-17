@@ -33,7 +33,7 @@ module TypedRb
               fail TypeError.new("Cannot find type for variable #{lvalue}", self)
             end
             if lvalue_type.compatible?(rvalue_type)
-              TmInstanceVar.new(lvalue, node)
+              lvalue_type
             else
               error_message = "Error finding compatible instance variable check #{lvalue}, expected #{lvalue_type} found #{rvalue_type}"
               fail TypeError.new(error_message, self)

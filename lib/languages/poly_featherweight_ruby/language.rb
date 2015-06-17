@@ -9,7 +9,9 @@ module TypedRb
 
         def check(expr)
           ::BasicObject::TypeRegistry.registry.clear
-          eval(expr)
+          $TYPECHECK = true
+          eval(expr, TOPLEVEL_BINDING)
+          $TYPECHECK = false
           ::BasicObject::TypeRegistry.normalize_types!
           TypingContext.type_variables_register.clear
           check_type(parse(expr))
@@ -22,7 +24,7 @@ module TypedRb
         end
 
         def check_type(expr)
-          expr.check_type(TypingContext.toplevel_binding)
+          expr.check_type(TypingContext.top_level)
         end
       end
     end
