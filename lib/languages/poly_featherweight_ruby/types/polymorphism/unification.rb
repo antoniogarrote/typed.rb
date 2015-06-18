@@ -37,7 +37,7 @@ module TypedRb
             end
 
             def compatible_lt_type?(value_l, value_r)
-              error_message = "Error checking type #{value_l} > #{value_r}"
+              error_message = "Error checking type, #{value_l} is not a subtype of #{value_r}"
               value_l <= value_r ? value_l : fail(error_message)
             end
 
@@ -84,7 +84,15 @@ module TypedRb
             # Create the graph based on the provided constraints as unlinked
             # nodes.
             def initialize(constraints)
-              vars = constraints.map { |(l, _t, _r)| l }.uniq
+              vars = constraints.reduce([]) do |acc, (l, _t, r)|
+                vals = [l]
+                if r.is_a?(Hash)
+                  vals << r[:return]
+                else
+                  vals << r
+                end
+                acc + vals.select{ |v| v.is_a?(TypeVariable) }
+              end.uniq
               @groups = vars.each_with_object({}) do |var, groups|
                 groups[var] = make_group(var => true)
               end

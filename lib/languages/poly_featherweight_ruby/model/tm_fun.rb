@@ -126,8 +126,7 @@ module TypedRb
             else
               # check the body with the new bindings for the args
               body_return_type = body.check_type(context)
-
-              if body_return_type.compatible?(function_type.to)
+              if body_return_type.compatible?(function_type.to, :lt)
                 function_type
               else
                 error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."

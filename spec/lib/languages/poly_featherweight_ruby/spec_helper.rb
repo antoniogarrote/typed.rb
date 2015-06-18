@@ -5,6 +5,10 @@ def tyobject(klass)
   TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject.new(klass)
 end
 
+def tyinteger
+  TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject.new(Integer)
+end
+
 def tyunit
   TypedRb::Languages::PolyFeatherweightRuby::Types::TyUnit.new
 end
@@ -22,4 +26,14 @@ def eval_with_ts(code)
   $TYPECHECK = true
   eval(code)
   ::BasicObject::TypeRegistry.normalize_types!
+end
+
+def find_instance_variable_for(klass, variable, language)
+  language.type_variables.detect{ |v| v.to_s =~ /#{klass}:#{variable}/ }
+end
+
+def expect_binding(language, klass, variable, type)
+  var = find_instance_variable_for(klass, variable, language)
+  expect(var.bound).to_not be_nil
+  expect(var.bound.ruby_type).to be(type)
 end

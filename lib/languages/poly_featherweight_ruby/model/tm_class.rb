@@ -29,14 +29,7 @@ module TypedRb
             class_type = TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse_singleton_object_type(class_name)
             context = context.add_binding(:self, class_type)
             body.check_type(context)
-            unify_constraints(:instance_variable)
-            unify_constraints(:class_variable)
             class_type
-          end
-
-          def unify_constraints(type)
-            # TODO
-            #constraints = TypedRb::Languages::PolyFeatherweightRuby::Types::Type.constraints_for(type, class_name)
           end
         end
       end

@@ -7,6 +7,8 @@ module TypedRb
         include Model
         include Types
 
+        attr_reader :unification_result
+
         def check(expr)
           ::BasicObject::TypeRegistry.registry.clear
           $TYPECHECK = true
@@ -15,6 +17,11 @@ module TypedRb
           ::BasicObject::TypeRegistry.normalize_types!
           TypingContext.type_variables_register.clear
           check_type(parse(expr))
+          @unification_result = run_unification
+        end
+
+        def check_file(path)
+          check(File.open(path,'r').read)
         end
 
         def parse(expr)
@@ -25,6 +32,19 @@ module TypedRb
 
         def check_type(expr)
           expr.check_type(TypingContext.top_level)
+        end
+
+        def run_unification
+          constraints = Types::TypingContext.all_constraints
+          #puts "CONSTRAINTS"
+          #constraints.each do |(l,t,r)|
+          #  puts "#{l} #{t} #{r}"
+          #end
+          Types::Polymorphism::Unification.new(constraints).run(true)
+        end
+
+        def type_variables
+          TypingContext.all_variables
         end
       end
     end

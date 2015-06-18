@@ -18,7 +18,7 @@ module TypedRb
             def add_message_constraint(message, args)
               return_type = TypingContext.type_variable_for_message(variable, message)
               # add constraint for this
-              add_constraint(:send, args: args, return: return_type, mesage: message)
+              add_constraint(:send, args: args, return: return_type, message: message)
               # return return type
               return_type
             end

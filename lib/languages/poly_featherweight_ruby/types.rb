@@ -39,12 +39,14 @@ module TypedRb
               @type_variable_register ||= {}
             end
 
-            def constraints_for(type, klass)
-              type_variables_register.reduce([]) do |acc, ((type_key, variable), value)|
-                if type_key == type && variable.index(/^#{klass}/) == 0
-                  acc << value.constraints
-                end
+            def all_constraints
+              @type_variable_register.values.reduce([]) do |constraints, type_var|
+                constraints + type_var.constraints
               end
+            end
+
+            def all_variables
+              @type_variable_register.values
             end
           end
 
