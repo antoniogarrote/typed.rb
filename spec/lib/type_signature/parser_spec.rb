@@ -1,4 +1,5 @@
 require_relative '../../spec_helper'
+require_relative '../../../lib/type_signature/parser'
 
 describe TypedRb::TypeSignature::Parser do
 
@@ -9,7 +10,7 @@ describe TypedRb::TypeSignature::Parser do
 
   it 'parses an atomic type' do
     result = described_class.parse('Bool')
-    expect(result).to be =='Bool'
+    expect(result).to be == 'Bool'
   end
 
   it 'parses a function type' do
@@ -19,12 +20,12 @@ describe TypedRb::TypeSignature::Parser do
 
   it 'parses a complex type' do
     result = described_class.parse('Bool -> Int    -> Bool')
-    expect(result).to be == ['Bool', ['Int', 'Bool']]
+    expect(result).to be == ['Bool', 'Int', 'Bool']
   end
 
   it 'parses a complex type using unit' do
     result = described_class.parse('Bool -> Int -> unit')
-    expect(result).to be == ['Bool', ['Int', :unit]]
+    expect(result).to be == ['Bool', 'Int', :unit]
   end
 
   it 'parses a types with parentheses' do
@@ -47,6 +48,11 @@ describe TypedRb::TypeSignature::Parser do
     expect(result).to be == [['Bool', 'Bool'], ['Bool', 'Int']]
   end
 
+  it 'parses a types with complex parentheses' do
+    result = described_class.parse('(Bool -> Bool) -> (Bool -> Int) -> (Int -> Int)')
+    expect(result).to be == [['Bool', 'Bool'], ['Bool', 'Int'], ['Int', 'Int']]
+  end
+
   it 'parses a types with complex compound parentheses' do
     result = described_class.parse('((Bool -> Bool) -> (Bool -> Int)) -> (Bool -> Int)')
     expect(result).to be == [[['Bool','Bool'], ['Bool', 'Int']], ['Bool', 'Int']]
@@ -54,6 +60,49 @@ describe TypedRb::TypeSignature::Parser do
 
   it 'parses unbalanced type expressions' do
     result = described_class.parse('Bool -> Int -> (Bool -> Int) -> Int')
-    expect(result).to be == ['Bool',['Int', [['Bool','Int'], 'Int']]]
+    expect(result).to be == ['Bool','Int', ['Bool','Int'], 'Int']
+  end
+
+  it 'parses unbalanced type expressions with just return types' do
+    result = described_class.parse('Bool -> Int -> (-> Int) -> Int')
+    expect(result).to be == ['Bool','Int', ['Int'], 'Int']
+  end
+
+  it 'parses expressions with only return type' do
+    result = described_class.parse(' -> Int')
+    expect(result).to be == ['Int']
+  end
+
+  it 'parses type variables' do
+    result = described_class.parse('[X]')
+    expect(result).to be == {:type => 'X', :bound => 'BasicObject' }
+  end
+
+  it 'parses bound type variables' do
+    result = described_class.parse('[X < Integer]')
+    expect(result).to be == {:type => 'X', :bound => 'Integer' }
+  end
+
+  it 'parses return type variables' do
+    result = described_class.parse(' -> [X]')
+    expect(result).to be == [{:type => 'X', :bound => 'BasicObject' }]
+  end
+
+  it 'parses type variables in both sides' do
+    result = described_class.parse('[X<String] -> [Y]')
+    expect(result).to be == [{:type => 'X', :bound => 'String' },
+                             {:type => 'Y', :bound => 'BasicObject' }]
+  end
+
+  it 'parses type variables in complex expressions' do
+    result = described_class.parse('[X] -> ([Y] -> Integer)')
+    expect(result).to be == [{:type => 'X', :bound => 'BasicObject' },
+                             [{:type => 'Y', :bound => 'BasicObject' },
+                              'Integer']]
+  end
+
+  it 'parses a block' do
+    result = described_class.parse('Int -> unit -> &(String -> Integer)')
+    expect(result).to be == ['Int', :unit, {:block => ['String', 'Integer']}]
   end
 end

@@ -148,23 +148,8 @@ module TypedRb
           protected
 
           def self.parse_function_type(arg_types)
-            if arg_types.size == 1
-              TyFunction.new([], parse(arg_types.first))
-            else
-              walk_args = ->((head,tail),parsed_arg_types=[]) do
-                parsed_arg_types << parse(head)
-                if tail.instance_of?(Array)
-                  walk_args[tail, parsed_arg_types]
-                elsif tail != nil
-                  parsed_arg_types + [parse(tail)]
-                end
-              end
-
-              parsed_arg_types = walk_args[arg_types]
-              return_type = parsed_arg_types.pop
-
-              TyFunction.new(parsed_arg_types, return_type)
-            end
+            return_type = parse(arg_types.pop)
+            TyFunction.new(arg_types.map{ |arg| parse(arg) }, return_type)
           end
         end
 
