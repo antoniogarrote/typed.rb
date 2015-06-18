@@ -98,14 +98,6 @@ module TypedRb
 
           def check_type_explicit_receiver(context)
             receiver_type = receiver.check_type(context)
-            if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
-              check_polymorphic_function_application(receiver_type, context)
-            else
-              check_concrete_function_application(receiver_type, context)
-            end
-          end
-
-          def check_concrete_function_application(receiver_type, context)
             function_type = receiver_type.find_function_type(message)
             if function_type.nil?
               error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
@@ -114,19 +106,6 @@ module TypedRb
               # function application
               check_application(receiver_type, function_type, context)
             end
-          end
-
-          def check_polymorphic_function_application(type_variable, context)
-            argument_types = args.map do |arg|
-              arg.check_type(context)
-            end
-            return_variable_name = "##{type_variable.variable}::#{message}"
-            return_variable = context.type_variable_for(:send, return_variable_name)
-            send_types = { args: argument_types,
-                           return: return_variable,
-                           message: message }
-            type_variable.add_constraint(:send, send_types)
-            return_variable
           end
 
           def check_application(receiver_type, function_type, context)
