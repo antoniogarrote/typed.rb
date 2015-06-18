@@ -21,7 +21,7 @@ module TypedRb
           end
 
           def check_type(context)
-            if @condition_expr.check_type(context).compatible?(Types::TyObject)
+            if @condition_expr.check_type(context).compatible?(Types::TyObject.new(BasicObject), :lt)
               then_expr_type = @then_expr.check_type(context)
               else_expr_type = @else_expr.check_type(context)
               if then_expr_type.compatible?(else_expr_type) && else_expr_type.compatible?(then_expr_type)

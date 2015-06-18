@@ -13,4 +13,12 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Language do
       expect_binding(language, Counter, '@counter', Integer)
     end
   end
+  context 'with valid source code including conditionals' do
+    let(:example) { 'if.rb' }
+
+    it 'should be possible to type check the code' do
+      language.check_file(file)
+      expect_binding(language, TestIf, '@state', String)
+    end
+  end
 end
