@@ -35,7 +35,7 @@ module TypedRb
                 opt_type = opt.check_type(context)
                 var.compatible?(opt_type, :gt)
               end
-              context = context.add_binding(arg.variable,arg)
+              context = context.add_binding(var.variable, var)
             end
 
             args_types = args.map { |(_,var, _)| var }

@@ -18,6 +18,10 @@ module TypedRb
         def type
           @types_stack.pop
         end
+
+        def context_name
+          #TODO
+        end
       end
 
       class Parser
@@ -92,12 +96,13 @@ module TypedRb
           args = parse_args(args.children, context)
           body = map(body, context)
           uniq_args = args.map do |(type, var, opt)|
-            [type, arg, Types::TypingContext.type_variable_for_abstraction(:lambda, var, context), opt].compact
+            uniq_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, var, context)
+            body = body.rename(var.to_s, uniq_arg.variable)
+            [type, uniq_arg, opt].compact
           end
-          renamed_body = uniq_args.inject(body) {|renam_body, (arg, uniq_arg)| renam_body.rename(arg, uniq_arg.variable) }
           # TODO deal with abs with a provided type, like block passed to typed functions.
           TmAbs.new(uniq_args,
-                    renamed_body,
+                    body,
                     nil, # no type for the lambda so far.
                     node)
         end

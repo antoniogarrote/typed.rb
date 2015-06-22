@@ -37,3 +37,12 @@ def expect_binding(language, klass, variable, type)
   expect(var.bound).to_not be_nil
   expect(var.bound.ruby_type).to be(type)
 end
+
+def top_level_typing_context
+  TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.top_level
+end
+
+def parse(expr)
+  TypedRb::Languages::PolyFeatherweightRuby::Model::GenSym.reset
+  TypedRb::Languages::PolyFeatherweightRuby::Parser.new.parse(expr)
+end

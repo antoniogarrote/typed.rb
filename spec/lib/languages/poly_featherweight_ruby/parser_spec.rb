@@ -4,12 +4,6 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Parser do
   subject { described_class.new }
 
   context '#parse' do
-
-    def parse(expr)
-      TypedRb::Languages::PolyFeatherweightRuby::Model::GenSym.reset
-      subject.parse(expr)
-    end
-
     it 'should parse a class statement' do
       parsed = parse('class A < B; 1; end')
       expect(parsed).to be_instance_of(TypedRb::Languages::PolyFeatherweightRuby::Model::TmClass)

@@ -36,6 +36,21 @@ __END
     expect(::BasicObject::TypeRegistry.registry['class|A']['abbrev']).to eq(['String', 'String'])
   end
 
+  it 'parses instance and class instance variables' do
+    $TYPECHECK = true
+    code = <<__END
+    class A
+      ts 'A#@val / String'
+
+      ts 'A#test / String -> unit'
+      def test(msg)
+         @val + msg
+      end
+    end
+__END
+
+  end
+
   it 'normalizes the parsed types with information about the defined classes' do
     $TYPECHECK = true
     code = <<__END
@@ -69,6 +84,7 @@ __END
     expect(::BasicObject::TypeRegistry.registry[[:instance,B]]["consume_b"].to_s).to eq("(NilClass -> Boolean)")
   end
 
+<<<<<<< Updated upstream
   it 'parses field type signatures and store the result in the registry' do
     $TYPECHECK = true
     code = <<__END
@@ -184,4 +200,6 @@ __END
 
     expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('(Integer,( -> Integer) -> Integer)')
   end
+=======
+>>>>>>> Stashed changes
 end
