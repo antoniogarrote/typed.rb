@@ -7,37 +7,41 @@ module TypedRb
       module Model
         # abstraction
         class TmAbs < Expr
-          attr_accessor :head, :term
-          def initialize(head, term, type,node)
+          attr_accessor :args, :term
+          def initialize(args, term, type, node)
             super(node, type)
-            if type.nil?
-              fail StandardError, 'Missing type annotation for abstraction'
-            end
-            @head = head
+            @args = args
             @term = term
           end
 
           def to_s
-            "λ#{GenSym.resolve(@head)}:#{type}.#{@term}"
+            if type
+              "λ#{GenSym.resolve(@args)}:#{type}.#{@term}"
+            else
+              "λ#{GenSym.resolve(@args)}.#{@term}"
+            end
           end
 
           def rename(from_binding, to_binding)
-            if(@head != from_binding)
+            unless args.any? { |(_type, arg_value)| arg_value == from_binding }
               term.rename(from_binding,to_binding)
             end
             self
           end
 
           def check_type(context)
-            context = context.add_binding(head,type.from)
-            type_term = term.check_type(context)
-            if type.to.nil? || type_term.compatible?(type.to)
-              type.to = type_term
-              type
-            else
-              error_message = "Error abstraction type, exepcted #{type} got #{type.from} -> #{type_term}"
-              fail TypeError.new(error_message, self)
+            args.each do |(_arg, var, opt)|
+              if opt
+                opt_type = opt.check_type(context)
+                var.compatible?(opt_type, :gt)
+              end
+              context = context.add_binding(arg.variable,arg)
             end
+
+            args_types = args.map { |(_,var, _)| var }
+            type_term = term.check_type(context)
+
+            Types::TyFunction.new(args_types, type_term)
           end
         end
       end

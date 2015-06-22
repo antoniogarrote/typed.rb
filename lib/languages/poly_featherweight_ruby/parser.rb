@@ -68,6 +68,8 @@ module TypedRb
             TmVar.new(node.children.first,node)
           when :const
             TmConst.new(parse_const(node), node)
+          when :block
+            parse_block(node, context)
           else
             fail StandardError, "Unknown term #{node.type}: #{node}"
           end
@@ -83,18 +85,20 @@ module TypedRb
         end
 
         def parse_lambda(node, context)
-          fail "Not implemented yet"
           args,body  = node.children[1],node.children[2]
           if args.type != :args
             fail StandardError,"Error parsing function args [#{args}]"
           end
-          arg = parse_args(args.children, context)
+          args = parse_args(args.children, context)
           body = map(body, context)
-          uniq_arg = Model::GenSym.next(arg)
-
-          TmAbs.new(uniq_arg,
-                    body.rename(arg, uniq_arg),
-                    context.type,
+          uniq_args = args.map do |(type, var, opt)|
+            [type, arg, Types::TypingContext.type_variable_for_abstraction(:lambda, var, context), opt].compact
+          end
+          renamed_body = uniq_args.inject(body) {|renam_body, (arg, uniq_arg)| renam_body.rename(arg, uniq_arg.variable) }
+          # TODO deal with abs with a provided type, like block passed to typed functions.
+          TmAbs.new(uniq_args,
+                    renamed_body,
+                    nil, # no type for the lambda so far.
                     node)
         end
 
@@ -208,6 +212,12 @@ module TypedRb
           else
             map(rescue_body, context)
           end
+        end
+
+        def parse_block(node, context)
+          receiver = parse(node.children[0], context)
+          args = parse(node.children[1], context)
+
         end
       end
     end

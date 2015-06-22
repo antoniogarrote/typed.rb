@@ -7,7 +7,7 @@ module TypedRb
           attr_accessor :from, :to
 
           def initialize(from, to)
-            @from = from
+            @from = from.is_a?(Array) ?  from : [from]
             @to = to
           end
 

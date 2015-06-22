@@ -35,6 +35,17 @@ module TypedRb
               type_var
             end
 
+            def type_variable_for_abstraction(abs_kind, variable, context)
+              new_var_name = "#{context.context_name}:#{abs_kind}:#{variable}"
+              new_var_name = Model::GenSym.next(new_var_name)
+              type_var = type_variables_register[[abs_kind.to_sym, new_var_name]]
+              if type_var.nil?
+                type_var = Polymorphism::TypeVariable.new(new_var_name)
+                type_variables_register[[abs_kind.to_sym, new_var_name]] = type_var
+              end
+              type_var
+            end
+
             def type_variables_register
               @type_variable_register ||= {}
             end
@@ -79,6 +90,10 @@ module TypedRb
 
           def get_self
             @bindings[:self]
+          end
+
+          def context_name
+            "#{@bindings[:self].to_s}"
           end
 
           protected
