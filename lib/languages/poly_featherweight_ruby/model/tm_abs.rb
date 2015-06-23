@@ -45,8 +45,16 @@ module TypedRb
             Types::TyFunction.new(args_types, type_term)
           end
 
-          def resolve_ruby_method
-
+          def resolve_ruby_method_parameters
+            args.map do |(arg_type, val, _)|
+              if arg_type == :optarg
+                [:opt, val]
+              elsif arg_type == :blockarg
+                [:block, val]
+              else
+                [:req, val]
+              end
+            end
           end
         end
       end

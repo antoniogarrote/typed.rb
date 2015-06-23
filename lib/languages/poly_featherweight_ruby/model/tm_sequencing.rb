@@ -27,7 +27,11 @@ module TypedRb
           end
 
           def check_type(context)
-            @terms.drop(1).reduce(@terms.first.check_type(context)) {|_,term|
+
+            @terms.reduce(@terms.first.check_type(context)) {|_,term|
+              puts "CHECKING NEXT TERM"
+              puts term.inspect
+              puts "---------------"
               term.check_type(context)
             }
           end

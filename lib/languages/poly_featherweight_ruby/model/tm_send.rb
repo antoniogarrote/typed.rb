@@ -104,8 +104,8 @@ module TypedRb
             if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
               arg_types = args.map{ |arg| arg.check_type(context) }
               receiver_type.add_message_constraint(message, arg_types)
-            elsif receiver_type.is_a?(Types:TyFunction) && (message == :[] || message == :call)
-
+            elsif receiver_type.is_a?(Types::TyFunction) && (message == :[] || message == :call)
+              check_lambda_application(receiver_type, context)
             else
               function_type = receiver_type.find_function_type(message)
               if function_type.nil?
@@ -119,48 +119,36 @@ module TypedRb
           end
 
           def check_application(receiver_type, function_type, context)
-            function_arg_types = function_type.from
-            function_return_type = function_type.to
+            formal_parameters = function_type.from
             method = receiver_type.resolve_ruby_method(message)
-            method.parameters.each_with_index do |(arg_type, arg_name), index|
-              argument = args[index]
-              function_arg_type = function_arg_types[index]
-              if argument.nil? && arg_type != :opt
-                fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
-              else
-                unless argument.nil? # opt if this is nil
-                  argument_type = argument.check_type(context)
-                  unless argument_type.compatible?(function_arg_type)
-                    error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
-                    error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
-                    fail TypeError.new(error_message, self)
-                  end
-                end
-              end
-            end
-            function_return_type
+            parameters_info = method.parameters
+            check_args_application(parameters_info, formal_parameters, args, context)
+            function_type.to
           end
 
-          def check_lambda_application(lambda_type, function_type, context)
-            function_arg_types = function_type.from
-            function_return_type = function_type.to
-            lambda_type.from.each_with_index do |(arg_type, arg_name), index|
-              argument = args[index]
-              function_arg_type = function_arg_types[index]
-              if argument.nil? && arg_type != :opt
+          def check_lambda_application(lambda_type, context)
+            parameters_info = lambda_type.resolve_ruby_method_parameters
+            formal_parameters = lambda_type.from
+            check_args_application(parameters_info, formal_parameters, args, context)
+            lambda_type.to
+          end
+
+          def check_args_application(parameters_info, formal_parameters, actual_arguments, context)
+            parameters_info.each_with_index do |(require_info, arg_name), index|
+              actual_argument = actual_arguments[index]
+              formal_parameter_type = formal_parameters[index]
+              if actual_argument.nil? && require_info != :opt
                 fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
               else
-                unless argument.nil? # opt if this is nil
-                  argument_type = argument.check_type(context)
-                  unless argument_type.compatible?(function_arg_type)
-                    error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
-                    error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
+                unless actual_argument.nil? # opt if this is nil
+                  actual_argument_type = actual_argument.check_type(context)
+                  unless actual_argument_type.compatible?(formal_parameter_type)
+                    error_message = "#{error_message} #{formal_parameter_type} expected, #{argument_type} found"
                     fail TypeError.new(error_message, self)
                   end
                 end
               end
             end
-            function_return_type
           end
         end
       end
