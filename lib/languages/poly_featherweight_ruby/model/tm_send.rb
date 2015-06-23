@@ -83,19 +83,19 @@ module TypedRb
           end
 
           def check_type_no_explicit_receiver(context)
-            self_type = context.get_type_for(:self) # check message in self type -> application
-            function_type = self_type.find_function_type(message)
-            if function_type.nil?
-              if context.get_type_for(message) && args.size == 0
-                # m -> m is local variable
-                context.get_type_for(message)
-              else
+            # local variables take precedence over message sending
+            if context.get_type_for(message) && args.size == 0
+              context.get_type_for(message)
+            else
+              self_type = context.get_type_for(:self) # check message in self type -> application
+              function_type = self_type.find_function_type(message)
+              if function_type.nil?
                 error_message = "Error typing message, type information for #{self_type}:#{message} found."
                 fail TypeError.new(error_message, self)
-              end
-            else
+              else
               # function application
-              check_application(self_type, function_type, context)
+                check_application(self_type, function_type, context)
+              end
             end
           end
 
@@ -104,6 +104,8 @@ module TypedRb
             if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
               arg_types = args.map{ |arg| arg.check_type(context) }
               receiver_type.add_message_constraint(message, arg_types)
+            elsif receiver_type.is_a?(Types:TyFunction) && (message == :[] || message == :call)
+
             else
               function_type = receiver_type.find_function_type(message)
               if function_type.nil?
@@ -121,6 +123,28 @@ module TypedRb
             function_return_type = function_type.to
             method = receiver_type.resolve_ruby_method(message)
             method.parameters.each_with_index do |(arg_type, arg_name), index|
+              argument = args[index]
+              function_arg_type = function_arg_types[index]
+              if argument.nil? && arg_type != :opt
+                fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
+              else
+                unless argument.nil? # opt if this is nil
+                  argument_type = argument.check_type(context)
+                  unless argument_type.compatible?(function_arg_type)
+                    error_message = "Incompatible argument #{arg_name} in #{receiver_type}##{message},"
+                    error_message = "#{error_message} #{function_arg_type} expected, #{argument_type} found"
+                    fail TypeError.new(error_message, self)
+                  end
+                end
+              end
+            end
+            function_return_type
+          end
+
+          def check_lambda_application(lambda_type, function_type, context)
+            function_arg_types = function_type.from
+            function_return_type = function_type.to
+            lambda_type.from.each_with_index do |(arg_type, arg_name), index|
               argument = args[index]
               function_arg_type = function_arg_types[index]
               if argument.nil? && arg_type != :opt
