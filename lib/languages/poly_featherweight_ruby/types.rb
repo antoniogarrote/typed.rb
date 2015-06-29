@@ -7,57 +7,37 @@ module TypedRb
 
         class TypingContext
 
-          # work with constraints
           class << self
+            def type_variables_register
+              @type_variables_register ||= Polymorphism::TypeVariableRegister.new
+            end
 
             def type_variable_for(type, variable, hierarchy)
-              type_var = hierarchy.detect do |ruby_type|
-                type_variables_register[[type, ruby_type, variable]]
-              end
-
-              type_var = if type_var.nil?
-                           new_var_name = "#{hierarchy.first}:#{variable}"
-                           Polymorphism::TypeVariable.new(new_var_name)
-                         else
-                           type_variables_register[[type, type_var, variable]]
-                         end
-              type_variables_register[[type, hierarchy.first, variable]] = type_var
-              type_var
+              type_variables_register.type_variable_for(type, variable, hierarchy)
             end
 
             def type_variable_for_message(variable, message)
-              new_var_name = "#{variable}:#{message}"
-              type_var = type_variables_register[[:return, new_var_name]]
-              if type_var.nil?
-                type_var = Polymorphism::TypeVariable.new(new_var_name)
-                type_variables_register[[:return, new_var_name]] = type_var
-              end
-              type_var
+              type_variables_register.type_variable_for_message(variable, message)
             end
 
             def type_variable_for_abstraction(abs_kind, variable, context)
-              new_var_name = "#{context.context_name}:#{abs_kind}:#{variable}"
-              new_var_name = Model::GenSym.next(new_var_name)
-              type_var = type_variables_register[[abs_kind.to_sym, new_var_name]]
-              if type_var.nil?
-                type_var = Polymorphism::TypeVariable.new(new_var_name)
-                type_variables_register[[abs_kind.to_sym, new_var_name]] = type_var
-              end
-              type_var
-            end
-
-            def type_variables_register
-              @type_variable_register ||= {}
+              type_variables_register.type_variable_for_abstraction(abs_kind, variable, context)
             end
 
             def all_constraints
-              @type_variable_register.values.reduce([]) do |constraints, type_var|
-                constraints + type_var.constraints
-              end
+              type_variables_register.all_constraints
             end
 
             def all_variables
-              @type_variable_register.values
+              type_variables_register.all_variables
+            end
+
+            def add_constraint(variable, relation, type)
+              type_variables_register.add_constraint(variable, relation, type)
+            end
+
+            def constraints_for(variable)
+              type_variables_register.constraints[variable]
             end
           end
 
@@ -80,7 +60,7 @@ module TypedRb
           end
 
           def get_type_for(val)
-            type = @bindings[val]
+            type = @bindings[val.to_s]
             if type.nil?
               @parent.get_type_for(val) if @parent
             else
@@ -89,17 +69,17 @@ module TypedRb
           end
 
           def get_self
-            @bindings[:self]
+            @bindings['self']
           end
 
           def context_name
-            "#{@bindings[:self].to_s}"
+            "#{@bindings['self']}"
           end
 
           protected
 
           def push_binding(val,type)
-            @bindings[val] = type
+            @bindings[val.to_s] = type
             self
           end
         end

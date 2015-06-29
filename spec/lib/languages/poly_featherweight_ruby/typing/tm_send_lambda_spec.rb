@@ -9,10 +9,9 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmSend do
 
   it 'should evaluate lambda functions applications' do
     expr = <<__END
-     begin
-       a = ->(x) { x }
-       a[1]
-     end
+     a = ->(x) { x }
+     a[1]
+     a['string']
 __END
 
     parsed = parse(expr)

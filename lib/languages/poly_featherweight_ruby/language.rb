@@ -38,7 +38,7 @@ module TypedRb
           constraints = Types::TypingContext.all_constraints
           #puts "CONSTRAINTS"
           #constraints.each do |(l,t,r)|
-          #  puts "#{l} #{t} #{r}"
+          #  puts "#{l} -> #{t} -> #{r}"
           #end
           Types::Polymorphism::Unification.new(constraints).run(true)
         end

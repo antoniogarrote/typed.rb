@@ -95,13 +95,9 @@ module TypedRb
           end
           args = parse_args(args.children, context)
           body = map(body, context)
-          uniq_args = args.map do |(type, var, opt)|
-            uniq_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, var, context)
-            body = body.rename(var.to_s, uniq_arg.variable)
-            [type, uniq_arg, opt].compact
-          end
+
           # TODO deal with abs with a provided type, like block passed to typed functions.
-          TmAbs.new(uniq_args,
+          TmAbs.new(args,
                     body,
                     nil, # no type for the lambda so far.
                     node)

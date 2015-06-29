@@ -102,7 +102,7 @@ module TypedRb
           def check_type_explicit_receiver(context)
             receiver_type = receiver.check_type(context)
             if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
-              arg_types = args.map{ |arg| arg.check_type(context) }
+              arg_types = args.map { |arg| arg.check_type(context) }
               receiver_type.add_message_constraint(message, arg_types)
             elsif receiver_type.is_a?(Types::TyFunction) && (message == :[] || message == :call)
               check_lambda_application(receiver_type, context)
@@ -127,7 +127,7 @@ module TypedRb
           end
 
           def check_lambda_application(lambda_type, context)
-            parameters_info = lambda_type.resolve_ruby_method_parameters
+            parameters_info = lambda_type.parameters_info
             formal_parameters = lambda_type.from
             check_args_application(parameters_info, formal_parameters, args, context)
             lambda_type.to

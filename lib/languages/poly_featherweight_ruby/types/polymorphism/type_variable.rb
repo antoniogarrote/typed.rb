@@ -5,14 +5,20 @@ module TypedRb
         module Polymorphism
           class TypeVariable
             attr_reader :bound, :variable
-            def initialize(var_name)
-              @constraints = []
-              @variable = Model::GenSym.next("TV_#{var_name}")
+
+            def initialize(var_name, options = {})
+              @abstract = options[:abstract] || false
+              gen_name = options[:gen_name].nil? ? true : options[:gen_name]
+              @variable = gen_name ? Model::GenSym.next("TV_#{var_name}") : var_name
               @bound = nil
             end
 
+            def abstract?
+              @abstract
+            end
+
             def add_constraint(relation, type)
-              @constraints << [relation, type]
+              TypingContext.add_constraint(variable, relation, type)
             end
 
             def add_message_constraint(message, args)
@@ -33,7 +39,7 @@ module TypedRb
             end
 
             def constraints
-              @constraints.map { |(t,c)| [self, t, c] }
+              TypingContext.constraints_for(variable).map { |(t, c)| [self, t, c] }
             end
 
             def check_type(_context)
