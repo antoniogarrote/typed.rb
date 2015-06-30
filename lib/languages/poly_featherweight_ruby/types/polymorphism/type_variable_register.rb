@@ -6,10 +6,12 @@ module TypedRb
         module Polymorphism
           class TypeVariableRegister
 
-            attr_reader :parent, :constraints
+            attr_reader :parent, :constraints, :children
 
             def initialize(parent=nil)
               @parent = parent
+              @parent.children << self if @parent
+              @children = []
               @constraints = {}
             end
 
