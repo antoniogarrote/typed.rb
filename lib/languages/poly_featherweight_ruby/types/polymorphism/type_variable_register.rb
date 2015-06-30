@@ -6,7 +6,7 @@ module TypedRb
         module Polymorphism
           class TypeVariableRegister
 
-            attr_reader :parent, :constraints, :children
+            attr_accessor :parent, :constraints, :children
 
             def initialize(parent=nil)
               @parent = parent
@@ -16,6 +16,7 @@ module TypedRb
             end
 
             def type_variable_for(type, variable, hierarchy)
+              ensure_string(variable)
               type_var = hierarchy.detect do |ruby_type|
                 type_variables_register[[type, ruby_type, variable]]
               end
@@ -31,6 +32,7 @@ module TypedRb
             end
 
             def type_variable_for_message(variable, message)
+              ensure_string(variable)
               new_var_name = "#{variable}:#{message}"
               type_var = type_variables_register[[:return, new_var_name]]
               if type_var.nil?
@@ -41,6 +43,7 @@ module TypedRb
             end
 
             def type_variable_for_abstraction(abs_kind, variable, context)
+              ensure_string(variable)
               new_var_name = "TV_#{context.context_name}:#{abs_kind}:#{variable}"
               new_var_name = Model::GenSym.next(new_var_name)
               type_var = type_variables_register[[abs_kind.to_sym, new_var_name]]
@@ -77,6 +80,36 @@ module TypedRb
               var_constraints = @constraints[variable_name] || []
               var_constraints << [relation_type, type]
               @constraints[variable_name] = var_constraints
+            end
+
+            def apply_type(parent, type_variable_mapping)
+              register = TypeVariableRegister.new(parent)
+              register.constraints = rename_constraints(constraints, type_variable_mapping)
+              register.children = children.map { |child_register| child_register.apply_type(register, type_variable_mapping) }
+              register
+            end
+
+            def rename_constraints(constraints, type_variable_mapping)
+              constraints.map do |constraint|
+                if constraint.size == 2
+                  type, variable = constraint
+                  new_variable = type_variable_mapping[variable] || variable
+                  [type, new_variable]
+                elsif constraint.size == 3
+                  type, hierachy, variable = constraint
+                  new_variable = type_variable_mapping[variable] || variable
+                  [type, hierachy, new_variable]
+                else
+                  fail StandardError, "Unknown type of constraint #{constraint.to_s}"
+                end
+              end
+            end
+
+            protected
+
+            def ensure_string(variable)
+              variable = variable.to_s if variable.is_a?(Symbol)
+              fail StandardError, "Variable name must be a String for register" unless variable.is_a?(String)
             end
           end
         end

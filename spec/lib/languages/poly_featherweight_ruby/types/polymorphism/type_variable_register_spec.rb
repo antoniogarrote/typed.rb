@@ -1,3 +1,5 @@
+require_relative '../../spec_helper'
+
 describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVariableRegister do
   describe '#initialize' do
     it 'should be possible to create a register without parent' do
