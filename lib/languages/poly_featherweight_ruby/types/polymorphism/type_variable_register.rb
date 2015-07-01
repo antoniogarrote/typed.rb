@@ -6,34 +6,38 @@ module TypedRb
         module Polymorphism
           class TypeVariableRegister
 
-            attr_accessor :parent, :constraints, :children
+            attr_accessor :parent, :constraints, :children, :type_variables_register
 
             def initialize(parent=nil)
               @parent = parent
               @parent.children << self if @parent
               @children = []
               @constraints = {}
+              @type_variables_register = {}
             end
 
             def type_variable_for(type, variable, hierarchy)
               ensure_string(variable)
-              class_for_type_var = hierarchy.detect do |ruby_type|
-                type_variables_register[[type, ruby_type, variable]]
+              top_level = top_level_register
+              key = hierarchy.map do |ruby_type|
+                [ type, ruby_type, variable ]
+              end.detect do |constructed_key|
+                top_level.type_variables_register[constructed_key]
               end
-              if class_for_type_var.nil?
+              if key.nil?
                 new_var_name = "#{hierarchy.first}:#{variable}"
                 type_var = TypeVariable.new(new_var_name)
                 type_variables_register[[type, hierarchy.first, variable]] = type_var
                 type_var
               else
-                type_variables_register[[type, class_for_type_var, variable]]
+                top_level.type_variables_register[key]
               end
             end
 
             def type_variable_for_message(variable, message)
               ensure_string(variable)
               key = [:return, message, variable]
-              type_var = type_variables_register[key]
+              type_var = recursive_constraint_search(key)
               if type_var.nil?
                 new_var_name = "#{variable}:#{message}"
                 type_var = TypeVariable.new(new_var_name)
@@ -45,7 +49,7 @@ module TypedRb
             def type_variable_for_abstraction(abs_kind, variable, context)
               ensure_string(variable)
               key = [abs_kind.to_sym, context.context_name, variable]
-              type_var = type_variables_register[key]
+              type_var = recursive_constraint_search(key)
               if type_var.nil?
                 # don't gnerate a random fresh name for the var, use the one we're
                 # providing
@@ -56,18 +60,25 @@ module TypedRb
               type_var
             end
 
-            def type_variables_register
-              @type_variable_register ||= {}
+            def constraints_for(variable)
+              found = constraints[variable]
+              children_found = children.map{ |child_context|  child_context.constraints_for(variable) }.reduce(&:+)
+              (found || []) + (children_found || [])
             end
 
+            # @type_variables_register
+            # code_name => type_var
+            # @constraints
+            # type_var => constraint
             def all_constraints
-              @type_variable_register.values.reduce([]) do |constraints, type_var|
-                constraints + type_var.constraints
+              self_variables_constraints = @type_variables_register.values.reduce([]) do |constraints_acc, type_var|
+                constraints_acc + type_var.constraints(self)
               end
+              self_variables_constraints + (children.map { |register| register.all_constraints }.reduce(&:+) || [])
             end
 
             def all_variables
-              @type_variable_register.values
+              @type_variables_register.values
             end
 
             def clear
@@ -84,20 +95,47 @@ module TypedRb
 
             def apply_type(parent, type_variable_mapping)
               register = TypeVariableRegister.new(parent)
+              register.type_variables_register = type_variables_register.each_with_object({}) do |((k, i, v), var), acc|
+                acc[[k, i, v]] = type_variable_mapping[var.variable] || var
+              end
               register.constraints = rename_constraints(constraints, type_variable_mapping)
               register.children = children.map { |child_register| child_register.apply_type(register, type_variable_mapping) }
               register
             end
 
             def rename_constraints(constraints, type_variable_mapping)
-              constraints.map do |constraint|
-                type, info, variable = constraint
-                new_variable = type_variable_mapping[variable] || variable
-                [type, info, new_variable]
+              constraints.each_with_object({}) do |(variable_name, values), acc|
+                new_variable_name = type_variable_mapping[variable_name] ? type_variable_mapping[variable_name].variable : variable_name
+                new_values = values.map do |(rel, type)|
+                  if type.is_a?(TypeVariable) && type_variable_mapping[type.variable]
+                    [rel, type_variable_mapping[type.variable]]
+                  else
+                    [rel, type]
+                  end
+                end
+                acc[new_variable_name] = new_values
               end
             end
 
             protected
+
+            def recursive_constraint_search(key)
+              current = self
+              found = nil
+              while found.nil? && !current.nil?
+                found = current.type_variables_register[key]
+                current = current.parent unless current.nil?
+              end
+              found
+            end
+
+            def top_level_register
+              current = self
+              while current.parent != nil
+                current = current.parent
+              end
+              current
+            end
 
             def ensure_string(variable)
               variable = variable.to_s if variable.is_a?(Symbol)

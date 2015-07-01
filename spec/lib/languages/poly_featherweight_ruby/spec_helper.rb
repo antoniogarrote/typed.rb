@@ -46,3 +46,11 @@ def parse(expr)
   TypedRb::Languages::PolyFeatherweightRuby::Model::GenSym.reset
   TypedRb::Languages::PolyFeatherweightRuby::Parser.new.parse(expr)
 end
+
+class TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext
+  class << self
+    def type_variables_register=(other)
+      @type_variables_register = other
+    end
+  end
+end

@@ -37,7 +37,7 @@ module TypedRb
             end
 
             def constraints_for(variable)
-              type_variables_register.constraints[variable]
+              type_variables_register.constraints[variable] || []
             end
           end
 

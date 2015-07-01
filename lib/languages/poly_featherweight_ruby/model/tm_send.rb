@@ -93,7 +93,7 @@ module TypedRb
                 error_message = "Error typing message, type information for #{self_type}:#{message} found."
                 fail TypeError.new(error_message, self)
               else
-              # function application
+                # function application
                 check_application(self_type, function_type, context)
               end
             end

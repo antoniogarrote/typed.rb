@@ -38,8 +38,8 @@ module TypedRb
               self
             end
 
-            def constraints
-              TypingContext.constraints_for(variable).map { |(t, c)| [self, t, c] }
+            def constraints(register = TypingContext)
+              register.constraints_for(variable).map { |(t, c)| [self, t, c] }
             end
 
             def check_type(_context)
