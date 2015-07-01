@@ -39,6 +39,20 @@ module TypedRb
             def constraints_for(variable)
               type_variables_register.constraints[variable] || []
             end
+
+            def push_context
+              new_register = Polymorphism::TypeVariableRegister.new(@type_variables_register)
+              @type_variables_register.children << new_register
+              @type_variables_register = new_register
+              new_register
+            end
+
+            def pop_context
+              fail StandardError, 'Empty typing context stack, impossible to pop' if @type_variables_register.nil?
+              last_register = @type_variables_register
+              @type_variables_register = @type_variables_register.parent
+              last_register
+            end
           end
 
           # work with types

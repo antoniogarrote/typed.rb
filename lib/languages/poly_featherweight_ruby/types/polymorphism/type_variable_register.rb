@@ -5,7 +5,6 @@ module TypedRb
         # Polymorphic additions to Featherweight Ruby
         module Polymorphism
           class TypeVariableRegister
-
             attr_accessor :parent, :constraints, :children, :type_variables_register
 
             def initialize(parent=nil)
@@ -20,7 +19,7 @@ module TypedRb
               ensure_string(variable)
               top_level = top_level_register
               key = hierarchy.map do |ruby_type|
-                [ type, ruby_type, variable ]
+                [type, ruby_type, variable]
               end.detect do |constructed_key|
                 top_level.type_variables_register[constructed_key]
               end
