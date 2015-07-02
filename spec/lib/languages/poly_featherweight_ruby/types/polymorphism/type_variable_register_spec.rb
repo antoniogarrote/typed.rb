@@ -31,13 +31,13 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVar
       expect(type_variable_one).to eq(type_variable_two)
     end
 
-    it 'finds a type variable in the hierarchy' do
-      parent = described_class.new
-      child = described_class.new(parent)
-      type_variable_one = parent.type_variable_for(:instance_variable, '@a', Object.ancestors)
-      type_variable_two = child.type_variable_for(:instance_variable, '@a', String.ancestors)
-      expect(type_variable_one).to eq(type_variable_two)
-    end
+   it 'finds a type variable in the hierarchy' do
+     parent = described_class.new
+     child = described_class.new(parent)
+     type_variable_one = parent.type_variable_for(:instance_variable, '@a', Object.ancestors)
+     type_variable_two = child.type_variable_for(:instance_variable, '@a', String.ancestors)
+     expect(type_variable_one).to eq(type_variable_two)
+   end
   end
 
   describe '#type_variable_for_message' do
@@ -66,9 +66,25 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVar
 
       renamed_x = tyvariable('renamed_x')
       renamed_return_id_x = tyvariable('renamed_ret_id_x')
-
       renamed_register = register.apply_type(nil, {xvar.variable => renamed_x, ret_type.variable => renamed_return_id_x})
-      #TODO : check that the constraints have been renamed
+
+      constraints = renamed_register.all_constraints
+      expect(constraints.size).to eq(1)
+      variable, type, info = constraints.first
+      expect(type).to eq :send
+      expect(variable).to eq renamed_x
+      expect(info[:return]).to eq renamed_return_id_x
+      expect(info[:args].size).to eq 1
+      expect(info[:args].first).to eq renamed_x
+
+      constraints = register.all_constraints
+      expect(constraints.size).to eq(1)
+      variable, type, info = constraints.first
+      expect(type).to eq :send
+      expect(variable).to eq xvar
+      expect(info[:return]).to eq ret_type
+      expect(info[:args].size).to eq 1
+      expect(info[:args].first).to eq xvar
     end
 
     it 'creates a new register with the right subsitutions in the type_variable' do
@@ -85,20 +101,28 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVar
       argx.compatible?(ata)
       argy.compatible?(argx)
 
-      puts "-- before --"
-      parent.all_constraints.each do |constraint|
-        puts constraint.inspect
-      end
-      result = parent.apply_type(nil, argx.variable => tyvariable('substitution'))
-      puts "-- after --"
-      result.all_constraints.each do |constraint|
-        puts constraint.inspect
-      end
-      puts "-- and --"
+      substitution = tyvariable('substitution')
+      result = parent.apply_type(nil, argx.variable => substitution)
+      constraints = result.all_constraints
+      var, type, info = constraints[0]
+      expect(var).to eq(argy)
+      expect(type).to eq(:lt)
+      expect(info).to eq(substitution)
+      var, type, info = constraints[1]
+      expect(var).to eq(substitution)
+      expect(type).to eq(:lt)
+      expect(info).to eq(ata)
+
       TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variables_register = parent
-      TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.all_constraints.each do |constraint|
-        puts constraint.inspect
-      end
+      constraints = TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.all_constraints
+      var, type, info = constraints[0]
+      expect(var).to eq(argy)
+      expect(type).to eq(:lt)
+      expect(info).to eq(argx)
+      var, type, info = constraints[1]
+      expect(var).to eq(argx)
+      expect(type).to eq(:lt)
+      expect(info).to eq(ata)
     end
   end
 end

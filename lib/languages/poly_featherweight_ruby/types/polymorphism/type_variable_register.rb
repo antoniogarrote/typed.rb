@@ -120,7 +120,7 @@ module TypedRb
                         arg
                       end
                     end
-                    [:return, {args: new_args, return: new_return_type, message: type[:message]}]
+                    [:send, {args: new_args, return: new_return_type, message: type[:message]}]
                   else
                     if type.is_a?(TypeVariable) && type_variable_mapping[type.variable]
                       [rel, type_variable_mapping[type.variable]]
