@@ -106,10 +106,27 @@ module TypedRb
               constraints.each_with_object({}) do |(variable_name, values), acc|
                 new_variable_name = type_variable_mapping[variable_name] ? type_variable_mapping[variable_name].variable : variable_name
                 new_values = values.map do |(rel, type)|
-                  if type.is_a?(TypeVariable) && type_variable_mapping[type.variable]
-                    [rel, type_variable_mapping[type.variable]]
+                  if(rel == :send)
+                    old_return_type = type[:return]
+                    new_return_type = if old_return_type.is_a?(TypeVariable)
+                                        type_variable_mapping[old_return_type.variable] ? type_variable_mapping[old_return_type.variable] : old_return_type
+                                      else
+                                        old_return_type
+                                      end
+                    new_args = type[:args].map do |arg|
+                      if arg.is_a?(TypeVariable)
+                        type_variable_mapping[arg.variable] ? type_variable_mapping[arg.variable] : arg
+                      else
+                        arg
+                      end
+                    end
+                    [:return, {args: new_args, return: new_return_type, message: type[:message]}]
                   else
-                    [rel, type]
+                    if type.is_a?(TypeVariable) && type_variable_mapping[type.variable]
+                      [rel, type_variable_mapping[type.variable]]
+                    else
+                      [rel, type]
+                    end
                   end
                 end
                 acc[new_variable_name] = new_values

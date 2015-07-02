@@ -58,6 +58,19 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVar
   end
 
   describe '#apply_type' do
+    it 'applies a type to a send constraint' do
+      TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variables_register = described_class.new
+      register = TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variables_register
+      xvar = register.type_variable_for_abstraction(:lambda,'x',top_level_typing_context)
+      ret_type = xvar.add_message_constraint('id', [xvar])
+
+      renamed_x = tyvariable('renamed_x')
+      renamed_return_id_x = tyvariable('renamed_ret_id_x')
+
+      renamed_register = register.apply_type(nil, {xvar.variable => renamed_x, ret_type.variable => renamed_return_id_x})
+      #TODO : check that the constraints have been renamed
+    end
+
     it 'creates a new register with the right subsitutions in the type_variable' do
       TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variables_register = described_class.new
       parent = TypedRb::Languages::PolyFeatherweightRuby::Types::TypingContext.type_variables_register
