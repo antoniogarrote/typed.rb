@@ -127,11 +127,7 @@ module TypedRb
           end
 
           def check_lambda_application(lambda_type, context)
-            parameters_info = lambda_type.parameters_info
-            return_type = lambda_type.materialize do |formal_parameters|
-              check_args_application(parameters_info, formal_parameters, args, context)
-            end
-            return_type
+            lambda_type.check_args_application(args, context).to
           end
 
           def check_args_application(parameters_info, formal_parameters, actual_arguments, context)

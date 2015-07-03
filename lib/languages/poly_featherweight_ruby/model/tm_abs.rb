@@ -35,7 +35,7 @@ module TypedRb
             with_fresh_bindings(context) do |var_type_args, var_type_return|
               type_term = body.check_type(context)
               var_type_return.compatible?(type_term, :lt)
-              Types::TyFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
+              Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
             end
           end
 
