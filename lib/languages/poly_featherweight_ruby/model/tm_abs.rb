@@ -32,33 +32,35 @@ module TypedRb
           end
 
           def check_type(context)
-            with_fresh_bindings(context) do |fresh_args, fresh_term|
-              fresh_args.each do |(_arg, var, opt)|
-                if opt
-                  opt_type = opt.check_type(context)
-                  var.compatible?(opt_type, :gt)
-                end
-                context = context.add_binding(var.variable, var)
-              end
-
-              args_types = fresh_args.map { |(_, var, _)| var }
-              type_term = fresh_term.check_type(context)
-
-              Types::TyFunction.new(args_types, type_term, resolve_ruby_method_parameters)
+            with_fresh_bindings(context) do |var_type_args, var_type_return|
+              type_term = body.check_type(context)
+              var_type_return.compatible?(type_term, :lt)
+              Types::TyFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
             end
           end
 
           # abstractions are polymorphic universal types by default,
           # we need new bindings in the type variables with each instantiation of the lambda.
           def with_fresh_bindings(context)
-            body = Marshal.load(Marshal.dump(term))
-            @instantiation_count += 1
+            Types::TypingContext.push_context
             fresh_args = args.map do |(type, var, opt)|
-              uniq_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}_#{@instantiation_count}", context)
-              body = body.rename(var.to_s, uniq_arg.variable)
-              [type, uniq_arg, opt].compact
+              type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}", context)
+              context = case type
+                        when :arg, :block
+                          context.add_binding(var, type_var_arg)
+                        when :optarg
+                          declared_arg_type = opt.check_type(orig_context)
+                          if type_var_arg.compatible?(declared_arg_type, :gt)
+                            context.add_binding(var, type_var_arg)
+                          end
+                        end
+              type_var_arg
             end
-            yield fresh_args, body
+
+            return_type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, nil, context)
+            lambda_type  = yield fresh_args, return_type_var_arg
+            lambda_type.local_typing_context = Types::TypingContext.pop_context
+            lambda_type
           end
 
           protected

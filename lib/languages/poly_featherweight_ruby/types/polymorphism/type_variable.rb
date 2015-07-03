@@ -7,14 +7,9 @@ module TypedRb
             attr_reader :bound, :variable
 
             def initialize(var_name, options = {})
-              @abstract = options[:abstract] || false
               gen_name = options[:gen_name].nil? ? true : options[:gen_name]
               @variable = gen_name ? Model::GenSym.next("TV_#{var_name}") : var_name
               @bound = nil
-            end
-
-            def abstract?
-              @abstract
             end
 
             def add_constraint(relation, type)

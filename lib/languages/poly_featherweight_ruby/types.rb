@@ -51,7 +51,15 @@ module TypedRb
               fail StandardError, 'Empty typing context stack, impossible to pop' if @type_variables_register.nil?
               last_register = @type_variables_register
               @type_variables_register = @type_variables_register.parent
+              @type_variables_register.children.reject!{ |child| child == last_register }
               last_register
+            end
+
+            def with_context(context)
+              old_context = @type_variables_register
+              @type_variables_register = context
+              yield
+              @type_variables_register = old_context
             end
           end
 

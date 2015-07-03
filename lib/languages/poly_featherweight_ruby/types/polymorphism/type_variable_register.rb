@@ -46,6 +46,9 @@ module TypedRb
             end
 
             def type_variable_for_abstraction(abs_kind, variable, context)
+              if variable.nil?
+                variable = Model::GenSym.next("#{abs_kind}_ret}")
+              end
               ensure_string(variable)
               key = [abs_kind.to_sym, context.context_name, variable]
               type_var = recursive_constraint_search(key)
@@ -131,6 +134,15 @@ module TypedRb
                 end
                 acc[new_variable_name] = new_values
               end
+            end
+
+            def local_var_types
+              @type_variables_register.map do |(key,value)|
+                type = key.first
+                if type != :instance_variables && type != :class_variable
+                  value
+                end
+              end.compact
             end
 
             protected
