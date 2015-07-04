@@ -61,6 +61,10 @@ module TypedRb
               yield
               @type_variables_register = old_context
             end
+
+            def clear
+              @type_variables_register = Polymorphism::TypeVariableRegister.new
+            end
           end
 
           # work with types

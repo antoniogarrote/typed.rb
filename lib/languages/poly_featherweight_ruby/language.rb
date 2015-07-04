@@ -15,9 +15,10 @@ module TypedRb
           eval(expr, TOPLEVEL_BINDING)
           $TYPECHECK = false
           ::BasicObject::TypeRegistry.normalize_types!
-          TypingContext.type_variables_register.clear
-          check_type(parse(expr))
+          TypingContext.clear
+          check_result = check_type(parse(expr))
           @unification_result = run_unification
+          check_result
         end
 
         def check_file(path)

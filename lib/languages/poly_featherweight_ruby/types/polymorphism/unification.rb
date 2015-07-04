@@ -55,7 +55,7 @@ module TypedRb
                     graph[return_type][:type] = function.to
                   end
                 else
-                  fail StandardError, "Message #{message} not found for type variable #{message}"
+                  fail StandardError, "Message #{message} not found for type variable #{receiver}"
                 end
               else
                 fail StandardError, "Unbound variable #{receiver} type acting as receiver for #{message}"
@@ -66,8 +66,8 @@ module TypedRb
               arg_types.each_with_index do |arg, i|
                 fn_arg = fn.from[i]
                 if arg.is_a?(TypeVariable)
-                  type = compatible_lt_type?(graph[arg.bound][:type], fn_arg)
-                  graph[return_type][:type] = type
+                  type = compatible_lt_type?(graph[arg][:type], fn_arg)
+                  graph[arg][:type] = type
                 else
                   compatible_lt_type?(arg, fn_arg)
                 end
@@ -142,7 +142,7 @@ module TypedRb
               groups.values.each do |group|
                 next unless group[:type]
                 group[:vars].keys.each do |var|
-                  var.bind(find_type(group [:type]))
+                  var.bind(find_type(group[:type]))
                 end
               end
             end
