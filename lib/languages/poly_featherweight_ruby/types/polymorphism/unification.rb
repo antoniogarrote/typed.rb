@@ -194,7 +194,17 @@ module TypedRb
               links_common = group_l[:links].merge(group_r[:links])
               group_common = make_group(vars_common, links_common)
               group_common[:grouped] = true
-              vars_common.each { |var|  groups[var] = group_common }
+              # TODO: types???
+              group_common[:type] = max_type(group_l[:type], group_r[:type])
+              vars_common.keys.each { |var|  groups[var] = group_common }
+            end
+
+            def max_type(type_a, type_b)
+              if type_a.nil? || type_b.nil?
+                type_a || type_b
+              else
+                compatible_type?(value_l, value_r, true)
+              end
             end
 
             def replace(rest, l, r, acc = [])
@@ -223,7 +233,7 @@ module TypedRb
             end
 
             def run(bind_variables = true)
-              unify(@gt_constraints)
+              unify(@gt_constraints) # we create links between vars in unify, we need to fold groups afterwards
               @lt_constraints = graph.fold_groups.replace_groups(@lt_constraints)
               unify(@lt_constraints)
               unify(@send_constraints)

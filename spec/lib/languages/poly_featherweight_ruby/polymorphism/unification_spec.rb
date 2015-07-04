@@ -88,8 +88,7 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::Unifica
       unification = described_class.new(type_var.constraints + type_var2.constraints)
       unification.run.bindings
 
-      # @a = @b = Integer
-      # @c = String
+      # @a = @b = Numeric
       expect(type_var.bound).to eq(numeric)
       expect(type_var2.bound).to eq(numeric)
     end

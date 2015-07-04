@@ -24,7 +24,7 @@ module TypedRb
               else
                 unless actual_argument.nil? # opt if this is nil
                   actual_argument_type = actual_argument.check_type(context)
-                  unless actual_argument_type.compatible?(from_type)
+                  unless actual_argument_type.compatible?(from_type, :lt)
                     error_message = "#{error_message} #{from_type} expected, #{argument_type} found"
                     fail TypeError.new(error_message, self)
                   end
