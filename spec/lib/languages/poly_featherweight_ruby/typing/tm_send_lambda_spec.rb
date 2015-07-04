@@ -7,7 +7,16 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmSend do
   end
 
 
-  it 'should evaluate lambda functions applications' do
+  it 'evaluates lambda functions applications' do
+    expr = <<__END
+     a = ->(x) { x }
+     a[1]
+__END
+
+    parsed = parse(expr)
+    result = parsed.check_type(top_level_typing_context)
+    expect(result).to eq(tyinteger)
+
     expr = <<__END
      a = ->(x) { x }
      a[1]
@@ -16,7 +25,6 @@ __END
 
     parsed = parse(expr)
     result = parsed.check_type(top_level_typing_context)
-    puts "------------"
-    puts result.inspect
+    expect(result).to eq(tystring)
   end
 end

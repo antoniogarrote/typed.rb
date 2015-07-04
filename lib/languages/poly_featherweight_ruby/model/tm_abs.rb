@@ -32,8 +32,8 @@ module TypedRb
           end
 
           def check_type(context)
-            with_fresh_bindings(context) do |var_type_args, var_type_return|
-              type_term = body.check_type(context)
+            with_fresh_bindings(context) do |var_type_args, var_type_return, context|
+              type_term = term.check_type(context)
               var_type_return.compatible?(type_term, :lt)
               Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
             end
@@ -58,7 +58,7 @@ module TypedRb
             end
 
             return_type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, nil, context)
-            lambda_type  = yield fresh_args, return_type_var_arg
+            lambda_type  = yield fresh_args, return_type_var_arg, context
             lambda_type.local_typing_context = Types::TypingContext.pop_context
             lambda_type
           end

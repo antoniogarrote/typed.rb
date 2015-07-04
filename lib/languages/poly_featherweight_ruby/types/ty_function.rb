@@ -39,7 +39,9 @@ module TypedRb
           attr_accessor :local_typing_context
 
           def initialize(from, to, parameters_info = nil)
-            super
+            super(from, to, parameters_info)
+            @local_typing_context = local_typing_context
+            @application_count = 0
           end
 
           def materialize
@@ -47,15 +49,15 @@ module TypedRb
             materialized_from_args = []
             materialized_to_arg = nil
 
-            @applicaton_count += 1
+            @application_count += 1
             substitutions = @local_typing_context.local_var_types.each_with_object({}) do |var_type, acc|
-              acc[var_type] = Polymorphism::TypeVariable.new("#{var_type}_#{@applicaton_count}")
+              acc[var_type.variable] = Polymorphism::TypeVariable.new("#{var_type}_#{@application_count}")
               maybe_from_arg_index = from.index(var_type)
               if maybe_from_arg_index
-                materialized_from_args[maybe_from_arg_index] = acc[var_type]
+                materialized_from_args[maybe_from_arg_index] = acc[var_type.variable]
               end
               if to == var_type
-                materialized_to_arg = var_type
+                materialized_to_arg = acc[var_type.variable]
               end
             end
 
@@ -67,13 +69,14 @@ module TypedRb
               fail StandardError, "Cannot find the return type variable for function application in the local typing context."
             end
             applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
-            materialized_function = TyFunction.new(materialized_from_args, materialized_to_arg, parameters_info, @local_typing_context)
+            materialized_function = TyFunction.new(materialized_from_args, materialized_to_arg, parameters_info)
             TypingContext.with_context(applied_typing_context) do
               yield materialized_function
             end
+
             # got all the constraints here
             # do something with the context -> unification? merge context?
-            Polymorphism::Unification.new(@local_typing_context.all_constraints).run
+            Polymorphism::Unification.new(applied_typing_context.all_constraints).run
             bound_from_args = materialized_function.from.map  { |arg| arg.bound || arg }
             bound_to_arg = materialized_function.to.bound || materialized_function.to
             #
@@ -81,7 +84,7 @@ module TypedRb
           end
 
           def check_args_application(actual_arguments, context)
-            lambda_type.materialize do |materialized_function|
+            materialize do |materialized_function|
               materialized_function.check_args_application(actual_arguments, context)
             end
           end

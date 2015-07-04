@@ -9,6 +9,10 @@ def tyinteger
   TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject.new(Integer)
 end
 
+def tystring
+  TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject.new(String)
+end
+
 def tyunit
   TypedRb::Languages::PolyFeatherweightRuby::Types::TyUnit.new
 end

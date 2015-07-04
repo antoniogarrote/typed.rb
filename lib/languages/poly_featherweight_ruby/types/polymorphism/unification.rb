@@ -142,8 +142,24 @@ module TypedRb
               groups.values.each do |group|
                 next unless group[:type]
                 group[:vars].keys.each do |var|
-                  var.bind(group[:type])
+                  var.bind(find_type(group [:type]))
                 end
+              end
+            end
+
+            def find_type(value)
+              # type variable
+              if value.is_a?(TypeVariable)
+                find_type[value.bound]
+              # group
+              elsif value.is_a?(Hash) && value[:type]
+                find_type(value[:type])
+              # type
+              elsif value.is_a?(Type)
+                value
+              # nil
+              else
+                fail StandardError, 'Cannot find type in type_variable binding' if value.nil?
               end
             end
 
@@ -265,7 +281,7 @@ module TypedRb
                   #   t :gt and r a type variable or a type,
                   # - In the second invocation to unify, l must always be a group
                   #   t :lt and r a type variable,
-                  check_constraint(l, t, r, t != :send) # we don't binc if constraint is send
+                  check_constraint(l, t, r, t != :send) # we don't bind if constraint is send
                 end
                 unify(rest)
               end

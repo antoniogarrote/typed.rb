@@ -41,7 +41,7 @@ module TypedRb
             end
 
             def push_context
-              new_register = Polymorphism::TypeVariableRegister.new(@type_variables_register)
+              new_register = Polymorphism::TypeVariableRegister.new(self.type_variables_register)
               @type_variables_register.children << new_register
               @type_variables_register = new_register
               new_register
@@ -49,7 +49,7 @@ module TypedRb
 
             def pop_context
               fail StandardError, 'Empty typing context stack, impossible to pop' if @type_variables_register.nil?
-              last_register = @type_variables_register
+              last_register = self.type_variables_register
               @type_variables_register = @type_variables_register.parent
               @type_variables_register.children.reject!{ |child| child == last_register }
               last_register
