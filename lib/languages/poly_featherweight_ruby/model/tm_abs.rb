@@ -34,14 +34,19 @@ module TypedRb
           def check_type(context)
             with_fresh_bindings(context) do |var_type_args, var_type_return, context|
               type_term = term.check_type(context)
-              var_type_return.compatible?(type_term, :gt)
-              Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
+              if var_type_return.compatible?(type_term, :gt)
+                Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
+              else
+                # TODO: improve message
+                fail Model::TypeError, 'Incompatible type function found'
+              end
             end
           end
 
           # abstractions are polymorphic universal types by default,
           # we need new bindings in the type variables with each instantiation of the lambda.
           def with_fresh_bindings(context)
+            orig_context = Types::TypingContext.type_variables_register
             Types::TypingContext.push_context
             fresh_args = args.map do |(type, var, opt)|
               type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}", context)

@@ -52,14 +52,9 @@ class BasicObject
                      "Declared typed instance method '#{method}' not found for class '#{klass}'"
               end
             elsif type == :class
-<<<<<<< Updated upstream
               unless all_methods.include?(method.to_sym)
                 fail ::TypedRb::Languages::FeatherweightRuby::Types::TypeParsingError,
                      "Declared typed class method '#{method}' not found for class '#{klass}'"
-=======
-              unless klass.methods.include?(method.to_sym)
-                fail TypeParsingError, "Declared typed class method '#{method}' not found for class '#{klass}'"
->>>>>>> Stashed changes
               end
             end
             signatures_acc[method] = normalize_signature!(signature)
@@ -103,15 +98,7 @@ class BasicObject
 
       type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
 
-<<<<<<< Updated upstream
       TypeRegistry.register_type_information(kind, receiver, message, type_ast)
-=======
-      if method_name.index('@')
-        kind = :"#{kind}_variable"
-      end
-
-      TypeRegistry.register_type_information(kind, receiver, method_name, type_ast)
->>>>>>> Stashed changes
     end
   end
 

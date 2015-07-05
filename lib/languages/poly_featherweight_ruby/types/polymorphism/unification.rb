@@ -246,7 +246,7 @@ module TypedRb
             end
 
             def print_constraints
-              @gt_constraints.each do |(l, t, r)|
+              @gt_constraints.each do |(l, _t, r)|
                 l = if l.is_a?(Hash)
                       l.keys.map(&:to_s).join(',')
                     else
@@ -254,7 +254,7 @@ module TypedRb
                     end
                 puts "#{l} :gt #{r}"
               end
-              @lt_constraints.each do |(l, t, r)|
+              @lt_constraints.each do |(l, _t, r)|
                 l = if l.is_a?(Hash)
                       l.keys.map(&:to_s).join(',')
                     else
@@ -262,7 +262,7 @@ module TypedRb
                     end
                 puts "#{l} :lt #{r}"
               end
-              @send_constraints.each do |(l, t, send)|
+              @send_constraints.each do |(l, _t, send)|
                 return_type = send[:return]
                 arg_types = send[:args].map(&:to_s)
                 message = send[:message]

@@ -9,6 +9,9 @@ module TypedRb
             @from            = from.is_a?(Array) ? from : [from]
             @to              = to
             @parameters_info = parameters_info
+            if @parameters_info.nil?
+              @parameters_info = @from.map { |type| [:req, type] }
+            end
           end
 
           def to_s
@@ -20,18 +23,40 @@ module TypedRb
               actual_argument = actual_arguments[index]
               from_type = from[index]
               if actual_argument.nil? && require_info != :opt
-                fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
+                fail Model::TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
               else
                 unless actual_argument.nil? # opt if this is nil
                   actual_argument_type = actual_argument.check_type(context)
                   unless actual_argument_type.compatible?(from_type, :lt)
                     error_message = "#{error_message} #{from_type} expected, #{argument_type} found"
-                    fail TypeError.new(error_message, self)
+                    fail Model::TypeError.new(error_message, self)
                   end
                 end
               end
             end
             self
+          end
+
+          # (S1 -> S2) < (T1 -> T2) => T1 < S1 && S2 < T2
+          # Contravariant in the input, covariant in the output
+          def compatible?(other_type, relation = :lt)
+            if other_type.is_a?(TyGenericFunction)
+              other_type.compatible?(self, relation == :lt ? :gt : :lt)
+            elsif other_type.is_a?(TyFunction)
+              from.each_with_index do |arg, i|
+                other_arg = other_type.from[i]
+                unless arg.compatible?(other_arg, :gt)
+                  return false
+                end
+              end
+              unless to.compatible?(other_type.to, :lt)
+                return false
+              end
+            else
+              fail Model::TypeError.new('Comparing function type with no function type', self)
+            end
+
+            return true
           end
         end
 
@@ -45,7 +70,9 @@ module TypedRb
           end
 
           def materialize
-            fail StandardError, 'Cannot materialize function because of missing local typing context' if @local_typing_context.nil?
+            if @local_typing_context.nil?
+              fail StandardError, 'Cannot materialize function because of missing local typing context'
+            end
             materialized_from_args = []
             materialized_to_arg = nil
 
@@ -62,11 +89,11 @@ module TypedRb
             end
 
             if materialized_from_args.size != from.size
-              fail StandardError, "Cannot find all the type variables for function application in the local typing context, expected #{from.size} got #{materialized_from_args.size}."
+              fail StandardError, 'Cannot find all the type variables for function application in the local typing context, expected #{from.size} got #{materialized_from_args.size}.'
             end
 
             if materialized_to_arg.nil?
-              fail StandardError, "Cannot find the return type variable for function application in the local typing context."
+              fail StandardError, 'Cannot find the return type variable for function application in the local typing context.'
             end
             applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
             materialized_function = TyFunction.new(materialized_from_args, materialized_to_arg, parameters_info)
@@ -86,6 +113,12 @@ module TypedRb
           def check_args_application(actual_arguments, context)
             materialize do |materialized_function|
               materialized_function.check_args_application(actual_arguments, context)
+            end
+          end
+
+          def compatible?(other_type, relation = :lt)
+            materialize do |materialized_function|
+              materialized_function.compatible?(other_type, relation)
             end
           end
         end

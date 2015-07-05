@@ -3,27 +3,28 @@ require_relative '../spec_helper'
 describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmSend do
   let(:language) { TypedRb::Languages::PolyFeatherweightRuby::Language.new }
 
-  it 'evaluates lambda functions applications' do
-    expr = <<__END
+  context 'with lambda functions' do
+    it 'evaluates lambda functions applications' do
+      expr = <<__END
      id = ->(x) { x }
      id[1]
 __END
 
-    result = language.check(expr)
-    expect(result).to eq(tyinteger)
+      result = language.check(expr)
+      expect(result).to eq(tyinteger)
 
-    expr = <<__END
+      expr = <<__END
      id = ->(x) { x }
      id[1]
      id['string']
 __END
 
-    result = language.check(expr)
-    expect(result).to eq(tystring)
-  end
+      result = language.check(expr)
+      expect(result).to eq(tystring)
+    end
 
-  it 'evaluates lambda functions applications with message sending inside' do
-    expr = <<__END
+    it 'evaluates lambda functions applications with message sending inside' do
+      expr = <<__END
      class Integer
        ts '#+ / Integer -> Integer'
      end
@@ -36,10 +37,10 @@ __END
      add[1,2]
 __END
 
-    result = language.check(expr)
-    expect(result).to eq(tyinteger)
+      result = language.check(expr)
+      expect(result).to eq(tyinteger)
 
-    expr = <<__END
+      expr = <<__END
      class Integer
        ts '#+ / Integer -> Integer'
      end
@@ -53,10 +54,10 @@ __END
      add['hello','world']
 __END
 
-    result = language.check(expr)
-    expect(result).to eq(tystring)
+      result = language.check(expr)
+      expect(result).to eq(tystring)
 
-    expr = <<__END
+      expr = <<__END
      class Integer
        ts '#foo / Integer -> String'
        def foo(x); 'foo'; end
@@ -66,13 +67,13 @@ __END
      f[1,2]
 __END
 
-    result = language.check(expr)
-    expect(result).to eq(tystring)
-  end
+      result = language.check(expr)
+      expect(result).to eq(tystring)
+    end
 
-  it 'catches expcetions in lambda applications' do
+    it 'catches expcetions in lambda applications' do
 
-    expr = <<__END
+      expr = <<__END
      class Integer
        ts '#foo / String -> String'
        def foo(x); 'foo'; end
@@ -81,12 +82,12 @@ __END
      f = ->(x,y) { x.foo(y) }
      f[1,2]
 __END
-    expect {
-      result = language.check(expr)
-      expect(result).to eq(tystring)
-    }.to raise_error
+      expect {
+        result = language.check(expr)
+        expect(result).to eq(tystring)
+      }.to raise_error
 
-    expr = <<__END
+      expr = <<__END
      class Integer
        ts '#foo / String -> String'
        def foo(x); 'foo'; end
@@ -95,7 +96,8 @@ __END
      f = ->(x,y) { x.foo(y) }
      f[1,'bar']
 __END
-    result = language.check(expr)
-    expect(result).to eq(tystring)
+      result = language.check(expr)
+      expect(result).to eq(tystring)
+    end
   end
 end

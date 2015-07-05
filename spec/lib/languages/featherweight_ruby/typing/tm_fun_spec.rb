@@ -95,27 +95,4 @@ __CODE
       }.to raise_error(TypedRb::Languages::FeatherweightRuby::Model::TypeError)
     end
   end
-
-  context 'with application without optional arguments' do
-    let(:code) do
-      text = <<__CODE
-       ts '#f / Integer -> Integer -> String'
-       def f(a,b=1)
-         'string'
-       end
-
-       f(2)
-
-       f(2,3)
-__CODE
-      text
-    end
-
-    it 'should not raise a type error' do
-      expect {
-        ast.check_type(TypedRb::Languages::FeatherweightRuby::Types::TypingContext.top_level)
-      }.not_to raise_error
-    end
-  end
-
 end

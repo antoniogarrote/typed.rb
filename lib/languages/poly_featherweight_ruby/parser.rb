@@ -161,7 +161,12 @@ module TypedRb
           if args.type != :args
             fail StandardError,"Error parsing function args [#{args}]"
           end
-          TmFun.new(nil, fun_name, parse_args(args.children, context), map(body, context), node)
+          tm_body = if body.nil?
+                      TmNil.new(node)
+                    else
+                      map(body, context)
+                    end
+          TmFun.new(nil, fun_name, parse_args(args.children, context), tm_body, node)
         end
 
         def parse_defs(node, context)
@@ -177,7 +182,12 @@ module TypedRb
                   else
                     map(owner, context)
                   end
-          TmFun.new(owner, fun_name, parse_args(args.children, context), map(body, context), node)
+          tm_body = if body.nil?
+                      TmNil.new
+                    else
+                      map(body, context)
+                    end
+          TmFun.new(owner, fun_name, parse_args(args.children, context), tm_body, node)
         end
 
         def parse_if_then_else(node, context)

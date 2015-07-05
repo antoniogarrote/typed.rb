@@ -30,7 +30,7 @@ module TypedRb
               else
                 add_constraint(relation, type)
               end
-              self
+              true
             end
 
             def constraints(register = TypingContext)

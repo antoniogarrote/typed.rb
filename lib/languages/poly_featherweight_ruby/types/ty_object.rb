@@ -39,7 +39,7 @@ module TypedRb
                 self <= other_type
               end
             else
-              other_type.compatible?(self, relation)
+              other_type.compatible?(self, relation == :lt ? :gt : :lt)
             end
           end
 

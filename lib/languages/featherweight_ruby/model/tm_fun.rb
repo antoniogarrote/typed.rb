@@ -82,12 +82,12 @@ module TypedRb
 
             function_type = owner_type.find_function_type(name)
             if function_type.nil?
-              fail TypeError, "Function #{owner}##{name} cannot find function type information for owner."
+              fail TypeError.new("Function #{owner}##{name} cannot find function type information for owner.",self)
             end
 
             # check matching args
             if function_type.from.size != args.size
-              fail TypeError, "Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}."
+              fail TypeError.new("Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}.",self)
             end
 
 

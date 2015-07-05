@@ -79,5 +79,28 @@ __END
       method = ty_b.find_function_type(:b)
       expect(method.to_s).to eq('(Numeric -> NilClass)')
     end
+
+    it 'can find methods with functions as arguments' do
+      $TYPECHECK = true
+      code = <<__END
+
+         class A1
+            ts '#a / String -> (String -> String) -> unit'
+            def a(s,f); f(s); end
+         end
+__END
+
+      eval(code)
+      ::BasicObject::TypeRegistry.normalize_types!
+
+      ty_b = described_class.new(B1)
+
+      method = ty_b.find_function_type(:a)
+      function = method.from[1]
+      expect(function).to be_instance_of(TypedRb::Languages::PolyFeatherweightRuby::Types::TyFunction)
+      expect(function.from.size).to eq(1)
+      expect(function.from[0]).to eq(ty_string)
+      expect(function.to).to eq(ty_string)
+    end
   end
 end

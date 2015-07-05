@@ -9,7 +9,7 @@ module TypedRb
           end
 
           def compatible?(other_type)
-            fail 'invoking compatible? in the top level object'
+            fail StandardError, 'invoking compatible? in the top level object'
           end
 
           def as_object_type
