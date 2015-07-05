@@ -65,15 +65,15 @@ module TypedRb
           when :lvasgn
             parse_let(node, context)
           when :block
-            parse_lambda(node, context)
+            parse_block(node,context)
           when :send
             parse_send(node, context)
+          when :yield
+            parse_yield(node context)
           when :lvar
             TmVar.new(node.children.first,node)
           when :const
             TmConst.new(parse_const(node), node)
-          when :block
-            parse_block(node, context)
           else
             fail StandardError, "Unknown term #{node.type}: #{node}"
           end
@@ -86,6 +86,20 @@ module TypedRb
         def parse_instance_var_assign(node, context)
           ivar = TmInstanceVar.new(node.children.first, node)
           TmInstanceVarAssignment.new(ivar, map(node.children.last, context), node)
+        end
+
+        def parse_block(node, context)
+          if children[0].type == :send && children[0].children[1] == :lambda
+            parse_lambda(node, context)
+          else
+            parse_send_block(node, context)
+          end
+        end
+
+        def parse_send_block(node, context)
+          block = parse_lambda(node, context)
+          send = parse_send(node.children[0], context)
+          send.with_block(block)
         end
 
         def parse_lambda(node, context)
@@ -136,6 +150,11 @@ module TypedRb
               TmSend.new(receiver, message, args.map { |arg| map(arg,context) }, node)
             end
           end
+        end
+
+        def parse_yield(node, context)
+          args = children
+          TmSend.new(nil, :yield, args.map { |arg| map(arg,context) }, node)
         end
 
         def parse_class(node, context)
@@ -223,12 +242,6 @@ module TypedRb
           else
             map(rescue_body, context)
           end
-        end
-
-        def parse_block(node, context)
-          receiver = parse(node.children[0], context)
-          args = parse(node.children[1], context)
-
         end
       end
     end

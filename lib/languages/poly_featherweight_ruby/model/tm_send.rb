@@ -7,12 +7,13 @@ module TypedRb
       module Model
         # message send
         class TmSend < Expr
-          attr_accessor :receiver, :message, :args
+          attr_accessor :receiver, :message, :args, :block
           def initialize(receiver, message, args, node)
             super(node)
             @receiver = receiver
             @message = message
             @args = args
+            @block = nil
           end
 
           def to_s
@@ -21,6 +22,10 @@ module TypedRb
             else
               "[#{receiver} <- #{message}(#{args.map(&to_s).join(',')})"
             end
+          end
+
+          def with_block(block)
+            @block = block
           end
 
           def rename(from_binding, to_binding)
@@ -123,6 +128,10 @@ module TypedRb
             method = receiver_type.resolve_ruby_method(message)
             parameters_info = method.parameters
             check_args_application(parameters_info, formal_parameters, args, context)
+            if @block
+              block_type = @block.check_type(context)
+              function_type.with_block_type.compatible?(block_type, :lt)
+            end
             function_type.to
           end
 

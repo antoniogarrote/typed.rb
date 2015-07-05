@@ -27,9 +27,9 @@ module TypedRb
           elsif elem == ')'
             parse_end_of_function
           elsif elem == '<'
-            parse_bound
+            parse_binding
           elsif elem == ']'
-            parse_end_of_bound
+            parse_end_of_binding
           elsif elem == '>'
             parse_next_elem
           else
@@ -76,13 +76,13 @@ module TypedRb
         @current_type = []
       end
 
-      def parse_bound
+      def parse_binding
         new_type = parse_new_type
         @current_function << new_type unless @current_type.empty?
         @current_type = []
       end
 
-      def parse_end_of_bound
+      def parse_end_of_binding
         new_type = parse_new_type
         @current_function << new_type unless @current_type.empty?
         bound = if @current_function.size == 1

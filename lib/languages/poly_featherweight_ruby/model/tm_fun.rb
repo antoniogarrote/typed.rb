@@ -109,7 +109,11 @@ module TypedRb
                             fail TypeError.new(error_message, self)
                           end
                         when :blockarg
-                          fail "Block args not implemented yet"
+                          if(function_type.block_type)
+                            context.add_binding(arg[1], function_type.block_type)
+                          else
+                            fail TypeError.new("Function #{owner}##{name} missing block type for block argument #{arg[1]}", self)
+                          end
                         else
                           fail TypeError.new("Function #{owner}##{name} unknown type of arg #{arg.first}", self)
                         end
@@ -118,6 +122,8 @@ module TypedRb
             # pointing self to the right type
             context = context.add_binding(:self, owner_type)
 
+            # adding yield binding if present
+            context = context.add_binding(:yield, function_type.block_type) if function_type.block_type
 
             if is_constructor
               # constructor

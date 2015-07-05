@@ -3,15 +3,20 @@ module TypedRb
     module PolyFeatherweightRuby
       module Types
         class TyFunction < Type
-          attr_accessor :from, :to, :parameters_info
+          attr_accessor :from, :to, :parameters_info, :block_type
 
           def initialize(from, to, parameters_info = nil)
             @from            = from.is_a?(Array) ? from : [from]
             @to              = to
             @parameters_info = parameters_info
+            @block_type      = nil
             if @parameters_info.nil?
               @parameters_info = @from.map { |type| [:req, type] }
             end
+          end
+
+          def with_block_type(type)
+            @block_type = type
           end
 
           def to_s

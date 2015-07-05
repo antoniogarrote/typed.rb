@@ -170,7 +170,14 @@ module TypedRb
 
           def self.parse_function_type(arg_types)
             return_type = parse(arg_types.pop)
-            TyFunction.new(arg_types.map{ |arg| parse(arg) }, return_type)
+            block_type = if arg_types.last.is_a?(Hash) && arg_types.last[:block]
+                           parse_function_type(arg_types.pop)
+                         else
+                           nil
+                         end
+            function_type = TyFunction.new(arg_types.map{ |arg| parse(arg) }, return_type)
+            function_type.with_block_type(block_type) if block_type
+            function_type
           end
         end
 
