@@ -130,5 +130,66 @@ __END
         result = language.check(expr)
         expect(result.to_s).to eq('((Animal -> Integer) -> Integer)')
     end
+
+    it 'respects covariance in the output type' do
+
+      classes = <<__END
+      class Animal
+        ts '#initialize / -> unit'
+
+        ts '#animal / -> unit'
+        def animal; end
+      end
+
+      class Mammal < Animal
+        ts '#initialize / -> unit'
+
+        ts '#mammal / -> unit'
+        def mammal; end
+      end
+
+      class Cat < Mammal
+        ts '#initialize / -> unit'
+
+        ts '#cat / -> unit'
+        def cat; end
+      end
+__END
+
+      expr = <<__END
+      #{classes}
+
+      ts '#integer_to_mammal / (Integer -> Mammal) -> Mammal'
+      def integer_to_mammal(mammalf)
+        mammalf[1]
+      end
+
+      ts '#integer_to_animal / (Integer -> Animal) -> Mammal'
+      def integer_to_animal(animalf)
+        integer_to_mammal(animalf)
+      end
+__END
+      expect do
+        result  = language.check(expr)
+      end.to raise_error
+
+
+      expr = <<__END
+      #{classes}
+
+      ts '#integer_to_mammal / (Integer -> Mammal) -> Mammal'
+      def integer_to_mammal(mammalf)
+        mammalf[1]
+      end
+
+      ts '#integer_to_cat / (Integer -> Cat) -> Mammal'
+      def integer_to_cat(catf)
+        integer_to_mammal(catf)
+      end
+__END
+
+      result  = language.check(expr)
+      expect(result.to_s).to eq('((Integer -> Cat) -> Mammal)')
+    end
   end
 end
