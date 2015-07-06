@@ -16,10 +16,8 @@ module TypedRb
           parser = Parser.new
           ast = parser.parse(expr)
           ast = parser.remove_names(ast).first
-          #binding.pry
           ast.eval
         end
-
       end
     end
   end
