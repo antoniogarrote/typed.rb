@@ -89,7 +89,7 @@ module TypedRb
         end
 
         def parse_block(node, context)
-          if children[0].type == :send && children[0].children[1] == :lambda
+          if node.children[0].type == :send && node.children[0].children[1] == :lambda
             parse_lambda(node, context)
           else
             parse_send_block(node, context)

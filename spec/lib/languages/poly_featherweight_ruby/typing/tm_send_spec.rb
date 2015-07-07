@@ -93,7 +93,7 @@ __END
         result = language.check(expr)
         #cat undefined for Mammal,
         # s => cat s :gt Cat, s :gt Mammal
-      }.to raise_error
+      }.to raise_error(StandardError)
 
 
       expr = <<__END
@@ -112,7 +112,7 @@ __END
       expect {
         result = language.check(expr)
         # Cat not >= Mammal
-      }.to raise_error
+      }.to raise_error(StandardError)
 
       expr = <<__END
       #{classes}
@@ -171,7 +171,7 @@ __END
 __END
       expect do
         result  = language.check(expr)
-      end.to raise_error
+      end.to raise_error(StandardError)
 
 
       expr = <<__END

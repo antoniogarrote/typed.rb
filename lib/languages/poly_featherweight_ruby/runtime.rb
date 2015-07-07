@@ -2,6 +2,7 @@ require_relative('../../../lib/type_signature/parser')
 require_relative('./types')
 
 class Integer
+  # ts '#+ / Integer -> Integer'
   def +(other)
     raise StandardError.new('Error invoking abstract method Integer#+')
   end
@@ -19,8 +20,22 @@ class BasicObject
         @registry
       end
 
+      def generic_types_registry
+        @generic_types_registry ||= {}
+        @generic_types_registry
+      end
+
       def register_type_information(kind, receiver, method, type_ast)
         methods_for(kind, receiver)[method] = type_ast
+      end
+
+      def register_generic_type_information(generic_type_information)
+        if generic_types_registry[generic_type_information[:type]]
+          fail ::TypedRb::Languages::PolyFeatherweightRuby::Types::TypeParsingError,
+          "Duplicated generic type definition for #{generic_type_information[:type]}"
+        else
+          generic_types_registry[generic_type_information[:type]] = generic_type_information
+        end
       end
 
       def object_key(kind, receiver)
@@ -31,6 +46,10 @@ class BasicObject
         method_registry = registry[object_key(kind, receiver)] || {}
         registry[object_key(kind, receiver)] = method_registry
         method_registry
+      end
+
+      def find_generic_type(type)
+        @generic_types_registry[type]
       end
 
       def find(kind, klass, message)
@@ -75,6 +94,17 @@ class BasicObject
           normalized[[type,klass]] = method_signatures
         end
         @registry = normalized
+
+        normalized_generic_types = {}
+        normalized_generic_types = generic_types_registry.inject(normalized_generic_types) do |acc, (_, info)|
+          info[:type] = Object.const_get(info[:type])
+          info[:parameters] = info[:parameters].map do |parameter|
+            parameter[:bound] = Object.const_get(parameter[:bound])
+            parameter
+          end
+          acc[info[:type]] = info; acc
+        end
+        @generic_types_registry = normalized_generic_types
       end
 
       def normalize_signature!(type)
@@ -85,32 +115,39 @@ class BasicObject
 
   def ts signature
     if $TYPECHECK
-      method, signature = signature.split(/\s+\/\s+/)
+      parametric_type_prefix = /\s*(module|class|type)\s*/
+      if signature.index(parametric_type_prefix) == 0
+        type_signature = signature.split(parametric_type_prefix).last
+        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature)
+        TypeRegistry.register_generic_type_information(generic_type)
+      else
+        method, signature = signature.split(/\s+\/\s+/)
 
-      kind, receiver, message = if method.index('#')
-                                  [:instance] + method.split('#')
-                                elsif method.index('.')
-                                  [:class] + method.split('.')
-                                else
-                                  fail ::TypedRb::Languages::PolyFeatherweightRuby::Types::TypeParsingError,
-                                       "Error parsing receiver, method signature: #{signature}"
-                                end
+        kind, receiver, message = if method.index('#')
+                                    [:instance] + method.split('#')
+                                  elsif method.index('.')
+                                    [:class] + method.split('.')
+                                  else
+                                    fail ::TypedRb::Languages::PolyFeatherweightRuby::Types::TypeParsingError,
+                                    "Error parsing receiver, method signature: #{signature}"
+                                  end
 
-      if receiver == ''
-        if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
-          receiver = :main
-        elsif self.instance_of?(::Class)
-          receiver = self.name
-        else
-          receiver = self.class.name
+        if receiver == ''
+          if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
+            receiver = :main
+          elsif self.instance_of?(::Class)
+            receiver = self.name
+          else
+            receiver = self.class.name
+          end
         end
+
+        kind = :"#{kind}_variable" if message.index('@')
+
+        type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
+
+        TypeRegistry.register_type_information(kind, receiver, message, type_ast)
       end
-
-      kind = :"#{kind}_variable" if message.index('@')
-
-      type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
-
-      TypeRegistry.register_type_information(kind, receiver, message, type_ast)
     end
   end
 
