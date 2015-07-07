@@ -50,7 +50,7 @@ describe TypedRb::Languages::PolyFeatherweightRuby::Types::TyObject do
 
   describe '#find_function_type' do
     before :each do
-      ::BasicObject::TypeRegistry.registry.clear
+      ::BasicObject::TypeRegistry.clear
     end
 
     it 'it can find methods in the base and super classes' do

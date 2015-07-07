@@ -111,14 +111,17 @@ module TypedRb
         end
 
         class Type
-          def self.parse(type)
+          def self.parse(type, klass)
             fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
             if type == 'unit'
               TyUnit.new
             elsif type == 'Boolean'
               TyBoolean.new
             elsif type.is_a?(Array)
-              parse_function_type(type.is_a?(Array) ? type : [type])
+              parse_function_type(type, klass)
+            elsif type.is_a?(Hash) && type[:kind]  == :type_var
+              type[:type] = "#{klass}:#{type[:type]}"
+              parse_type_var(type)
             else
               parse_object_type(type)
             end
@@ -132,6 +135,12 @@ module TypedRb
               relation = (relation == :lt ? :gt : lt)
               other_type.instance_of?(self.class, relation) || other_type.instance_of?(TyError)
             end
+          end
+
+          def self.parse_type_var(type)
+            Polymorphism::TypeVariable.new(type[:type],
+                                           :upper_bound => Object.const_get(type[:bound]),
+                                           :gen_name    => false)
           end
 
           def self.parse_object_type(type)
@@ -168,14 +177,14 @@ module TypedRb
 
           protected
 
-          def self.parse_function_type(arg_types)
-            return_type = parse(arg_types.pop)
+          def self.parse_function_type(arg_types, klass)
+            return_type = parse(arg_types.pop, klass)
             block_type = if arg_types.last.is_a?(Hash) && arg_types.last[:block]
-                           parse_function_type(arg_types.pop)
+                           parse_function_type(arg_types.pop, klass)
                          else
                            nil
                          end
-            function_type = TyFunction.new(arg_types.map{ |arg| parse(arg) }, return_type)
+            function_type = TyFunction.new(arg_types.map{ |arg| parse(arg, klass) }, return_type)
             function_type.with_block_type(block_type) if block_type
             function_type
           end

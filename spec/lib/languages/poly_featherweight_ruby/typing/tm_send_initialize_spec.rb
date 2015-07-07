@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmSend do
 
   before :each do
-    ::BasicObject::TypeRegistry.registry.clear
+    ::BasicObject::TypeRegistry.clear
   end
 
   let(:code) do

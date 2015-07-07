@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmBoolean do
 
   before :each do
-    ::BasicObject::TypeRegistry.registry.clear
+    ::BasicObject::TypeRegistry.clear
   end
 
   let(:typed_code) do

@@ -3,7 +3,7 @@ require_relative './spec_helper'
 describe BasicObject do
 
   before :each do
-    ::BasicObject::TypeRegistry.registry.clear
+    ::BasicObject::TypeRegistry.clear
   end
 
   it 'parses type signatures and store data into the type registry' do
@@ -183,5 +183,36 @@ __END
     ::BasicObject::TypeRegistry.normalize_types!
 
     expect(::BasicObject::TypeRegistry.registry[[:instance,A]]["func"].to_s).to eq('(Integer,( -> Integer) -> Integer)')
+  end
+
+  it 'parses generic types' do
+    $TYPECHECK = true
+    code = <<__END
+     ts 'type Container[X<Numeric]'
+     class Container
+
+       ts '#push / [X<Numeric] -> unit'
+       def push(value)
+        @value = value
+       end
+
+       ts '#pop / -> [X<Numeric]'
+       def pop
+        @value
+       end
+
+     end
+__END
+
+    eval(code)
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    expect(::BasicObject::TypeRegistry.generic_types_registry[Container][:type]).to eq(Container)
+    expect(::BasicObject::TypeRegistry.generic_types_registry[Container][:parameters][0].variable).to eq('Container:X')
+    expect(::BasicObject::TypeRegistry.generic_types_registry[Container][:parameters][0].upper_bound).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['push'].from[0].variable).to eq('Container:X')
+    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['push'].from[0].upper_bound).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.variable).to eq('Container:X')
+    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.upper_bound).to eq(Numeric)
   end
 end

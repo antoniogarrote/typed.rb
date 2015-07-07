@@ -25,6 +25,11 @@ class BasicObject
         @generic_types_registry
       end
 
+      def clear
+        generic_types_registry.clear
+        registry.clear
+      end
+
       def register_type_information(kind, receiver, method, type_ast)
         methods_for(kind, receiver)[method] = type_ast
       end
@@ -88,7 +93,7 @@ class BasicObject
                      "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
-            signatures_acc[method] = normalize_signature!(signature)
+            signatures_acc[method] = normalize_signature!(klass,signature)
             signatures_acc
           end
           normalized[[type,klass]] = method_signatures
@@ -99,16 +104,15 @@ class BasicObject
         normalized_generic_types = generic_types_registry.inject(normalized_generic_types) do |acc, (_, info)|
           info[:type] = Object.const_get(info[:type])
           info[:parameters] = info[:parameters].map do |parameter|
-            parameter[:bound] = Object.const_get(parameter[:bound])
-            parameter
+            ::TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse(parameter, info[:type])
           end
           acc[info[:type]] = info; acc
         end
         @generic_types_registry = normalized_generic_types
       end
 
-      def normalize_signature!(type)
-        ::TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse(type)
+      def normalize_signature!(klass, type)
+        ::TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse(type, klass)
       end
     end
   end
@@ -118,7 +122,7 @@ class BasicObject
       parametric_type_prefix = /\s*(module|class|type)\s*/
       if signature.index(parametric_type_prefix) == 0
         type_signature = signature.split(parametric_type_prefix).last
-        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature)
+        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature).first
         TypeRegistry.register_generic_type_information(generic_type)
       else
         method, signature = signature.split(/\s+\/\s+/)
@@ -150,5 +154,4 @@ class BasicObject
       end
     end
   end
-
 end

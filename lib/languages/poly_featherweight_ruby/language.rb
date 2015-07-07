@@ -10,7 +10,7 @@ module TypedRb
         attr_reader :unification_result
 
         def check(expr)
-          ::BasicObject::TypeRegistry.registry.clear
+          ::BasicObject::TypeRegistry.clear
           $TYPECHECK = true
           eval(expr, TOPLEVEL_BINDING)
           $TYPECHECK = false
