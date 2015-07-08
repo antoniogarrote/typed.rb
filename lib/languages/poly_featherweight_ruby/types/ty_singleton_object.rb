@@ -33,6 +33,16 @@ module TypedRb
             "Class[#{@ruby_type.name}]"
           end
         end
+
+        class TyGenericSingletonObject < TySingletonObject
+
+          attr_reader :type_vars
+
+          def initialize(ruby_type, type_vars)
+            super(ruby_type)
+            @type_vars = type_vars
+          end
+        end
       end
     end
   end

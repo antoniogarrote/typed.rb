@@ -164,7 +164,12 @@ module TypedRb
           def self.parse_singleton_object_type(type)
             begin
               ruby_type = Object.const_get(type)
-              TySingletonObject.new(ruby_type)
+              generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
+              if generic_type
+                TyGenericSingletonObject.new(ruby_type, generic_type[:parameters])
+              else
+                TySingletonObject.new(ruby_type)
+              end
             rescue StandardError => e
               puts e.message
               #puts "ERROR"
