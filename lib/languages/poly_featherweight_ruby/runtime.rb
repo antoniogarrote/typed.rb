@@ -106,7 +106,8 @@ class BasicObject
           info[:parameters] = info[:parameters].map do |parameter|
             ::TypedRb::Languages::PolyFeatherweightRuby::Types::Type.parse(parameter, info[:type])
           end
-          acc[info[:type]] = info; acc
+          acc[info[:type]] = ::TypedRb::Languages::PolyFeatherweightRuby::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
+          acc
         end
         @generic_types_registry = normalized_generic_types
       end
@@ -153,5 +154,11 @@ class BasicObject
         TypeRegistry.register_type_information(kind, receiver, message, type_ast)
       end
     end
+  end
+end
+
+class Class
+  def call(*types)
+    self
   end
 end

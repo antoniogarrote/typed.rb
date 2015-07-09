@@ -134,6 +134,9 @@ module TypedRb
               body_return_type = body.check_type(context)
               if body_return_type.compatible?(function_type.to, :lt)
                 function_type
+              # TODO
+              # A TyObject(Symbol) should be returned not the function type
+              # x = def id(x); x; end / => x == :id
               else
                 error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
                 fail TypeError.new(error_message, self)

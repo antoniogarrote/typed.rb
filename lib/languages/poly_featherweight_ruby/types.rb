@@ -24,6 +24,10 @@ module TypedRb
               type_variables_register.type_variable_for_abstraction(abs_kind, variable, context)
             end
 
+            def type_variable_for_generic_type(type_var)
+              type_variables_register.type_variable_for_generic_type(type_var)
+            end
+
             def all_constraints
               type_variables_register.all_constraints
             end
@@ -111,6 +115,9 @@ module TypedRb
         end
 
         class Type
+
+          # This is only used from the runtime parsing logic
+          # TODO: moved it to Runtime?
           def self.parse(type, klass)
             fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
             if type == 'unit'
@@ -166,7 +173,7 @@ module TypedRb
               ruby_type = Object.const_get(type)
               generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
               if generic_type
-                TyGenericSingletonObject.new(ruby_type, generic_type[:parameters])
+                generic_type
               else
                 TySingletonObject.new(ruby_type)
               end

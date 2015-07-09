@@ -62,6 +62,23 @@ module TypedRb
               type_var
             end
 
+            # TODO: type_var is now a type variable, not a parsing hash
+            def type_variable_for_generic_type(type_var)
+              key = [:generic,  type_var.variable]
+              type_var_in_registry = type_variables_register[key]
+              if type_var_in_registry
+                type_var_in_registry
+              else
+                type_var_in_registry = Polymorphism::TypeVariable.new(type_var.variable,
+                                                                      :upper_bound => type_var.upper_bound,
+                                                                      :gen_name    => false)
+                type_variables_register[key] = type_var_in_registry
+                type_var_in_registry
+              end
+            end
+
+
+
             def constraints_for(variable)
               found = constraints[variable]
               children_found = children.map{ |child_context|  child_context.constraints_for(variable) }.reduce(&:+)

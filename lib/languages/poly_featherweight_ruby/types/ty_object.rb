@@ -141,6 +141,16 @@ module TypedRb
             end
           end
         end
+
+        class TyGenericObject < TyObject
+          attr_reader :type_vars
+
+          def initialize(ruby_type, type_vars)
+            super(ruby_type)
+            @type_vars = type_vars
+          end
+          # TODO
+        end
       end
     end
   end

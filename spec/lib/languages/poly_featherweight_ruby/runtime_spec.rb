@@ -215,4 +215,42 @@ __END
     expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.variable).to eq('Container:X')
     expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.upper_bound).to eq(Numeric)
   end
+
+  describe '.find' do
+
+    it 'finds registered function types' do
+      $TYPECHECK = true
+      code = <<__END
+     ts 'type Container[X<Numeric]'
+     class Container
+
+       ts '#push / [X<Numeric] -> unit'
+       def push(value)
+        @value = value
+       end
+
+       ts '#pop / -> [X<Numeric]'
+       def pop
+        @value
+       end
+
+     end
+__END
+
+      eval(code)
+      ::BasicObject::TypeRegistry.normalize_types!
+
+
+      function_type = ::BasicObject::TypeRegistry.find(:instance, Container, :push)
+      puts function_type.inspect
+      expect(function_type).to be_is_a(TypedRb::Languages::PolyFeatherweightRuby::Types::TyFunction)
+      expect(function_type.from.size).to eq(1)
+      type_var = function_type.from.first
+      expect(type_var).to be_is_a(TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVariable)
+      expect(type_var.variable).to eq('Container:X')
+      expect(type_var.upper_bound).to eq(Numeric)
+      expect(::BasicObject::TypeRegistry.generic_types_registry[Container][:parameters][0].variable).to eq(type_var.variable)
+      #expect(::BasicObject::TypeRegistry.generic_types_registry[Container][:parameters][0]).to eq(type_var)
+    end
+  end
 end
