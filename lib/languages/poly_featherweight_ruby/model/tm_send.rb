@@ -109,6 +109,9 @@ module TypedRb
             if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
               arg_types = args.map { |arg| arg.check_type(context) }
               receiver_type.add_message_constraint(message, arg_types)
+            elsif receiver_type.is_a?(Types::TyGenericSingletonObject) && (message == :call)
+              arg_types = args.map { |arg| arg.check_type(context) }
+              check_type_application_to_generic(receiver_type, arg_types, context)
             elsif receiver_type.is_a?(Types::TyFunction) && (message == :[] || message == :call)
               check_lambda_application(receiver_type, context)
             else
@@ -121,6 +124,10 @@ module TypedRb
                 check_application(receiver_type, function_type, context)
               end
             end
+          end
+
+          def check_type_application_to_generic(generic_type, args, context)
+            generic_type.check_args_application(args, context)
           end
 
           def check_application(receiver_type, function_type, context)

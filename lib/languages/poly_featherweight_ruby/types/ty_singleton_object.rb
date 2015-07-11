@@ -42,6 +42,7 @@ module TypedRb
           def initialize(ruby_type, type_vars)
             super(ruby_type)
             @type_vars = type_vars
+            @application_count = 0
           end
 
           # ts 'MyClass[X][Y]'
@@ -52,7 +53,9 @@ module TypedRb
           # @see comment below
           def check_args_application(actual_arguments, context)
             materialize do |materialized_generic_type|
-              #materialized_function.check_args_application(actual_arguments, context)
+              actual_arguments.each_with_index do |argument, i|
+                materialized_generic_type.type_vars[i].compatible?(argument, :lt)
+              end
             end
           end
 
@@ -69,14 +72,17 @@ module TypedRb
             end
 
             @application_count += 1
-            substitutions = type_vars.each_with_object do |type_var, acc|
-              type_var_in_register = local_typing_context.type_variable_for_generic_type(type_var)
-              fail StandardError, "Cannot find type variable #{type_var.variable} for generic type type  application in the local typing context"
-              acc[type_var_in_register.variable] = Polymorphism::TypeVariable.new("#{type_var_in_register.variable}_#{@application_count}")
+            substitutions = @local_typing_context.generic_type_local_var_types.each_with_object({}) do |type_var, acc|
+              cloned_type_var = Polymorphism::TypeVariable.new("#{type_var.variable}_#{@application_count}")
+              cloned_type_var.upper_bound = type_var.upper_bound
+              acc[type_var.variable] = cloned_type_var
             end
             applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
+            materialized_type_vars = type_vars.map do |type_var|
+              applied_typing_context.type_variables_register[[:generic, nil, type_var.variable]]
+            end
 
-            materialized_generic_type = TyGenericSingletonObject.new(ruby_type, type_vars)
+            materialized_generic_type = TyGenericSingletonObject.new(ruby_type, materialized_type_vars)
             materialized_generic_type.local_typing_context = applied_typing_context
             TypingContext.with_context(applied_typing_context) do
               # Appy constraints for application of Type args
@@ -86,9 +92,13 @@ module TypedRb
             # got all the constraints here
             # do something with the context -> unification? merge context?
             Polymorphism::Unification.new(applied_typing_context.all_constraints).run
-
-            # TODO:
             # - Create a new ty_singleton_object for the  unified types
+            materialized_type_vars = materialized_type_vars.map do |type_var|
+              # TODO: nested type vars?
+              # class X[T]; def test; Array.(T).new; end; end
+              type_var.bound
+            end
+
             # - Apply the unified types to all the methods in the class/instance
             #   - this can be dynamically done with the right implementation of find_function_type
             # - Make the class available for the type checking system, so it can be found when
@@ -99,11 +109,8 @@ module TypedRb
             #   - this can be accomplished with the overloading version of as_object_type, that will return
             #     an instance of a new class ty_generic_object with overloaded versions of find_function_type /find_var_type
             ########################
-            #bound_from_args = materialized_function.from.map  { |arg| arg.bound || arg }
-            #bound_to_arg = materialized_function.to.bound || materialized_function.to
-            #
-            #TyFunction.new(bound_from_args, bound_to_arg, parameters_info)
-            fail StandardError, "Not implemented yet"
+
+            TyGenericSingletonObject.new(ruby_type, materialized_type_vars)
           end
 
           # TODO

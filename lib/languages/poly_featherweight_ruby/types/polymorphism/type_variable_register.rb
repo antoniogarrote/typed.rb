@@ -66,9 +66,8 @@ module TypedRb
               type_var
             end
 
-            # TODO: type_var is now a type variable, not a parsing hash
             def type_variable_for_generic_type(type_var)
-              key = [:generic,  type_var.variable]
+              key = [:generic,  nil, type_var.variable]
               type_var_in_registry = type_variables_register[key]
               if type_var_in_registry
                 type_var_in_registry
@@ -160,12 +159,20 @@ module TypedRb
             def local_var_types
               @type_variables_register.map do |(key,value)|
                 type = key.first
-                if type != :instance_variables && type != :class_variable
+                if type != :instance_variable && type != :class_variable
                   value
                 end
               end.compact
             end
 
+            def generic_type_local_var_types
+              @type_variables_register.map do |(key,value)|
+                type = key.first
+                if type == :instance_variable || type == :class_variable || type == :generic
+                  value
+                end
+              end.compact
+            end
             protected
 
             def recursive_constraint_search(key)

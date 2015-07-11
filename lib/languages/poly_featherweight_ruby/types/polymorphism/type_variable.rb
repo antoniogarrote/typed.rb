@@ -4,7 +4,7 @@ module TypedRb
       module Types
         module Polymorphism
           class TypeVariable
-            attr_reader :bound, :variable, :upper_bound
+            attr_accessor :bound, :variable, :upper_bound
 
             def initialize(var_name, options = {})
               gen_name = options[:gen_name].nil? ? true : options[:gen_name]

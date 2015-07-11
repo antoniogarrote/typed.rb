@@ -29,6 +29,7 @@ __CODE
     expect(value_instance_var.variable.index('Pod:@value')).to_not be_nil
     value_instance_var_constraints = parsed.local_typing_context.constraints[value_instance_var.variable]
     expect(value_instance_var_constraints.size).to eq(2)
-    expect(parsed.local_typing_context.constraints['Pod:X']).to eq([[:lt, Numeric]])
+    expect(parsed.local_typing_context.constraints['Pod:X'].first.first).to eq(:lt)
+    expect(parsed.local_typing_context.constraints['Pod:X'].first.last.ruby_type).to eq(Numeric)
   end
 end

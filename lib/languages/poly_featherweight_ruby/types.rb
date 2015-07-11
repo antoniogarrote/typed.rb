@@ -146,7 +146,7 @@ module TypedRb
 
           def self.parse_type_var(type)
             Polymorphism::TypeVariable.new(type[:type],
-                                           :upper_bound => Object.const_get(type[:bound]),
+                                           :upper_bound => TySingletonObject.new(Object.const_get(type[:bound])),
                                            :gen_name    => false)
           end
 

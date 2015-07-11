@@ -208,11 +208,11 @@ __END
     ::BasicObject::TypeRegistry.normalize_types!
     expect(::BasicObject::TypeRegistry.generic_types_registry[Container].ruby_type).to eq(Container)
     expect(::BasicObject::TypeRegistry.generic_types_registry[Container].type_vars[0].variable).to eq('Container:X')
-    expect(::BasicObject::TypeRegistry.generic_types_registry[Container].type_vars[0].upper_bound).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.generic_types_registry[Container].type_vars[0].upper_bound.ruby_type).to eq(Numeric)
     expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['push'].from[0].variable).to eq('Container:X')
-    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['push'].from[0].upper_bound).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['push'].from[0].upper_bound.ruby_type).to eq(Numeric)
     expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.variable).to eq('Container:X')
-    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.upper_bound).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.upper_bound.ruby_type).to eq(Numeric)
   end
 
   describe '.find' do
@@ -246,7 +246,7 @@ __END
       type_var = function_type.from.first
       expect(type_var).to be_is_a(TypedRb::Languages::PolyFeatherweightRuby::Types::Polymorphism::TypeVariable)
       expect(type_var.variable).to eq('Container:X')
-      expect(type_var.upper_bound).to eq(Numeric)
+      expect(type_var.upper_bound.ruby_type).to eq(Numeric)
       expect(::BasicObject::TypeRegistry.generic_types_registry[Container].type_vars[0].variable).to eq(type_var.variable)
       #expect(::BasicObject::TypeRegistry.generic_types_registry[Container].type_vars[0]).to eq(type_var)
     end

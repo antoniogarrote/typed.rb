@@ -150,7 +150,7 @@ module TypedRb
             def find_type(value)
               # type variable
               if value.is_a?(TypeVariable)
-                find_type[value.bound]
+                find_type(value.bound)
               # group
               elsif value.is_a?(Hash) && value[:type]
                 find_type(value[:type])
@@ -226,8 +226,12 @@ module TypedRb
 
             def initialize(constraints)
               @constraints = constraints
-              @gt_constraints = @constraints.select { |(_, t, _r)| t == :gt }
-              @lt_constraints = @constraints.select { |(_, t, _r)| t == :lt }
+              @gt_constraints = @constraints.select { |(_, t, _r)| t == :gt }.sort do |(_, _, r1), (_, _, r2)|
+                -(r1 <=> r2) || 0 rescue 0
+              end
+              @lt_constraints = @constraints.select { |(_, t, _r)| t == :lt }.sort do |(_, _, r1), (_, _, r2)|
+                (r1 <=> r2) || 0 rescue 0
+              end
               @send_constraints = @constraints.select { |(_, t, _r)| t == :send }
               @graph = Topography.new(@constraints)
             end
