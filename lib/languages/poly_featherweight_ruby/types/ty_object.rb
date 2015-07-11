@@ -152,6 +152,39 @@ module TypedRb
             @type_vars = type_vars
           end
           # TODO
+
+          def find_function_type(message)
+            function_type = find_function_type_in_hierarchy(:instance, message)
+            if function_type
+              from_args = function_type.from.map do |arg|
+                if arg.is_a?(Polymorphism::TypeVariable)
+                  matching_var = type_vars.detect { |type_var|  type_var.variable == arg.variable }
+                  if matching_var && matching_var.bound
+                    matching_var.bound
+                  else
+                    arg
+                  end
+                else
+                  arg
+                end
+              end
+
+              to_arg = if function_type.to.is_a?(Polymorphism::TypeVariable)
+                         matching_var = type_vars.detect{ |type_var| type_var.variable == function_type.to.variable }
+                         if matching_var && matching_var.bound
+                           matching_var.bound
+                         else
+                           function_type.to
+                         end
+                       else
+                         function_type.to
+                       end
+
+              materialised_function = TyFunction.new(from_args, to_arg, function_type.parameters_info)
+              materialised_function.with_block_type(function_type.block_type)
+              materialised_function
+            end
+          end
         end
       end
     end

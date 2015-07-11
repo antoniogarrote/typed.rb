@@ -61,7 +61,7 @@ module TypedRb
                             else
                               receiver.check_type(context)
                             end
-            if receiver_type.instance_of?(TypedRb::Languages::PolyFeatherweightRuby::Types::TySingletonObject)
+            if receiver_type.is_a?(TypedRb::Languages::PolyFeatherweightRuby::Types::TySingletonObject)
               receiver_type
             else
               nil

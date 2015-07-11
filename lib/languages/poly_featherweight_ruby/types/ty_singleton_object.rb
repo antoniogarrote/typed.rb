@@ -91,13 +91,19 @@ module TypedRb
 
             # got all the constraints here
             # do something with the context -> unification? merge context?
+            # applied_typing_context.all_constraints.each{|(l,t,r)| puts "#{l} #{t} #{r}" }
             Polymorphism::Unification.new(applied_typing_context.all_constraints).run
             # - Create a new ty_singleton_object for the  unified types
-            materialized_type_vars = materialized_type_vars.map do |type_var|
-              # TODO: nested type vars?
-              # class X[T]; def test; Array.(T).new; end; end
-              type_var.bound
-            end
+
+            # Better not the the type but the bound type var but the var itself,
+            # it can be used to look for the var in applications
+             materialized_type_vars = materialized_type_vars.map do |type_var|
+               # TODO: nested type vars?
+               # class X[T]; def test; Array.(T).new; end; end
+               orig_name = applied_typing_context.type_variables_register.invert[type_var].last
+               type_var.variable= orig_name
+               type_var
+             end
 
             # - Apply the unified types to all the methods in the class/instance
             #   - this can be dynamically done with the right implementation of find_function_type
@@ -114,10 +120,23 @@ module TypedRb
           end
 
           # TODO
-          def find_function_type(message)
-            function_type = BasicObject::TypeRegistry.find(:class, ruby_type, message)
-            replace_bound_type_vars(function_type, type_vars)
-          end
+          # def find_function_type(message)
+          #   function_type = BasicObject::TypeRegistry.find(:class, ruby_type, message)
+          #   replace_bound_type_vars(function_type, type_vars)
+          # end
+
+#          def find_function_type(message)
+#            BasicObject::TypeRegistry.find(:class, ruby_type, message)
+#          end
+#
+#          def find_var_type(var)
+#            var_type = BasicObject::TypeRegistry.find(:class_variable, ruby_type, var)
+#            if var_type
+#              var_type
+#            else
+#              Types::TypingContext.type_variable_for(:class_variable, var, hierarchy)
+#            end
+#          end
 
           def as_object_type
             TyGenericObject.new(ruby_type, type_vars)

@@ -83,7 +83,6 @@ module TypedRb
 
             function_type = owner_type.find_function_type(name)
             if function_type.nil?
-              owner_type.find_function_type(name)
               fail TypeError.new("Function #{owner}##{name} cannot find function type information for owner.", self)
             end
 
