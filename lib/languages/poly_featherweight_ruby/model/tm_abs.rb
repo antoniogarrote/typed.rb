@@ -47,7 +47,7 @@ module TypedRb
           # we need new bindings in the type variables with each instantiation of the lambda.
           def with_fresh_bindings(context)
             orig_context = Types::TypingContext.type_variables_register
-            Types::TypingContext.push_context
+            Types::TypingContext.push_context(:lambda)
             fresh_args = args.map do |(type, var, opt)|
               type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}", context)
               context = case type

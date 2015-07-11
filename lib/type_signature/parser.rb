@@ -126,7 +126,6 @@ module TypedRb
       end
 
       def parse_next_elem
-        # binding.pry
         new_type = parse_new_type
         @current_function << new_type unless @current_type.empty?
         @current_function << :<

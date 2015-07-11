@@ -9,7 +9,7 @@ module TypedRb
 
           class << self
             def type_variables_register
-              @type_variables_register ||= Polymorphism::TypeVariableRegister.new
+              @type_variables_register ||= Polymorphism::TypeVariableRegister.new(nil, :top_level)
             end
 
             def type_variable_for(type, variable, hierarchy)
@@ -44,8 +44,8 @@ module TypedRb
               type_variables_register.constraints[variable] || []
             end
 
-            def push_context
-              new_register = Polymorphism::TypeVariableRegister.new(self.type_variables_register)
+            def push_context(type)
+              new_register = Polymorphism::TypeVariableRegister.new(self.type_variables_register, type)
               @type_variables_register.children << new_register
               @type_variables_register = new_register
               new_register
@@ -66,8 +66,8 @@ module TypedRb
               @type_variables_register = old_context
             end
 
-            def clear
-              @type_variables_register = Polymorphism::TypeVariableRegister.new
+            def clear(type)
+              @type_variables_register = Polymorphism::TypeVariableRegister.new(type)
             end
           end
 

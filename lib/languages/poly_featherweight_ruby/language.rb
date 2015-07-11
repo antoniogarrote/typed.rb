@@ -15,7 +15,7 @@ module TypedRb
           eval(expr, TOPLEVEL_BINDING)
           $TYPECHECK = false
           ::BasicObject::TypeRegistry.normalize_types!
-          TypingContext.clear
+          TypingContext.clear(:top_level)
           check_result = check_type(parse(expr))
           @unification_result = run_unification
           check_result
@@ -37,10 +37,10 @@ module TypedRb
 
         def run_unification
           constraints = Types::TypingContext.all_constraints
-          #puts "CONSTRAINTS"
-          #constraints.each do |(l,t,r)|
-          #  puts "#{l} -> #{t} -> #{r}"
-          #end
+          # puts "CONSTRAINTS"
+          # constraints.each do |(l,t,r)|
+          #   puts "#{l} -> #{t} -> #{r}"
+          # end
           Types::Polymorphism::Unification.new(constraints).run(true)
         end
 

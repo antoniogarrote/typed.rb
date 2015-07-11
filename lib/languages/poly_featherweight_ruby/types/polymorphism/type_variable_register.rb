@@ -5,11 +5,15 @@ module TypedRb
         # Polymorphic additions to Featherweight Ruby
         module Polymorphism
           class TypeVariableRegister
-            attr_accessor :parent, :constraints, :children, :type_variables_register
+            attr_accessor :parent, :constraints, :children, :type_variables_register, :kind
 
-            def initialize(parent=nil)
+            def initialize(parent=nil, kind)
+              @kind = kind
               @parent = parent
-              @parent.children << self if @parent
+              if @parent
+                @parent.children << self
+                @parent.children.uniq!
+              end
               @children = []
               @constraints = {}
               @type_variables_register = {}
@@ -17,11 +21,11 @@ module TypedRb
 
             def type_variable_for(type, variable, hierarchy)
               ensure_string(variable)
-              top_level = top_level_register
+              upper_level = upper_class_register
               key = hierarchy.map do |ruby_type|
                 [type, ruby_type, variable]
               end.detect do |constructed_key|
-                top_level.type_variables_register[constructed_key]
+                upper_level.type_variables_register[constructed_key]
               end
               if key.nil?
                 new_var_name = "#{hierarchy.first}:#{variable}"
@@ -29,7 +33,7 @@ module TypedRb
                 type_variables_register[[type, hierarchy.first, variable]] = type_var
                 type_var
               else
-                top_level.type_variables_register[key]
+                upper_level.type_variables_register[key]
               end
             end
 
@@ -174,9 +178,13 @@ module TypedRb
               found
             end
 
-            def top_level_register
+            # We find the first registry that has been created
+            # in the context of a generic class or the top level
+            # registry if none is found.
+            # The registry can be the current one.
+            def upper_class_register
               current = self
-              while current.parent != nil
+              while current.kind != :top_level && current.kind != :class
                 current = current.parent
               end
               current

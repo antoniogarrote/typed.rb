@@ -132,7 +132,9 @@ module TypedRb
             else
               # check the body with the new bindings for the args
               body_return_type = body.check_type(context)
-              if body_return_type.compatible?(function_type.to, :lt)
+              if function_type.to.instance_of?(Types::TyUnit)
+                function_type.to
+              elsif body_return_type.compatible?(function_type.to, :lt)
                 function_type
               # TODO
               # A TyObject(Symbol) should be returned not the function type

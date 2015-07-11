@@ -26,7 +26,6 @@ module TypedRb
           end
 
           def check_type(context)
-            binding.pry
             class_type = Types::Type.parse_singleton_object_type(class_name)
             context = context.add_binding(:self, class_type)
             if class_type.is_a?(Types::TyGenericSingletonObject)
@@ -40,7 +39,7 @@ module TypedRb
 
 
           def with_fresh_bindings(generic_class, context)
-            Types::TypingContext.push_context
+            Types::TypingContext.push_context(:class)
             generic_class.type_vars.each do |type_var|
               type_var = Types::TypingContext.type_variable_for_generic_type(type_var)
               if type_var.upper_bound != Object

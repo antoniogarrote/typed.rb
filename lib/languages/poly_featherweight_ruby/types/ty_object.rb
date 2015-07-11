@@ -52,10 +52,12 @@ module TypedRb
           end
 
           def find_var_type(var)
+            # This is only in case the type has been explicitely declared
             var_type = BasicObject::TypeRegistry.find(:instance_variable, ruby_type, var)
             if var_type
               var_type
             else
+              # If no types has been declared, we'll find a var type in the registry
               Types::TypingContext.type_variable_for(:instance_variable, var, hierarchy)
             end
           end
