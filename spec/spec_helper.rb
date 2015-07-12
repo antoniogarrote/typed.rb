@@ -46,6 +46,62 @@ RSpec.configure do |config|
 end
 
 # Load all files
-def load_family(family)
-  require_relative "../lib/languages/#{family}/init"
+require_relative '../lib/init'
+
+def tyobject(klass)
+  TypedRb::Types::TyObject.new(klass)
+end
+
+def tyinteger
+  TypedRb::Types::TyObject.new(Integer)
+end
+
+def tystring
+  TypedRb::Types::TyObject.new(String)
+end
+
+def tyunit
+  TypedRb::Types::TyUnit.new
+end
+
+def tyboolean
+  TypedRb::Types::TyBoolean.new
+end
+
+def tyvariable(name)
+  TypedRb::Types::Polymorphism::TypeVariable.new(name)
+end
+
+def eval_with_ts(code)
+  ::BasicObject::TypeRegistry.clear
+  $TYPECHECK = true
+  eval(code)
+  ::BasicObject::TypeRegistry.normalize_types!
+end
+
+def find_instance_variable_for(klass, variable, language)
+  language.type_variables.detect{ |v| v.to_s =~ /#{klass}:#{variable}/ }
+end
+
+def expect_binding(language, klass, variable, type)
+  var = find_instance_variable_for(klass, variable, language)
+  expect(var.bound).to_not be_nil
+  expect(var.bound.ruby_type).to be(type)
+end
+
+def top_level_typing_context
+  TypedRb::Types::TypingContext.top_level
+end
+
+def parse(expr)
+  TypedRb::Model::GenSym.reset
+  TypedRb::AstParser.new.parse(expr)
+end
+
+class TypedRb::Types::TypingContext
+  class << self
+    def type_variables_register=(other)
+      @type_variables_register = other
+    end
+  end
 end

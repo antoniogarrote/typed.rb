@@ -2,3 +2,5 @@
 *#
 Gemfile.lock
 .idea
+.bundle
+.DS_Store
