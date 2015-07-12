@@ -2,10 +2,13 @@ source 'https://rubygems.org'
 
 gem 'parser'
 
-gem 'pry'
-gem 'pry-byebug'
-
 group :development do
-  gem 'rubocop', require: false
+  gem 'pry'
+  gem 'pry-byebug'
+end
+
+group :test do
+  gem 'rubocop', :require =>  false
   gem 'rspec'
+  gem 'simplecov', :require => false
 end
