@@ -15,6 +15,7 @@ module TypedRb
 
       def with_block_type(type)
         @block_type = type
+        self
       end
 
       def to_s

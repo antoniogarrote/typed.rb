@@ -13,9 +13,26 @@ describe TypedRb::TypeSignature::Parser do
     expect(result).to eq('Bool')
   end
 
+  it 'parses an atomic type' do
+    result = described_class.parse('Bool...')
+    expect(result).to eq({:type       => 'Array',
+                          :parameters =>  ['Bool'],
+                          :kind       => :rest})
+  end
+
   it 'parses a function type' do
     result = described_class.parse('Bool -> Int')
     expect(result).to eq(['Bool', 'Int'])
+  end
+
+  it 'parses applied type parameters in signatures' do
+    result = described_class.parse('Bool... -> Array[Bool]')
+    expect(result[0]).to eq({:type       => 'Array',
+                             :parameters =>  ['Bool'],
+                             :kind       => :rest})
+    expect(result[1]).to eq({:type       => 'Array',
+                             :parameters =>  [{:type=>"Bool", :bound=>"BasicObject", :kind=>:type_var}],
+                             :kind       => :generic_type})
   end
 
   it 'parses a complex type' do

@@ -57,6 +57,26 @@ class BasicObject
         @generic_types_registry[type]
       end
 
+      def type_vars_for(klass)
+        singleton_object = generic_types_registry[klass]
+        singleton_object.type_vars.map do |type_var|
+          ::TypedRb::Types::Polymorphism::TypeVariable.new(type_var.variable,
+                                                           :upper_bound => type_var.upper_bound,
+                                                           :gen_name => false)
+        end
+      end
+
+      def type_var?(klass, variable)
+        singleton_object = generic_types_registry[klass]
+        if singleton_object
+          singleton_object.type_vars.any? do |type_var|
+            type_var.variable == variable
+          end
+        else
+          false
+        end
+      end
+
       def find(kind, klass, message)
         class_data = registry[[kind, klass]]
         if class_data
@@ -69,6 +89,24 @@ class BasicObject
       end
 
       def normalize_types!
+        normalize_generic_types!
+        normalize_methods!
+      end
+
+      def normalize_generic_types!
+        normalized_generic_types = {}
+        normalized_generic_types = generic_types_registry.inject(normalized_generic_types) do |acc, (_, info)|
+          info[:type] = Object.const_get(info[:type])
+          info[:parameters] = info[:parameters].map do |parameter|
+            ::TypedRb::Types::Type.parse(parameter, info[:type])
+          end
+          acc[info[:type]] = ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
+          acc
+        end
+        @generic_types_registry = normalized_generic_types
+      end
+
+      def normalize_methods!
         normalized = {}
         @registry.each_pair do |kind_receiver, method_signatures|
           parts = kind_receiver.split('|')
@@ -87,31 +125,20 @@ class BasicObject
             if type == :instance
               unless (all_instance_methods).include?(method.to_sym)
                 fail ::TypedRb::Types::TypeParsingError,
-                     "Declared typed instance method '#{method}' not found for class '#{klass}'"
+                "Declared typed instance method '#{method}' not found for class '#{klass}'"
               end
             elsif type == :class
               unless all_methods.include?(method.to_sym)
                 fail ::TypedRb::Types::TypeParsingError,
-                     "Declared typed class method '#{method}' not found for class '#{klass}'"
+                "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
-            signatures_acc[method] = normalize_signature!(klass,signature)
+            signatures_acc[method] = normalize_signature!(klass, signature)
             signatures_acc
           end
           normalized[[type,klass]] = method_signatures
         end
         @registry = normalized
-
-        normalized_generic_types = {}
-        normalized_generic_types = generic_types_registry.inject(normalized_generic_types) do |acc, (_, info)|
-          info[:type] = Object.const_get(info[:type])
-          info[:parameters] = info[:parameters].map do |parameter|
-            ::TypedRb::Types::Type.parse(parameter, info[:type])
-          end
-          acc[info[:type]] = ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
-          acc
-        end
-        @generic_types_registry = normalized_generic_types
       end
 
       def normalize_signature!(klass, type)
@@ -156,6 +183,8 @@ class BasicObject
         TypeRegistry.register_type_information(kind, receiver, message, type_ast)
       end
     end
+  rescue ::StandardError => ex
+    raise ::StandardError, "Error parsing type signature '#{type_signature}': #{ex.message}"
   end
 end
 

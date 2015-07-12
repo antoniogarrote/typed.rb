@@ -127,6 +127,10 @@ module TypedRb
         elsif type.is_a?(Hash) && type[:kind]  == :type_var
           type[:type] = "#{klass}:#{type[:type]}"
           parse_type_var(type)
+        elsif type.is_a?(Hash) && type[:kind]  == :generic_type
+          parse_concrete_type(type, klass)
+        elsif type.is_a?(Hash) && type[:kind]  == :rest
+          parse_rest_args(type)
         else
           parse_object_type(type)
         end
@@ -146,6 +150,50 @@ module TypedRb
         Polymorphism::TypeVariable.new(type[:type],
                                        :upper_bound => TySingletonObject.new(Object.const_get(type[:bound])),
                                        :gen_name    => false)
+      end
+
+      def self.parse_rest_args(type)
+        type_var = Polymorphism::TypeVariable.new('Array:X',
+                                                  :upper_bound => TySingletonObject.new(BasicObject),
+                                                  :gen_name    => false)
+        type_var.bind(TySingletonObject.new(Object.const_get(type[:parameters].first)))
+        Types::TyGenericObject.new(Array, [type_var])
+      end
+
+      def self.parse_concrete_type(type, klass)
+        # parameter_names -> container class type vars
+        parameter_names = (BasicObject::TypeRegistry.type_vars_for(klass) || []).each_with_object({}) do |variable, acc|
+          acc[variable.name.split(':').last] = variable
+        end
+        # this is the concrete argument to parse
+        # it might refer to type vars in the container class
+        ruby_type = Object.const_get(type[:type])
+        is_generic = false
+        concrete_type_vars = []
+        # for each parameter:
+        # - klass.is_variable? -> variable -> generic singletion
+        # - klass.is not variable? ->  bound_type -> generic object
+        BasicObject::TypeRegistry.type_vars_for(ruby_type).each_with_index do |type_var, i|
+          param = type[:parameters][i]
+          maybe_bound_param = parameter_names[param[:type]]
+          parsed_type_var = if maybe_bound_param
+                              is_generic = true
+                              maybe_bound_param
+                            else
+                              concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
+                                                                                     :upper_bound => type_var.upper_bound,
+                                                                                     :gen_name => false)
+                              concrete_param.bind(TySingletonObject.new(Object.const_get(param[:type])))
+                              concrete_param
+                            end
+          concrete_type_vars << parsed_type_var
+        end
+
+        if is_generic
+          Types::TyGenericSingletonObject.new(ruby_type, concrete_type_vars)
+        else
+          Types::TyGenericObject.new(ruby_type, concrete_type_vars)
+        end
       end
 
       def self.parse_object_type(type)
@@ -189,8 +237,9 @@ module TypedRb
 
       def self.parse_function_type(arg_types, klass)
         return_type = parse(arg_types.pop, klass)
-        block_type = if arg_types.last.is_a?(Hash) && arg_types.last[:block]
-                       parse_function_type(arg_types.pop, klass)
+        block_type = if arg_types.last.is_a?(Hash) && arg_types.last[:kind] == :block_arg
+                       block_type = arg_types.pop
+                       parse_function_type(block_type[:block], klass)
                      else
                        nil
                      end

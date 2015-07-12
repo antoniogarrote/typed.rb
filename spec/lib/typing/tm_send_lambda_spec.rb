@@ -84,7 +84,6 @@ __END
 __END
       expect {
         result = language.check(expr)
-        expect(result).to eq(tystring)
       }.to raise_error(StandardError)
 
       expr = <<__END

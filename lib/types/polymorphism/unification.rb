@@ -238,6 +238,7 @@ module TypedRb
           unify(@gt_constraints) # we create links between vars in unify, we need to fold groups afterwards
           @lt_constraints = graph.fold_groups.replace_groups(@lt_constraints)
           unify(@lt_constraints)
+          binding.pry
           unify(@send_constraints)
           graph.do_bindings! if bind_variables
           self
@@ -301,8 +302,10 @@ module TypedRb
 
         def check_constraint(l, t, r, bind = true)
           value_l = graph[l][:type]
+          #value_r = r.is_a?(Hash) ? graph[r][:type] : r
+          value_r = r
           # this will throw an exception if types no compatible
-          compatible_type = compatible_type?(value_l, t, r)
+          compatible_type = compatible_type?(value_l, t, value_r)
           graph[l][:type] = compatible_type if bind
         end
       end

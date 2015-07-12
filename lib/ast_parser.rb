@@ -71,7 +71,7 @@ module TypedRb
       when :send
         parse_send(node, context)
       when :yield
-        parse_yield(node context)
+        parse_yield(node, context)
       when :lvar
         TmVar.new(node.children.first,node)
       when :const
@@ -102,6 +102,7 @@ module TypedRb
       block = parse_lambda(node, context)
       send = parse_send(node.children[0], context)
       send.with_block(block)
+      send
     end
 
     def parse_lambda(node, context)
@@ -133,6 +134,10 @@ module TypedRb
           [:optarg, arg.children.first, map(arg.children.last, context)]
         when :blockarg
           [:blockarg, arg.children.first]
+        when :restarg
+          [:restarg, arg.children.last]
+        else
+          fail StandardError, "Unknown type of arg '#{arg.type}'"
         end
       end
     end
@@ -155,7 +160,7 @@ module TypedRb
     end
 
     def parse_yield(node, context)
-      args = children
+      args = node.children
       TmSend.new(nil, :yield, args.map { |arg| map(arg,context) }, node)
     end
 

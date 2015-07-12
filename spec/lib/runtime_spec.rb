@@ -215,6 +215,80 @@ __END
     expect(::BasicObject::TypeRegistry.registry[[:instance,Container]]['pop'].to.upper_bound.ruby_type).to eq(Numeric)
   end
 
+  it 'parses concrete generic types' do
+    $TYPECHECK = true
+    code = <<__END
+     ts 'type Array[X]'
+     class Array; end
+
+     ts 'type Cnt1[X<Numeric]'
+     class Cnt1
+
+        ts '#f1 / Array[Integer] -> unit'
+        def f1(a); end
+
+        ts '#f2 / Array[X] -> unit'
+        def f2(a); end
+
+     end
+__END
+
+    eval(code)
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    f1_type = ::BasicObject::TypeRegistry.registry[[:instance,Cnt1]]['f1']
+    f2_type = ::BasicObject::TypeRegistry.registry[[:instance,Cnt1]]['f2']
+    expect(f1_type.from.first).to be_instance_of(TypedRb::Types::TyGenericObject)
+    expect(f1_type.from.first.type_vars.first.bound.ruby_type).to eq(Integer)
+    expect(f1_type.from.first.type_vars.first.variable).to eq('Array:X')
+    expect(f2_type.from.first).to be_instance_of(TypedRb::Types::TyGenericSingletonObject)
+    expect(f2_type.from.first.type_vars.first.bound).to eq(nil)
+    expect(f2_type.from.first.type_vars.first.variable).to eq('Cnt1:X')
+  end
+
+  it 'parses function types with variable rest args' do
+    $TYPECHECK = true
+    code = <<__END
+     ts 'type Array[X]'
+     class Array; end
+
+     class Cnt2
+
+        ts '#f1 / String -> Integer... -> unit'
+        def f1(s, *i); end
+
+     end
+__END
+
+    eval(code)
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    f1_type = ::BasicObject::TypeRegistry.registry[[:instance,Cnt2]]['f1']
+    expect(f1_type.from[1]).to be_instance_of(TypedRb::Types::TyGenericObject)
+    expect(f1_type.from[1].type_vars.first.bound.ruby_type).to eq(Integer)
+    expect(f1_type.from[1].type_vars.first.variable).to eq('Array:X')
+  end
+
+  it 'parses function types with block arguments' do
+    $TYPECHECK = true
+    code = <<__END
+    class Cnt3
+       ts '#wblock / Integer -> &(Integer -> Integer) -> Integer'
+       def wblock(x)
+         yield x
+       end
+    end
+__END
+
+    eval(code)
+    ::BasicObject::TypeRegistry.normalize_types!
+
+    wblock_type = ::BasicObject::TypeRegistry.registry[[:instance,Cnt3]]['wblock']
+    expect(wblock_type.block_type.from.size).to eq(1)
+    expect(wblock_type.block_type.from.first.ruby_type).to eq(Integer)
+    expect(wblock_type.block_type.to.ruby_type).to eq(Integer)
+  end
+
   describe '.find' do
 
     it 'finds registered function types' do

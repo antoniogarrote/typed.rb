@@ -1,0 +1,57 @@
+class BasicObject
+  ts '#initialize / -> unit'
+  ts '#! / -> Boolean'
+  ts '#!= / BasicObject -> Boolean'
+  ts '#== / BasicObject -> Boolean'
+  ts '#__id__ / -> Integer'
+  ts '#object_id / -> Integer'
+  ts '#send / BasicObject -> BasicObject... -> BasicObject'
+  ts '#__send__ / BasicObject -> BasicObject... -> BasicObject'
+  ts '#equal? / BasicObject -> Boolean'
+  ts '#instance_eval / String -> String -> Integer -> &(BasicObject -> unit) -> BasicObject'
+  ts '#method_missing / Symbol -> BasicObject... -> BasicObject'
+  ts '#singleton_method_added / Symbol -> unit'
+  ts '#singleton_method_removed / Symbol -> unit'
+  ts '#singleton_method_undefined / Symbol -> unit'
+  ts '#ts / String -> unit'
+end
+
+
+module Kernel
+  ts '#Array / Range -> Array[Integer]'
+  ts '#Complex / BasicObject -> Integer -> Complex'
+  ts '#Float / BasicObject -> Float'
+  ts '#Hash / BasicObject -> Hash[BasicObject][BasicObject]'
+  ts '#Integer / BasicObject -> Integer -> Integer'
+  ts '#Rational / BasicObject -> Rational'
+  ts '#String / BasicObject -> String'
+  ts '#__callee__ / -> Symbol'
+  ts '#__dir__ / -> String'
+  ts '#__method__ / -> Symbol'
+  ts '#` / String -> BasicObject'
+  ts '#abort / String -> unit'
+  ts '.abort / String -> unit'
+  ts '#at_exit / &(-> unit) -> Proc'
+  ts '#autoload / BasicObject -> String -> unit'
+  ts '#autoload? / Symbol -> String'
+  ts '#binding / -> Binding'
+  ts '#block_given? / -> Boolean'
+  ts '#callcc / (Continuation -> BasicObject) -> BasicObject'
+  ts '#caller / Integer -> Integer -> Array[String]'
+  ts '#caller / Range -> Array[String]'
+end
+
+ts 'type Array[X]'
+class Array
+
+  ts '.[] / [X]... -> Array[X]'
+  ts '#initialize / BasicObject... -> Array[X]'
+  ts '#& / Array[X] -> Array[X]'
+  ts '#* / Integer -> Array[X]'
+  ts '#+ / Array[X] -> Array[X]'
+  ts '#- / Array[X] -> Array[X]'
+  ts '#<< / [X] -> Array[X]'
+  ts '#<=> / Array[X] -> Integer'
+  ts '#== / Array[X] -> Array[X]'
+  ts '#[] / Integer -> [X]'
+end

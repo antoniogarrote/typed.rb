@@ -35,6 +35,8 @@ module TypedRb
             "#{GenSym.resolve(arg[1])}:#{arg[2].type}"
           when :blockarg
             "&#{GenSym.resolve(arg.last)}"
+          when :restarg
+            "*#{GenSym.resolve(arg.last)}"
           end
         end
         "#{name}(#{args_str.join(',')}){ \n\t#{body}\n }"
@@ -97,7 +99,7 @@ module TypedRb
           args.each_with_index do |arg, i|
             function_arg_type = function_type.from[i]
             context = case arg.first
-                      when :arg
+                      when :arg, :restarg
                         context.add_binding(arg[1], function_arg_type)
                       when :optarg
                         declared_arg_type = arg.last.check_type(orig_context)

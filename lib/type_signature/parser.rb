@@ -135,6 +135,9 @@ module TypedRb
       def parse_new_type
         new_type = @current_type.join
         new_type = :unit if new_type == 'unit'
+        if new_type.to_s.end_with?('...')
+          new_type =  { :type => 'Array', :kind => :rest, :parameters => [new_type.split('...').first] }
+        end
         new_type
       end
     end

@@ -114,4 +114,72 @@ __CODE
       end.not_to raise_error
     end
   end
+
+  context 'with application with rest args' do
+
+    context 'with correct types' do
+      let(:code) do
+        text = <<__CODE
+       ts '#f / Integer -> Integer... -> String'
+       def f(a, *b)
+         'string'
+       end
+
+       f(2, 3, 4, 5)
+__CODE
+        text
+      end
+
+      it 'should not raise a type error' do
+
+        expect do
+          res = ast.check_type(TypedRb::Types::TypingContext.top_level)
+          expect(res.ruby_type).to eq(String)
+        end.not_to raise_error
+      end
+    end
+
+    context 'with erroneous types' do
+      let(:code) do
+        text = <<__CODE
+       ts '#f / Integer -> Integer... -> String'
+       def f(a, *b)
+         'string'
+       end
+
+       f(2, 'a', 'b')
+__CODE
+        text
+      end
+
+      it 'should raise a type error' do
+
+        expect do
+          ast.check_type(TypedRb::Types::TypingContext.top_level)
+        end.to raise_error(StandardError)
+      end
+    end
+
+    context 'with missing rest args' do
+      let(:code) do
+        text = <<__CODE
+       ts '#f / Integer -> Integer... -> String'
+       def f(a, *b)
+         'string'
+       end
+
+       f(2)
+__CODE
+        text
+      end
+
+      it 'should not raise a type error' do
+
+        expect do
+          res = ast.check_type(TypedRb::Types::TypingContext.top_level)
+          expect(res.ruby_type).to eq(String)
+        end.not_to raise_error
+      end
+    end
+  end
 end

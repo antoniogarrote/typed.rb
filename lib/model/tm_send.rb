@@ -138,7 +138,7 @@ module TypedRb
           check_args_application(parameters_info, formal_parameters, args, context)
           if @block
             block_type = @block.check_type(context)
-            function_type.with_block_type.compatible?(block_type, :lt)
+            function_type.with_block_type(block_type).compatible?(block_type, :lt)
           end
           function_type.to
         end
@@ -152,14 +152,30 @@ module TypedRb
         parameters_info.each_with_index do |(require_info, arg_name), index|
           actual_argument = actual_arguments[index]
           formal_parameter_type = formal_parameters[index]
-          if actual_argument.nil? && require_info != :opt
+          if actual_argument.nil? && require_info != :opt && require_info != :rest
             fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
           else
-            unless actual_argument.nil? # opt if this is nil
-              actual_argument_type = actual_argument.check_type(context)
-              unless actual_argument_type.compatible?(formal_parameter_type, :lt)
-                error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
-                fail TypeError.new(error_message, self)
+            if require_info == :rest
+              rest_type = formal_parameter_type.type_vars.first
+              formal_parameter_type = if rest_type.bound
+                                        rest_type.bound
+                                      else
+                                        rest_type
+                                      end
+              actual_arguments[index..-1].each do |actual_argument|
+                unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
+                  error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
+                  fail TypeError.new(error_message, self)
+                end
+              end
+              break
+            else
+              unless actual_argument.nil? # opt if this is nil
+                actual_argument_type = actual_argument.check_type(context)
+                unless actual_argument_type.compatible?(formal_parameter_type, :lt)
+                  error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
+                  fail TypeError.new(error_message, self)
+                end
               end
             end
           end
