@@ -63,8 +63,9 @@ module TypedRb
           end
 
           def find_function_type_in_hierarchy(kind, message)
-            @hierarchy.inject(nil) do |acc, type|
-              if acc
+            initial_value = BasicObject::TypeRegistry.find(kind, @hierarchy.first, message)
+            @hierarchy.drop(1).inject(initial_value) do |acc, type|
+              unless acc.is_a?(TyDynamicFunction)
                 acc
               else
                 BasicObject::TypeRegistry.find(kind, type, message)

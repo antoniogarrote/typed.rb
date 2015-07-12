@@ -1,5 +1,7 @@
 require_relative '../spec_helper'
 
+#TODO: parsing function will return a symbol, not the function
+# some of this specs expectations need to change
 describe TypedRb::Languages::PolyFeatherweightRuby::Model::TmSend do
   let(:language) { TypedRb::Languages::PolyFeatherweightRuby::Language.new }
 
@@ -127,8 +129,8 @@ __END
         mammal_to_i(animalf)
       end
 __END
-        result = language.check(expr)
-        expect(result.to_s).to eq('((Animal -> Integer) -> Integer)')
+      result = language.check(expr)
+      expect(result.to_s).to eq('((Animal -> Integer) -> Integer)')
     end
 
     it 'respects covariance in the output type' do

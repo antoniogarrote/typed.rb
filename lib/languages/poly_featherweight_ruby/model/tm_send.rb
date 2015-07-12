@@ -131,15 +131,19 @@ module TypedRb
           end
 
           def check_application(receiver_type, function_type, context)
-            formal_parameters = function_type.from
-            method = receiver_type.resolve_ruby_method(message)
-            parameters_info = method.parameters
-            check_args_application(parameters_info, formal_parameters, args, context)
-            if @block
-              block_type = @block.check_type(context)
-              function_type.with_block_type.compatible?(block_type, :lt)
+            if function_type.is_a?(Types::TyDynamicFunction)
+              function_type.to
+            else
+              formal_parameters = function_type.from
+              method = receiver_type.resolve_ruby_method(message)
+              parameters_info = method.parameters
+              check_args_application(parameters_info, formal_parameters, args, context)
+              if @block
+                block_type = @block.check_type(context)
+                function_type.with_block_type.compatible?(block_type, :lt)
+              end
+              function_type.to
             end
-            function_type.to
           end
 
           def check_lambda_application(lambda_type, context)

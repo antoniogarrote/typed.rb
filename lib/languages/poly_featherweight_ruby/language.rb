@@ -41,7 +41,9 @@ module TypedRb
           # constraints.each do |(l,t,r)|
           #   puts "#{l} -> #{t} -> #{r}"
           # end
-          Types::Polymorphism::Unification.new(constraints).run(true)
+          unif = Types::Polymorphism::Unification.new(constraints)
+          #unif.print_constraints
+          unif.run(true)
         end
 
         def type_variables

@@ -29,8 +29,12 @@ module TypedRb
                   then_expr_type
                 elsif else_expr_type.is_a?(Types::Polymorphism::TypeVariable)
                   else_expr_type
+                elsif Types::TyError.is?(then_expr_type)
+                  else_expr_type
+                elsif then_expr_type.is_a?(Types::TyDynamic) || then_expr_type.is_a?(Types::TyDynamicFunction)
+                  else_expr_type
                 else
-                  Types::TyError.is?(then_expr_type) ? else_expr_type : then_expr_type
+                  then_expr_type
                 end
               else
                 fail TypeError.new('Arms of conditional have different types', self)

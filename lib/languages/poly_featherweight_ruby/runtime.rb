@@ -4,7 +4,7 @@ require_relative('./types')
 class Integer
   # ts '#+ / Integer -> Integer'
   def +(other)
-    raise StandardError.new('Error invoking abstract method Integer#+')
+    fail StandardError.new('Error invoking abstract method Integer#+')
   end
 
   # TODO
@@ -60,9 +60,11 @@ class BasicObject
       def find(kind, klass, message)
         class_data = registry[[kind, klass]]
         if class_data
-          class_data[message.to_s]
-        else
+          class_data[message.to_s] || ::TypedRb::Languages::PolyFeatherweightRuby::Types::TyDynamicFunction.new(klass, message)
+        elsif kind == :instance_variable || kind == :class_variable
           nil
+        else
+          ::TypedRb::Languages::PolyFeatherweightRuby::Types::TyDynamicFunction.new(klass, message)
         end
       end
 

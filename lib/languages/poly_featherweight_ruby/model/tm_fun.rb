@@ -84,63 +84,66 @@ module TypedRb
             function_type = owner_type.find_function_type(name)
             if function_type.nil?
               fail TypeError.new("Function #{owner}##{name} cannot find function type information for owner.", self)
-            end
-
-            # check matching args
-            if function_type.from.size != args.size
-              fail TypeError.new("Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}.", self)
-            end
-
-
-            orig_context = context.dup
-
-            args.each_with_index do |arg, i|
-              function_arg_type = function_type.from[i]
-              context = case arg.first
-                        when :arg
-                          context.add_binding(arg[1], function_arg_type)
-                        when :optarg
-                          declared_arg_type = arg.last.check_type(orig_context)
-                          if declared_arg_type.compatible?(function_arg_type)
-                            context.add_binding(arg[1], function_arg_type)
-                          else
-                            error_message = "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
-                            fail TypeError.new(error_message, self)
-                          end
-                        when :blockarg
-                          if(function_type.block_type)
-                            context.add_binding(arg[1], function_type.block_type)
-                          else
-                            fail TypeError.new("Function #{owner}##{name} missing block type for block argument #{arg[1]}", self)
-                          end
-                        else
-                          fail TypeError.new("Function #{owner}##{name} unknown type of arg #{arg.first}", self)
-                        end
-            end
-
-            # pointing self to the right type
-            context = context.add_binding(:self, owner_type)
-
-            # adding yield binding if present
-            context = context.add_binding(:yield, function_type.block_type) if function_type.block_type
-
-            if is_constructor
-              # constructor
-              body.check_type(context)
-              function_type
+            elsif function_type.is_a?(Types::TyDynamicFunction)
+              # missing type information stop checking types
+              # TODO: raise a warning here
             else
-              # check the body with the new bindings for the args
-              body_return_type = body.check_type(context)
-              if function_type.to.instance_of?(Types::TyUnit)
-                function_type.to
-              elsif body_return_type.compatible?(function_type.to, :lt)
+              # check matching args
+              if function_type.from.size != args.size
+                fail TypeError.new("Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}.", self)
+              end
+
+
+              orig_context = context.dup
+
+              args.each_with_index do |arg, i|
+                function_arg_type = function_type.from[i]
+                context = case arg.first
+                          when :arg
+                            context.add_binding(arg[1], function_arg_type)
+                          when :optarg
+                            declared_arg_type = arg.last.check_type(orig_context)
+                            if declared_arg_type.compatible?(function_arg_type)
+                              context.add_binding(arg[1], function_arg_type)
+                            else
+                              error_message = "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
+                              fail TypeError.new(error_message, self)
+                            end
+                          when :blockarg
+                            if(function_type.block_type)
+                              context.add_binding(arg[1], function_type.block_type)
+                            else
+                              fail TypeError.new("Function #{owner}##{name} missing block type for block argument #{arg[1]}", self)
+                            end
+                          else
+                            fail TypeError.new("Function #{owner}##{name} unknown type of arg #{arg.first}", self)
+                          end
+              end
+
+              # pointing self to the right type
+              context = context.add_binding(:self, owner_type)
+
+              # adding yield binding if present
+              context = context.add_binding(:yield, function_type.block_type) if function_type.block_type
+
+              if is_constructor
+                # constructor
+                body.check_type(context)
                 function_type
-              # TODO
-              # A TyObject(Symbol) should be returned not the function type
-              # x = def id(x); x; end / => x == :id
               else
-                error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
-                fail TypeError.new(error_message, self)
+                # check the body with the new bindings for the args
+                body_return_type = body.check_type(context)
+                if function_type.to.instance_of?(Types::TyUnit)
+                  function_type.to
+                elsif body_return_type.compatible?(function_type.to, :lt)
+                  function_type
+                # TODO
+                # A TyObject(Symbol) should be returned not the function type
+                # x = def id(x); x; end / => x == :id
+                else
+                  error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
+                  fail TypeError.new(error_message, self)
+                end
               end
             end
           end

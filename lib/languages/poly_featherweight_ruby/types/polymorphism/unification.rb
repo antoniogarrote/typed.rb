@@ -32,7 +32,7 @@ module TypedRb
               if join_if_false
                 value_l.join(value_r)
               else
-                raise error
+                fail error
               end
             end
 
