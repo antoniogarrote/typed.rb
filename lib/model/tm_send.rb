@@ -76,7 +76,7 @@ module TypedRb
         function_type = self_type.find_function_type(:initialize)
         if function_type.nil?
           error_message = "Error typing message, type information for #{receiver_type} constructor found."
-          fail TypeError.new(error_message, self)
+          fail TypeCheckError, error_message
         else
           # function application
           @message = :initialize
@@ -94,7 +94,7 @@ module TypedRb
           function_type = self_type.find_function_type(message)
           if function_type.nil?
             error_message = "Error typing message, type information for #{self_type}:#{message} found."
-            fail TypeError.new(error_message, self)
+            fail TypeCheckError error_message
           else
             # function application
             check_application(self_type, function_type, context)
@@ -116,7 +116,7 @@ module TypedRb
           function_type = receiver_type.find_function_type(message)
           if function_type.nil?
             error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
-            fail TypeError.new(error_message, self)
+            fail TypeCheckError, error_message
           else
             # function application
             check_application(receiver_type, function_type, context)
@@ -153,7 +153,7 @@ module TypedRb
           actual_argument = actual_arguments[index]
           formal_parameter_type = formal_parameters[index]
           if actual_argument.nil? && require_info != :opt && require_info != :rest
-            fail TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
+            fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver_type}##{message}"
           else
             if require_info == :rest
               rest_type = formal_parameter_type.type_vars.first
@@ -165,7 +165,7 @@ module TypedRb
               actual_arguments[index..-1].each do |actual_argument|
                 unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
                   error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
-                  fail TypeError.new(error_message, self)
+                  fail TypeCheckError, error_message
                 end
               end
               break
@@ -174,7 +174,7 @@ module TypedRb
                 actual_argument_type = actual_argument.check_type(context)
                 unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                   error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
-                  fail TypeError.new(error_message, self)
+                  fail TypeCheckError, error_message
                 end
               end
             end

@@ -63,7 +63,7 @@ __CODE
 
       expect {
         language.check("#{code}; Pod2.(Integer)")
-      }.to raise_error(StandardError)
+      }.to raise_error(TypedRb::TypeCheckError)
 
       result = language.check("#{code}; Pod2.(Float)")
       expect(result.type_vars[0].bound.ruby_type).to eq(Float)
@@ -94,7 +94,7 @@ __CODE
 
       expect {
         language.check("#{code}; p = Pod3.(Integer).new(0.0); p.put(2.0)")
-      }.to raise_error(StandardError)
+      }.to raise_error(TypedRb::TypeCheckError)
 
       result = language.check("#{code}; p = Pod3.(Integer).new(0); p.put(2); p.get")
       expect(result.ruby_type).to eq(Integer)

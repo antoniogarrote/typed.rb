@@ -36,7 +36,7 @@ module TypedRb
             Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
           else
             # TODO: improve message
-            fail Model::TypeError, 'Incompatible type function found'
+            fail TypeCheckError, 'Incompatible type function found'
           end
         end
       end

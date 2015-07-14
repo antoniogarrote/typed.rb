@@ -1,7 +1,14 @@
 module TypedRb
+
+  class TypeCheckError < TypeError
+    def initialize(msg)
+      super(msg)
+    end
+  end
+
   module Types
 
-    class TypeParsingError < StandardError; end
+    class TypeParsingError < TypeCheckError; end
 
     class TypingContext
 

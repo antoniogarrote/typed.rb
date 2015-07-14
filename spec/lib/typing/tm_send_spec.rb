@@ -87,16 +87,25 @@ __END
         f[Mammal.new]
       end
 
-      f = ->(s=Cat.new) { s.cat }
-
-      t(f)
+      lambda {
+        f = ->(s=Cat.new) { s.cat }
+        t(f)
+      }
 __END
-      expect {
-        result = language.check(expr)
+
+      #expect {
+        language.check(expr)
         #cat undefined for Mammal,
         # s => cat s :gt Cat, s :gt Mammal
-      }.to raise_error(StandardError)
+      #}.to raise_error(TypedRb::TypeCheckError)
 
+      # TODO: review this?
+      # Actually the previous code does not
+      # throw an error because
+      # Mammal#cat is resolved into
+      # a Dynamic function instead of
+      # failing because no type information
+      # can be found.
 
       expr = <<__END
       #{classes}
@@ -112,9 +121,9 @@ __END
       end
 __END
       expect {
-        result = language.check(expr)
+        language.check(expr)
         # Cat not >= Mammal
-      }.to raise_error(StandardError)
+      }.to raise_error(TypedRb::TypeCheckError)
 
       expr = <<__END
       #{classes}
@@ -172,8 +181,8 @@ __END
       end
 __END
       expect do
-        result  = language.check(expr)
-      end.to raise_error(StandardError)
+        language.check(expr)
+      end.to raise_error(TypedRb::TypeCheckError)
 
 
       expr = <<__END

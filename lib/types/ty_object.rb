@@ -1,7 +1,7 @@
 module TypedRb
   module Types
 
-    class UncomparableTypes < StandardError
+    class UncomparableTypes < TypeCheckError
       attr_reader :from, :to
       def initialize(from, to)
         super("Cannot compare types #{from} <=> #{to}")
@@ -27,6 +27,10 @@ module TypedRb
           @hierarchy = (modules + classes).uniq
           @with_ruby_type = false
         end
+      end
+
+      def dynamic?
+        false
       end
 
       def compatible?(other_type, relation = :lt)

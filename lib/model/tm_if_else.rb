@@ -35,10 +35,10 @@ module TypedRb
               then_expr_type
             end
           else
-            fail TypeError.new('Arms of conditional have different types', self)
+            fail TypeCheckError, 'Arms of conditional have different types'
           end
         else
-          fail TypeError.new('Expected Bool type in if conditional expression', @condition_expr)
+          fail TypeCheckError, 'Expected Bool type in if conditional expression'
         end
       end
 

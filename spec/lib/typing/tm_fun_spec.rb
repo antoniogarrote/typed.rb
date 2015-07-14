@@ -156,7 +156,7 @@ __CODE
 
         expect do
           ast.check_type(TypedRb::Types::TypingContext.top_level)
-        end.to raise_error(StandardError)
+        end.to raise_error(TypedRb::TypeCheckError)
       end
     end
 

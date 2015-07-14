@@ -84,7 +84,7 @@ __END
 __END
       expect {
         result = language.check(expr)
-      }.to raise_error(StandardError)
+      }.to raise_error(TypedRb::TypeCheckError)
 
       expr = <<__END
      class Integer

@@ -7,6 +7,10 @@ module TypedRb
       def compatible?(other_type, relation = :lt)
         true
       end
+
+      def dynamic?
+        true
+      end
     end
 
     class TyDynamicFunction < TyFunction
@@ -15,6 +19,10 @@ module TypedRb
         @klass = klass
         @message = message
         @block_type = TyDynamicFunction.new(Proc, :cal, false) if with_block
+      end
+
+      def dynamic?
+        true
       end
 
       def check_args_application; end

@@ -61,13 +61,17 @@ module TypedRb
         end
 
         def can_apply?(fn, arg_types)
-          arg_types.each_with_index do |arg, i|
-            fn_arg = fn.from[i]
-            if arg.is_a?(TypeVariable)
-              type = compatible_lt_type?(graph[arg][:type], fn_arg)
-              graph[arg][:type] = type
-            else
-              compatible_lt_type?(arg, fn_arg)
+          if fn.dynamic?
+            true
+          else
+            arg_types.each_with_index do |arg, i|
+              fn_arg = fn.from[i]
+              if arg.is_a?(TypeVariable)
+                type = compatible_lt_type?(graph[arg][:type], fn_arg)
+                graph[arg][:type] = type
+              else
+                compatible_lt_type?(arg, fn_arg)
+              end
             end
           end
         end
@@ -137,9 +141,11 @@ module TypedRb
         end
 
         def do_bindings!
+          # puts "DOING BINDINGS"
           groups.values.each do |group|
             next unless group[:type]
             group[:vars].keys.each do |var|
+              # puts "#{var.variable} -> #{find_type(group[:type])}"
               var.bind(find_type(group[:type]))
             end
           end
@@ -235,10 +241,10 @@ module TypedRb
         end
 
         def run(bind_variables = true)
+          #print_constraints
           unify(@gt_constraints) # we create links between vars in unify, we need to fold groups afterwards
           @lt_constraints = graph.fold_groups.replace_groups(@lt_constraints)
           unify(@lt_constraints)
-          binding.pry
           unify(@send_constraints)
           graph.do_bindings! if bind_variables
           self

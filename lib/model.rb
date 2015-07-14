@@ -32,14 +32,6 @@ module TypedRb
       end
     end
 
-    class TypeError < StandardError
-      attr_reader :term
-      def initialize(msg, term)
-        super(msg)
-        @term = term
-      end
-    end
-
     class Expr
       attr_reader :line, :col, :type, :node
       def initialize(node, type = nil)
@@ -50,7 +42,7 @@ module TypedRb
       end
 
       def check_type(_context)
-        fail(TypeError, 'Unknown type', self) if @type.nil?
+        fail TypeCheckError, 'Unknown type' if @type.nil?
         @type
       end
 

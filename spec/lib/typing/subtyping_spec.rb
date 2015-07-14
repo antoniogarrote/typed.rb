@@ -88,7 +88,7 @@ __CODE
     it 'should raise a type error' do
       expect {
         ast.check_type(TypedRb::Types::TypingContext.top_level)
-      }.to raise_error(TypedRb::Model::TypeError)
+      }.to raise_error(TypedRb::TypeCheckError)
     end
   end
 

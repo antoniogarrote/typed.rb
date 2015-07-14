@@ -18,6 +18,10 @@ module TypedRb
         self
       end
 
+      def dynamic?
+        false
+      end
+
       def to_s
         "(#{@from.map(&:to_s).join(',')} -> #{@to})"
       end
@@ -27,13 +31,13 @@ module TypedRb
           actual_argument = actual_arguments[index]
           from_type = from[index]
           if actual_argument.nil? && require_info != :opt
-            fail Model::TypeError.new("Missing mandatory argument #{arg_name} in #{receiver_type}##{message}", self)
+            fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver_type}##{message}"
           else
             unless actual_argument.nil? # opt if this is nil
               actual_argument_type = actual_argument.check_type(context)
               unless actual_argument_type.compatible?(from_type, :lt)
                 error_message = "#{error_message} #{from_type} expected, #{argument_type} found"
-                fail Model::TypeError.new(error_message, self)
+                fail TypeCheckError, error_message
               end
             end
           end
@@ -57,7 +61,7 @@ module TypedRb
             return false
           end
         else
-          fail Model::TypeError.new('Comparing function type with no function type', self)
+          fail TypeCheckError, 'Comparing function type with no function type'
         end
 
         return true

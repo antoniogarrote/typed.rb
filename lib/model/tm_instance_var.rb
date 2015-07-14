@@ -25,9 +25,7 @@ module TypedRb
       def check_type(context)
         self_type = context.get_type_for(:self)
         type = self_type.find_var_type(val)
-        if type.nil?
-          fail TypeError.new("Cannot find type for variable #{val}", self)
-        end
+        fail TypeCheckError, "Cannot find type for variable #{val}" if type.nil?
         type
       end
     end

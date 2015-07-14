@@ -24,28 +24,34 @@ __END
      def wblock(x)
        yield x
      end
-
-     wblock('2') { |n| n + 1 }
+     lambda {
+       wblock('2') { |n| n + 1 }
+     }
 __END
 
       expect {
         language.check(expr)
-      }.to raise_error(StandardError)
+      }.to raise_error(TypedRb::TypeCheckError)
     end
 
     it 'type-checks correctly errors in the block arguments type' do
       expr = <<__END
+     class Integer
+       ts '#+ / Integer -> Integer'
+     end
+
      ts '#wblock / Integer -> &(Integer -> Integer) -> Integer'
      def wblock(x)
        yield x
      end
-
-     wblock(2) { |n| n + '1' }
+     lambda {
+       wblock(2) { |n| n + '1' }
+     }
 __END
 
       expect {
         language.check(expr)
-      }.to raise_error(StandardError)
+      }.to raise_error(TypedRb::TypeCheckError)
     end
 
     it 'type-checks correctly errors in the block return type' do
@@ -59,8 +65,8 @@ __END
 __END
 
       expect {
-        result = language.check(expr)
-      }.to raise_error(StandardError)
+        language.check(expr)
+      }.to raise_error(TypedRb::TypeCheckError)
     end
   end
 end
