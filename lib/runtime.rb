@@ -170,7 +170,12 @@ class BasicObject
           if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
             receiver = :main
           elsif self.instance_of?(::Class)
-            receiver = self.name
+            receiver = if name.nil?
+                         # singleton classes
+                         self.to_s.match(/Class:(.*)>/)[1]
+                       else
+                         self.name
+                       end
           else
             receiver = self.class.name
           end

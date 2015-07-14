@@ -153,7 +153,7 @@ module TypedRb
       def parse_owner(owner)
         if owner.nil?
           nil
-        elsif owner.type == :self
+        elsif owner == :self || owner.type == :self
           :self
         else # must be a class or other expression we can check the type
           owner

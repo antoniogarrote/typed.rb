@@ -10,16 +10,27 @@ module TypedRb
       @types_stack = []
     end
 
-    def type=(type)
+    def push(type)
       @types_stack << type
     end
 
-    def type
+    def pop
       @types_stack.pop
     end
 
+    def with_type(type)
+      push type
+      result = yield
+      pop
+      result
+    end
+
     def context_name
-      #TODO
+      @types_stack.last.join('::')
+    end
+
+    def singleton_class?
+      @types_stack.last.first == :self rescue false
     end
   end
 
@@ -76,6 +87,8 @@ module TypedRb
         TmVar.new(node.children.first,node)
       when :const
         TmConst.new(parse_const(node), node)
+      when :sclass
+        parse_sclass(node, context)
       else
         fail StandardError, "Unknown term #{node.type}: #{node}"
       end
@@ -168,8 +181,22 @@ module TypedRb
       fail StandardError, "Nil value parsing class" if node.nil? # No explicit class -> Object by default
       class_name = parse_const(node.children[0])
       super_class_name = parse_const(node.children[1]) || 'Object'
-      class_body = map(node.children[2], context)
-      TmClass.new(class_name, super_class_name, class_body, node)
+      context.with_type([:class, class_name, super_class_name]) do
+        class_body = map(node.children[2], context)
+        TmClass.new(class_name, super_class_name, class_body, node)
+      end
+    end
+
+    def parse_sclass(node, context)
+      class_name = if node.children[0].type == :self
+                     :self
+                   else
+                     parse_const(node.children[0])
+                   end
+      context.with_type([:self, class_name]) do
+        class_body = map(node.children[1], context)
+        TmSClass.new(class_name, class_body, node)
+      end
     end
 
     def parse_const(const_node, accum = [])
@@ -184,32 +211,35 @@ module TypedRb
 
     def parse_def(node, context)
       fun_name, args, body = node.children
-      if args.type != :args
-        fail StandardError,"Error parsing function args [#{args}]"
-      end
-      tm_body = if body.nil?
-                  TmNil.new(node)
-                else
-                  map(body, context)
-                end
-      TmFun.new(nil, fun_name, parse_args(args.children, context), tm_body, node)
+      owner = if context.singleton_class?
+                :self
+              else
+                nil
+              end
+      parse_fun(owner, fun_name, args, body, node, context)
     end
 
     def parse_defs(node, context)
       owner, fun_name, args, body = node.children
+      parse_fun(owner, fun_name, args, body, node, context)
+    end
+
+    def parse_fun(owner, fun_name, args, body, node, context)
       if args.type != :args
         fail StandardError,"Error parsing function args [#{args}]"
       end
       # parse the owner of the function
-      owner = if owner.type == :const
-                parse_class(owner, context)
+      owner = if owner.nil? || owner == :self
+                owner
+              elsif owner.type == :const
+                TmConst.new(parse_const(owner), node)
               elsif owner.type == :self
                 owner
               else
                 map(owner, context)
               end
       tm_body = if body.nil?
-                  TmNil.new
+                  TmNil.new(node)
                 else
                   map(body, context)
                 end
