@@ -4,8 +4,6 @@ class BasicObject
   ts '#!= / BasicObject -> Boolean'
   ts '#== / BasicObject -> Boolean'
   ts '#__id__ / -> Integer'
-  ts '#object_id / -> Integer'
-  ts '#send / BasicObject -> BasicObject... -> BasicObject'
   ts '#__send__ / BasicObject -> BasicObject... -> BasicObject'
   ts '#equal? / BasicObject -> Boolean'
   ts '#instance_eval / String -> String -> Integer -> &(BasicObject -> unit) -> BasicObject'
@@ -18,6 +16,8 @@ end
 
 
 module Kernel
+  ts '#send / BasicObject -> BasicObject... -> BasicObject'
+  ts '#object_id / -> Integer'
   ts '#Array / Range -> Array[Integer]'
   ts '#Complex / BasicObject -> Integer -> Complex'
   ts '#Float / BasicObject -> Float'
@@ -41,17 +41,34 @@ module Kernel
   ts '#caller / Range -> Array[String]'
 end
 
-ts 'type Array[X]'
+ts 'type Array[T]'
 class Array
 
-  ts '.[] / [X]... -> Array[X]'
-  ts '#initialize / BasicObject... -> Array[X]'
-  ts '#& / Array[X] -> Array[X]'
-  ts '#* / Integer -> Array[X]'
-  ts '#+ / Array[X] -> Array[X]'
-  ts '#- / Array[X] -> Array[X]'
-  ts '#<< / [X] -> Array[X]'
-  ts '#<=> / Array[X] -> Integer'
-  ts '#== / Array[X] -> Array[X]'
-  ts '#[] / Integer -> [X]'
+  ts '.[] / [T]... -> Array[T]'
+  ts '#initialize / BasicObject... -> Array[T]'
+  ts '#& / Array[T] -> Array[T]'
+  ts '#* / Integer -> Array[T]'
+  ts '#+ / Array[T] -> Array[T]'
+  ts '#- / Array[T] -> Array[T]'
+  ts '#<< / [T] -> Array[T]'
+  ts '#<=> / Array[T] -> Integer'
+  ts '#== / Array[T] -> Array[T]'
+  ts '#[] / Integer -> [T]'
+end
+
+
+ts 'type Hash[T][U]'
+class Hash; end
+
+ts 'type Range[T]'
+class Range; end
+
+class Integer
+  ts '#+ / Integer -> Integer'
+  def +(other)
+    fail StandardError.new('Error invoking abstract method Integer#+')
+  end
+
+  # TODO
+  # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
 end

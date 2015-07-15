@@ -141,11 +141,11 @@ module TypedRb
         end
 
         def do_bindings!
-          # puts "DOING BINDINGS"
+          TypedRb.log(self, :debug, "Doing bindings:")
           groups.values.each do |group|
             next unless group[:type]
             group[:vars].keys.each do |var|
-              # puts "#{var.variable} -> #{find_type(group[:type])}"
+              TypedRb.log(self, :debug, "  #{var.variable} -> #{find_type(group[:type])}")
               var.bind(find_type(group[:type]))
             end
           end

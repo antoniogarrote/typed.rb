@@ -169,6 +169,7 @@ module TypedRb
 
       def self.parse_concrete_type(type, klass)
         # parameter_names -> container class type vars
+        TypedRb.log(self, :debug, "Parsing concrete type #{type} within #{klass}")
         parameter_names = (BasicObject::TypeRegistry.type_vars_for(klass) || []).each_with_object({}) do |variable, acc|
           acc[variable.name.split(':').last] = variable
         end
@@ -212,11 +213,9 @@ module TypedRb
             TyObject.new(ruby_type)
           end
         rescue StandardError => e
-          puts e.message
-          #puts "ERROR"
-          #puts type
-          #puts type.inspect
-          #puts "==========================================="
+          TypedRb.log(self, :debug, e.message)
+          TypedRb.log(self, :debug, type)
+          TypedRb.log(self, :debug, type.inspect)
           fail TypeParsingError, "Unknown Ruby type #{type}"
         end
       end
@@ -231,11 +230,9 @@ module TypedRb
             TySingletonObject.new(ruby_type)
           end
         rescue StandardError => e
-          puts e.message
-          #puts "ERROR"
-          #puts type
-          #puts type.inspect
-          #puts "==========================================="
+          TypedRb.log(self, :debug, e.message)
+          TypedRb.log(self, :debug, type)
+          TypedRb.log(self, :debug, type.inspect)
           fail TypeParsingError, "Unknown Ruby type #{type}"
         end
       end

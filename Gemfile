@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'parser'
+gem 'log4r'
 
 group :development do
   gem 'pry'

@@ -1,64 +1,89 @@
 require_relative 'type_signature/parser'
 require_relative './types'
 
-class Integer
-  # ts '#+ / Integer -> Integer'
-  def +(other)
-    fail StandardError.new('Error invoking abstract method Integer#+')
-  end
-
-  # TODO
-  # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
-end
-
 class BasicObject
+
+  def ts signature
+    ::TypedRb.log(self, :debug,  "Parsing signuature: #{signature}")
+    if $TYPECHECK
+      parametric_type_prefix = /\s*(module|class|type)\s*/
+      if signature.index(parametric_type_prefix) == 0
+        type_signature = signature.split(parametric_type_prefix).last
+        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature).first
+        TypeRegistry.register_generic_type_information(generic_type)
+      else
+        method, signature = signature.split(/\s+\/\s+/)
+
+        kind, receiver, message = if method.index('#')
+                                    [:instance] + method.split('#')
+                                  elsif method.index('.')
+                                    [:class] + method.split('.')
+                                  else
+                                    fail ::TypedRb::Types::TypeParsingError,
+                                    "Error parsing receiver, method signature: #{signature}"
+                                  end
+
+        if receiver == ''
+          if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
+            receiver = 'main'
+          elsif self.instance_of?(::Class)
+            receiver = if name.nil?
+                         # singleton classes
+                         self.to_s.match(/Class:(.*)>/)[1]
+                       else
+                         self.name
+                       end
+          else
+            receiver = self.class.name
+          end
+        end
+
+        kind = :"#{kind}_variable" if message.index('@')
+
+        type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
+
+        TypeRegistry.register_type_information(kind, receiver, message, type_ast)
+      end
+    end
+  rescue ::StandardError => ex
+    puts ex.backtrace.join("\n")
+    raise ::StandardError, "Error parsing type signature '#{type_signature}': #{ex.message}"
+  end
 
   class TypeRegistry
     class << self
-      def registry
-        @registry ||= {}
-        @registry
-      end
 
-      def generic_types_registry
-        @generic_types_registry ||= {}
-        @generic_types_registry
-      end
-
+      ts '.clear / -> unit'
       def clear
         generic_types_registry.clear
+        generic_types_parser_registry.clear
         registry.clear
+        parser_registry.clear
       end
 
+      ts '.register_type_information / Symbol -> String -> String -> Object -> unit'
       def register_type_information(kind, receiver, method, type_ast)
         methods_for(kind, receiver)[method] = type_ast
       end
 
+      ts '.register_generic_type_information / Hash[Object][Object] -> unit'
       def register_generic_type_information(generic_type_information)
-        if generic_types_registry[generic_type_information[:type]]
+        if generic_types_parser_registry[generic_type_information[:type]]
           fail ::TypedRb::Types::TypeParsingError,
           "Duplicated generic type definition for #{generic_type_information[:type]}"
         else
-          generic_types_registry[generic_type_information[:type]] = generic_type_information
+          generic_types_parser_registry[generic_type_information[:type]] = generic_type_information
         end
       end
 
-      def object_key(kind, receiver)
-        "#{kind}|#{receiver}"
-      end
-
-      def methods_for(kind, receiver)
-        method_registry = registry[object_key(kind, receiver)] || {}
-        registry[object_key(kind, receiver)] = method_registry
-        method_registry
-      end
-
+      ts '.find_generic_type / Class -> TypedRb::Types::TyGenericSingletonObject'
       def find_generic_type(type)
         @generic_types_registry[type]
       end
 
+      ts '.type_vars_for / Class -> Array[TypedRb::Types::Polymorphism::TypeVariable]'
       def type_vars_for(klass)
-        singleton_object = generic_types_registry[klass]
+        singleton_object = find_generic_type(klass)
         singleton_object.type_vars.map do |type_var|
           ::TypedRb::Types::Polymorphism::TypeVariable.new(type_var.variable,
                                                            :upper_bound => type_var.upper_bound,
@@ -66,6 +91,7 @@ class BasicObject
         end
       end
 
+      ts '.type_var? / Class -> String -> Boolean'
       def type_var?(klass, variable)
         singleton_object = generic_types_registry[klass]
         if singleton_object
@@ -77,6 +103,7 @@ class BasicObject
         end
       end
 
+      ts '.find / Symbol -> Class -> String -> TypedRb::Types::TyFunction'
       def find(kind, klass, message)
         class_data = registry[[kind, klass]]
         if class_data
@@ -88,27 +115,62 @@ class BasicObject
         end
       end
 
+      ts '.normalize_types! / -> unit'
       def normalize_types!
         normalize_generic_types!
         normalize_methods!
       end
 
+      protected
+
+      ts '.registry / -> Hash[ Array[Object] ][ Hash[String][TypedRb::Types::TyFunction] ]'
+      def registry
+        @registry ||= {}
+        @registry
+      end
+
+      ts '.generic_types_registry / -> Hash[Class][ TypedRb::Types::TyGenericSingletonObject ]'
+      def generic_types_registry
+        @generic_types_registry ||= {}
+        @generic_types_registry
+      end
+
+      ts '.parser_registry / Hash[ String ][ Hash[String][Object] ]'
+      def parser_registry
+        @parser_registry ||= {}
+        @parser_registry
+      end
+
+      ts '.generic_types_parser_registry / Hash[String][ Hash[Object][Object] ]'
+      def generic_types_parser_registry
+        @generic_types_parser_registry ||= {}
+        @generic_types_parser_registry
+      end
+
+      ts '.methods_for / String -> String -> Hash[String][Object]'
+      def methods_for(kind, receiver)
+        method_registry = parser_registry[object_key(kind, receiver)] || {}
+        parser_registry[object_key(kind, receiver)] = method_registry
+        method_registry
+      end
+
+      ts '.normalize_generic_types! / -> unit'
       def normalize_generic_types!
-        normalized_generic_types = {}
-        normalized_generic_types = generic_types_registry.inject(normalized_generic_types) do |acc, (_, info)|
+        @generic_types_registry = generic_types_parser_registry.inject({}) do |acc, (_, info)|
           info[:type] = Object.const_get(info[:type])
           info[:parameters] = info[:parameters].map do |parameter|
             ::TypedRb::Types::Type.parse(parameter, info[:type])
           end
+          TypedRb.log(self, :debug,  "Normalising generic type: #{info[:type]}")
           acc[info[:type]] = ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
           acc
         end
-        @generic_types_registry = normalized_generic_types
       end
 
+      ts '.normalize_methods! / -> unit'
       def normalize_methods!
-        normalized = {}
-        @registry.each_pair do |kind_receiver, method_signatures|
+        @registry = {}
+        parser_registry.each_pair do |kind_receiver, method_signatures|
           parts = kind_receiver.split('|')
           type = parts.take(1).first.to_sym
           klass_name = parts.drop(1).join('_')
@@ -133,67 +195,29 @@ class BasicObject
                 "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
+            TypedRb.log(self, :debug, "Normalizing method #{klass} :: #{method} / #{signature}")
             signatures_acc[method] = normalize_signature!(klass, signature)
             signatures_acc
           end
-          normalized[[type,klass]] = method_signatures
+          @registry[[type,klass]] = method_signatures
         end
-        @registry = normalized
       end
 
+      ts '.normalize_signature! / Class -> String -> TypedRb::Types::TyFunction'
       def normalize_signature!(klass, type)
         ::TypedRb::Types::Type.parse(type, klass)
       end
-    end
-  end
 
-  def ts signature
-    if $TYPECHECK
-      parametric_type_prefix = /\s*(module|class|type)\s*/
-      if signature.index(parametric_type_prefix) == 0
-        type_signature = signature.split(parametric_type_prefix).last
-        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature).first
-        TypeRegistry.register_generic_type_information(generic_type)
-      else
-        method, signature = signature.split(/\s+\/\s+/)
-
-        kind, receiver, message = if method.index('#')
-                                    [:instance] + method.split('#')
-                                  elsif method.index('.')
-                                    [:class] + method.split('.')
-                                  else
-                                    fail ::TypedRb::Types::TypeParsingError,
-                                    "Error parsing receiver, method signature: #{signature}"
-                                  end
-
-        if receiver == ''
-          if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
-            receiver = :main
-          elsif self.instance_of?(::Class)
-            receiver = if name.nil?
-                         # singleton classes
-                         self.to_s.match(/Class:(.*)>/)[1]
-                       else
-                         self.name
-                       end
-          else
-            receiver = self.class.name
-          end
-        end
-
-        kind = :"#{kind}_variable" if message.index('@')
-
-        type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
-
-        TypeRegistry.register_type_information(kind, receiver, message, type_ast)
+      ts '.object_key / String -> String -> String'
+      def object_key(kind, receiver)
+        "#{kind}|#{receiver}"
       end
     end
-  rescue ::StandardError => ex
-    raise ::StandardError, "Error parsing type signature '#{type_signature}': #{ex.message}"
   end
 end
 
 class Class
+  ts '.call / Class... -> unit'
   def call(*types)
     self
   end

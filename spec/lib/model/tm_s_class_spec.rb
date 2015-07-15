@@ -22,6 +22,6 @@ describe TypedRb::Model::TmSClass do
 __CODE
 
     TypedRb::Language.new.check(code)
-    expect(BasicObject::TypeRegistry.registry[[:class,Pod1]].keys).to eq(['put', 'take'])
+    expect(BasicObject::TypeRegistry.send(:registry)[[:class,Pod1]].keys).to eq(['put', 'take'])
   end
 end

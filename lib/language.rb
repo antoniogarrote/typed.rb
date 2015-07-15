@@ -1,3 +1,4 @@
+#require_relative 'init'
 require_relative './ast_parser'
 
 module TypedRb
@@ -10,8 +11,10 @@ module TypedRb
     def check(expr)
       ::BasicObject::TypeRegistry.clear
       $TYPECHECK = true
+      require_relative 'prelude'
       eval(expr, TOPLEVEL_BINDING)
       $TYPECHECK = false
+      TypedRb.log(self, :debug, 'Normalize top level')
       ::BasicObject::TypeRegistry.normalize_types!
       TypingContext.clear(:top_level)
       check_result = check_type(parse(expr))
@@ -35,10 +38,10 @@ module TypedRb
 
     def run_unification
       constraints = Types::TypingContext.all_constraints
-      # puts "CONSTRAINTS"
-      # constraints.each do |(l,t,r)|
-      #   puts "#{l} -> #{t} -> #{r}"
-      # end
+       TypedRb.log(self, :debug, 'Constraints')
+       constraints.each do |(l,t,r)|
+         TypedRb.log(self, :debug,  "  #{l} -> #{t} -> #{r}")
+       end
       unif = Types::Polymorphism::Unification.new(constraints)
       #unif.print_constraints
       unif.run(true)
