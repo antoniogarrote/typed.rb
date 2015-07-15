@@ -35,6 +35,18 @@ module TypedRb
           end
         end
 
+        def type_variable_for_global(variable)
+          ensure_string(variable)
+          upper_level = top_level_register
+          key = [:global, nil, variable]
+          type_var = upper_level.type_variables_register[key]
+          if type_var.nil?
+            type_var = TypeVariable.new(variable, :gen_name => false)
+            upper_level.type_variables_register[key] = type_var
+          end
+          type_var
+        end
+
         def type_variable_for_message(variable, message)
           ensure_string(variable)
           key = [:return, message, variable]
@@ -171,6 +183,7 @@ module TypedRb
             end
           end.compact
         end
+
         protected
 
         def recursive_constraint_search(key)
@@ -190,6 +203,14 @@ module TypedRb
         def upper_class_register
           current = self
           while current.kind != :top_level && current.kind != :class
+            current = current.parent
+          end
+          current
+        end
+
+        def top_level_register
+          current = self
+          while current.kind != :top_level
             current = current.parent
           end
           current

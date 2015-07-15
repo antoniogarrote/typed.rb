@@ -68,6 +68,10 @@ def tyunit
   TypedRb::Types::TyUnit.new
 end
 
+def tysymbol
+  TypedRb::Types::TySymbol.new
+end
+
 def tyboolean
   TypedRb::Types::TyBoolean.new
 end

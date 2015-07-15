@@ -1,3 +1,5 @@
+require 'continuation'
+
 class BasicObject
   ts '#initialize / -> unit'
   ts '#! / -> Boolean'

@@ -16,9 +16,9 @@ module TypedRb
 
       def to_s
         if args.size == 0
-          "[#{receiver} <- #{message}"
+          "[#{receiver} <- #{message}]"
         else
-          "[#{receiver} <- #{message}(#{args.map(&to_s).join(',')})"
+          "[#{receiver} <- #{message}(#{args.map(&to_s).join(',')})]"
         end
       end
 

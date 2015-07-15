@@ -4,7 +4,7 @@ require_relative './types'
 class BasicObject
 
   def ts signature
-    ::TypedRb.log(self, :debug,  "Parsing signuature: #{signature}")
+    ::TypedRb.log(binding, :debug,  "Parsing signature: #{signature} and #{signature} and #{2}")
     if $TYPECHECK
       parametric_type_prefix = /\s*(module|class|type)\s*/
       if signature.index(parametric_type_prefix) == 0
@@ -26,7 +26,7 @@ class BasicObject
         if receiver == ''
           if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
             receiver = 'main'
-          elsif self.instance_of?(::Class)
+          elsif self.instance_of?(::Class) || self.instance_of?(::Module)
             receiver = if name.nil?
                          # singleton classes
                          self.to_s.match(/Class:(.*)>/)[1]
@@ -84,10 +84,14 @@ class BasicObject
       ts '.type_vars_for / Class -> Array[TypedRb::Types::Polymorphism::TypeVariable]'
       def type_vars_for(klass)
         singleton_object = find_generic_type(klass)
-        singleton_object.type_vars.map do |type_var|
-          ::TypedRb::Types::Polymorphism::TypeVariable.new(type_var.variable,
-                                                           :upper_bound => type_var.upper_bound,
-                                                           :gen_name => false)
+        if singleton_object
+          singleton_object.type_vars.map do |type_var|
+            ::TypedRb::Types::Polymorphism::TypeVariable.new(type_var.variable,
+                                                             :upper_bound => type_var.upper_bound,
+                                                             :gen_name => false)
+          end
+        else
+          []
         end
       end
 
@@ -158,10 +162,11 @@ class BasicObject
       def normalize_generic_types!
         @generic_types_registry = generic_types_parser_registry.inject({}) do |acc, (_, info)|
           info[:type] = Object.const_get(info[:type])
+          TypedRb.log(binding, :debug,  "Normalising generic type: #{info[:type]}")
+
           info[:parameters] = info[:parameters].map do |parameter|
             ::TypedRb::Types::Type.parse(parameter, info[:type])
           end
-          TypedRb.log(self, :debug,  "Normalising generic type: #{info[:type]}")
           acc[info[:type]] = ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
           acc
         end
@@ -183,7 +188,10 @@ class BasicObject
             all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods
             all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
           end
+
           method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
+            TypedRb.log(binding, :debug, "Normalizing method #{type}[#{klass}] :: #{method} / #{signature}")
+
             if type == :instance
               unless (all_instance_methods).include?(method.to_sym)
                 fail ::TypedRb::Types::TypeParsingError,
@@ -195,7 +203,7 @@ class BasicObject
                 "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
-            TypedRb.log(self, :debug, "Normalizing method #{klass} :: #{method} / #{signature}")
+
             signatures_acc[method] = normalize_signature!(klass, signature)
             signatures_acc
           end

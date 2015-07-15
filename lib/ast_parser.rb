@@ -5,6 +5,8 @@ require_relative 'types'
 
 module TypedRb
 
+  class TermParsingError < TypeCheckError; end
+
   class ParsingContext
     def initialize
       @types_stack = []
@@ -59,6 +61,14 @@ module TypedRb
         parse_instance_var(node, context)
       when :ivasgn
         parse_instance_var_assign(node, context)
+      when :lvar
+        TmVar.new(node.children.first,node)
+      when :lvasgn
+        parse_let(node, context)
+      when :gvar
+        parse_global_var(node, context)
+      when :gvasgn
+        parse_global_var_assign(node, context)
       when :begin, :kwbegin
         parse_begin(node, context)
       when :rescue
@@ -73,24 +83,24 @@ module TypedRb
         TmString.new(node)
       when :float
         TmFloat.new(node)
+      when :sym
+        TmSymbol.new(node)
       when :if
         parse_if_then_else(node, context)
-      when :lvasgn
-        parse_let(node, context)
       when :block
         parse_block(node,context)
       when :send
         parse_send(node, context)
       when :yield
         parse_yield(node, context)
-      when :lvar
-        TmVar.new(node.children.first,node)
       when :const
         TmConst.new(parse_const(node), node)
       when :sclass
         parse_sclass(node, context)
+      when :dstr
+        parse_string_interpolation(node, context)
       else
-        fail StandardError, "Unknown term #{node.type}: #{node}"
+        fail TermParsingError, "Unknown term #{node.type}: #{node.to_sexp}"
       end
     end
 
@@ -101,6 +111,20 @@ module TypedRb
     def parse_instance_var_assign(node, context)
       ivar = TmInstanceVar.new(node.children.first, node)
       TmInstanceVarAssignment.new(ivar, map(node.children.last, context), node)
+    end
+
+    def parse_global_var(node, _context)
+      TmGlobalVar.new(node.children.first, node)
+    end
+
+    def parse_global_var_assign(node, context)
+      gvar = TmGlobalVar.new(node.children.first, node)
+      TmGlobalVarAssignment.new(gvar, map(node.children.last, context), node)
+    end
+
+    def parse_string_interpolation(node, context)
+      units = node.children.map{ |child| map(child, context) }
+      TmStringInterpolation.new(units, node)
     end
 
     def parse_block(node, context)

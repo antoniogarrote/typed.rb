@@ -21,6 +21,10 @@ module TypedRb
           type_variables_register.type_variable_for(type, variable, hierarchy)
         end
 
+        def type_variable_for_global(variable)
+          type_variables_register.type_variable_for_global(variable)
+        end
+
         def type_variable_for_message(variable, message)
           type_variables_register.type_variable_for_message(variable, message)
         end
@@ -169,8 +173,8 @@ module TypedRb
 
       def self.parse_concrete_type(type, klass)
         # parameter_names -> container class type vars
-        TypedRb.log(self, :debug, "Parsing concrete type #{type} within #{klass}")
-        parameter_names = (BasicObject::TypeRegistry.type_vars_for(klass) || []).each_with_object({}) do |variable, acc|
+        TypedRb.log(binding, :debug, "Parsing concrete type #{type} within #{klass}")
+        parameter_names = BasicObject::TypeRegistry.type_vars_for(klass).each_with_object({}) do |variable, acc|
           acc[variable.name.split(':').last] = variable
         end
         # this is the concrete argument to parse
@@ -213,9 +217,7 @@ module TypedRb
             TyObject.new(ruby_type)
           end
         rescue StandardError => e
-          TypedRb.log(self, :debug, e.message)
-          TypedRb.log(self, :debug, type)
-          TypedRb.log(self, :debug, type.inspect)
+          TypedRb.log(binding, :error, "Error parsing object from type #{type}, #{e.message}")
           fail TypeParsingError, "Unknown Ruby type #{type}"
         end
       end
@@ -230,9 +232,7 @@ module TypedRb
             TySingletonObject.new(ruby_type)
           end
         rescue StandardError => e
-          TypedRb.log(self, :debug, e.message)
-          TypedRb.log(self, :debug, type)
-          TypedRb.log(self, :debug, type.inspect)
+          TypedRb.log(binding, :error, "Error parsing singleton object from type #{type}, #{e.message}")
           fail TypeParsingError, "Unknown Ruby type #{type}"
         end
       end
@@ -281,6 +281,12 @@ module TypedRb
     class TyUnit < TyObject
       def initialize
         super(NilClass)
+      end
+    end
+
+    class TySymbol < TyObject
+      def initialize
+        super(Symbol)
       end
     end
   end
