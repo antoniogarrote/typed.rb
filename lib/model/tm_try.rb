@@ -10,10 +10,6 @@ module TypedRb
         @rescue_terms = rescue_terms
       end
 
-      def to_s
-        "try #{@try_term} #{@rescue_terms.map{|rescue_term| 'with '+(rescue_term||'unit').to_s }.join(' ')}"
-      end
-
       def rename(from_binding, to_binding)
         @try_term.rename(from_binding, to_binding)
         @rescue_terms.each{|term| term.rename(from_binding, to_binding) }

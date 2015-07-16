@@ -11,10 +11,6 @@ module TypedRb
         @val = val
       end
 
-      def to_s
-        "const #{class_name}"
-      end
-
       def rename(_from_binding, _to_binding)
         self
       end

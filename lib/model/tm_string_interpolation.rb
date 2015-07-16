@@ -10,10 +10,6 @@ module TypedRb
         @units = units
       end
 
-      def to_s
-        "String: #{units.map(&:to_s).join(',')}"
-      end
-
       def rename(from_binding, to_binding)
         @units = units.map{ |unit| unit.rename(from_binding, to_binding) }
       end

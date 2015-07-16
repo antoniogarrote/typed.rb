@@ -14,14 +14,6 @@ module TypedRb
         @block = nil
       end
 
-      def to_s
-        if args.size == 0
-          "[#{receiver} <- #{message}]"
-        else
-          "[#{receiver} <- #{message}(#{args.map(&to_s).join(',')})]"
-        end
-      end
-
       def with_block(block)
         @block = block
       end

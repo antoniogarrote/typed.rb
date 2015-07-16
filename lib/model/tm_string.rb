@@ -10,10 +10,6 @@ module TypedRb
         super(node,Types::TyString.new)
         @val = node.children.first
       end
-
-      def to_s
-        "'#{@val.gsub("'","\\'")}'"
-      end
     end
   end
 end

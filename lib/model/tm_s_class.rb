@@ -13,10 +13,6 @@ module TypedRb
         @body = body
       end
 
-      def to_s
-        "class << #{class_name} \n#{body}\nend"
-      end
-
       def rename(from_binding, to_binding)
         body.rename(from_binding, to_binding)
         self

@@ -14,15 +14,6 @@ module TypedRb
         @body = body
       end
 
-      def to_s
-        "class #{class_name} < #{super_class_name}\n#{body}\nend"
-      end
-
-      def rename(from_binding, to_binding)
-        body.rename(from_binding, to_binding)
-        self
-      end
-
       def check_type(context)
         class_type = Types::Type.parse_singleton_object_type(class_name)
         context = context.add_binding(:self, class_type)

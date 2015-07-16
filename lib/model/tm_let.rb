@@ -11,10 +11,6 @@ module TypedRb
         @term = term
       end
 
-      def to_s
-        "let #{GenSym.resolve(@binding)} = #{@term}"
-      end
-
       def rename(from_binding, to_binding)
         # let binding shadows variables in the closure
         if @binding == from_binding

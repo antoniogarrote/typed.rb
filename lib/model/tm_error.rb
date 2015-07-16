@@ -8,10 +8,6 @@ module TypedRb
         super(node)
       end
 
-      def to_s
-        'error'
-      end
-
       def check_type(_context)
         Types::TyError.new
       end

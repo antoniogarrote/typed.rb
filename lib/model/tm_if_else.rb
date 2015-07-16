@@ -41,10 +41,6 @@ module TypedRb
           fail TypeCheckError, 'Expected Bool type in if conditional expression'
         end
       end
-
-      def to_s
-        "if #{@condition_expr} then\n  #{@then_expr}\nelse\n  #{@else_expr}\nend\n"
-      end
     end
   end
 end

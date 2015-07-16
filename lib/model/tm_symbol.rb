@@ -10,10 +10,6 @@ module TypedRb
         super(node,Types::TySymbol.new)
         @val = node.children.first
       end
-
-      def to_s
-        "#{@val}"
-      end
     end
   end
 end

@@ -10,15 +10,6 @@ module TypedRb
         @terms = terms.reject(&:nil?)
       end
 
-      def to_s
-        printing_order_terms= @terms.reverse
-        initial = "λ:#{GenSym.next}:Unit.#{printing_order_terms.first}"
-        printing_order_terms.drop(1).inject(initial) do |acc, term|
-          param = GenSym.next
-          "(#{acc} λ:#{param}:Unit.#{term})"
-        end
-      end
-
       def rename(from_binding, to_binding)
         @terms.each{|term| term.rename(from_binding, to_binding) }
         self

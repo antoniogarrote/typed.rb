@@ -26,22 +26,6 @@ module TypedRb
         end
       end
 
-      def to_s
-        args_str = args.map do |arg|
-          case arg.first
-          when :arg
-            GenSym.resolve(arg.last)
-          when :optarg
-            "#{GenSym.resolve(arg[1])}:#{arg[2].type}"
-          when :blockarg
-            "&#{GenSym.resolve(arg.last)}"
-          when :restarg
-            "*#{GenSym.resolve(arg.last)}"
-          end
-        end
-        "#{name}(#{args_str.join(',')}){ \n\t#{body}\n }"
-      end
-
       def rename(from_binding, to_binding)
         # rename receiver
         if owner != :self

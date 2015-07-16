@@ -13,10 +13,6 @@ module TypedRb
         @val = val
       end
 
-      def to_s
-        "#{val}"
-      end
-
       def rename(_from_binding, _to_binding)
         # global vars cannot be captured
         self

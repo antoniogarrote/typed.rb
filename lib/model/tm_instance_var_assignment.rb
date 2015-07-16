@@ -14,10 +14,6 @@ module TypedRb
         @rvalue = rvalue
       end
 
-      def to_s
-        "#{lvalue} = #{rvalue}"
-      end
-
       def rename(from_binding, to_binding)
         @rvalue = rvalue.rename(from_binding, to_binding)
         self

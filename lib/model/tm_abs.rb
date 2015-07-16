@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require_relative '../model'
 
 module TypedRb
@@ -12,14 +11,6 @@ module TypedRb
         @term  = term
         @arity = args.select { |(arg_type, _, _)|  arg_type == :arg }.count
         @instantiation_count = 0
-      end
-
-      def to_s
-        if type
-          "λ#{GenSym.resolve(@args)}:#{type}.#{@term}"
-        else
-          "λ#{GenSym.resolve(@args)}.#{@term}"
-        end
       end
 
       def rename(from_binding, to_binding)
