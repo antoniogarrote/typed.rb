@@ -50,6 +50,11 @@ module TypedRb
     private
 
     def map(node, context)
+      if node
+        sexp = node.to_sexp
+        sexp = "#{sexp[0..50]} ... #{sexp[-50..-1]}" if sexp.size > 100
+        TypedRb.log(binding, :debug, "Parsing node #{node}:\n#{sexp}")
+      end
       case node.type
       when :class
         parse_class(node, context)
@@ -85,6 +90,8 @@ module TypedRb
         TmFloat.new(node)
       when :sym
         TmSymbol.new(node)
+      when :regexp
+        parse_regexp(node, context)
       when :if
         parse_if_then_else(node, context)
       when :block
@@ -125,6 +132,11 @@ module TypedRb
     def parse_string_interpolation(node, context)
       units = node.children.map{ |child| map(child, context) }
       TmStringInterpolation.new(units, node)
+    end
+
+    def parse_regexp(node, context)
+      # ignore the regular expression options
+      TmRegexp.new(map(node.children[0], context), nil, node)
     end
 
     def parse_block(node, context)

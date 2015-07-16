@@ -289,5 +289,11 @@ module TypedRb
         super(Symbol)
       end
     end
+
+    class TyRegexp < TyObject
+      def initialize
+        super(Regexp)
+      end
+    end
   end
 end

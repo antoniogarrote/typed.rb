@@ -76,6 +76,10 @@ def tyboolean
   TypedRb::Types::TyBoolean.new
 end
 
+def tyregexp
+  TypedRb::Types::TyRegexp.new
+end
+
 def tyvariable(name)
   TypedRb::Types::Polymorphism::TypeVariable.new(name)
 end
