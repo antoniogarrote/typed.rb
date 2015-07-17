@@ -16,21 +16,31 @@ module TypedRb
         @current_type = []
         @current_function = []
         @stack = []
+        @in_binding = false
       end
 
       def parse (expr)
         expr = expr.gsub(/\s+/,'').gsub('->','>')
+
         expr.each_char do |elem|
-          if elem == '(' || elem == '['
+          if elem == '('
+            parse_start_of_type
+          elsif elem == '['
+            @in_binding  = true
             parse_start_of_type
           elsif elem == ')'
             parse_end_of_function
           elsif elem == '<'
+            @binding = '<'
             parse_binding
           elsif elem == ']'
+            @in_binding  = false
             parse_end_of_binding
-          elsif elem == '>'
+          elsif elem == '>' && @in_binding == false
             parse_next_elem
+          elsif elem == '>' && @in_binding == true
+            @binding = '>'
+            parse_binding
           else
             @current_type << elem
           end
@@ -76,7 +86,9 @@ module TypedRb
         next_function_elem << last_token
         next_function_elem = next_function_elem.map do |token_group|
           if(token_group.is_a?(Array))
-            if (token_group.size > 1 && token_group.drop(1).all?{ |token| token.is_a?(Hash) && token[:bound] } && token_group[0].is_a?(String))
+            if (token_group.size > 1 &&
+                token_group.drop(1).all?{ |token| token.is_a?(Hash) && token[:kind] == :type_var } &&
+                token_group[0].is_a?(String))
               { :type => token_group.first, :parameters => token_group.drop(1), :kind => :generic_type }
             else
               token_group.first
@@ -115,10 +127,11 @@ module TypedRb
         new_type = parse_new_type
         @current_function << new_type unless @current_type.empty?
         bound = if @current_function.size == 1
-                  { :type => @current_function.first, :bound => 'BasicObject', :kind => :type_var }
+                  { :type => @current_function.first, :kind => :type_var }
                 else
-                  { :type => @current_function.first, :bound => @current_function.last, :kind => :type_var }
+                  { :type => @current_function.first, :bound => @current_function.last, :binding => @binding, :kind => :type_var }
                 end
+        @binding = nil
         parent_function = @stack.pop
         parent_function << bound
         @current_function = parent_function
@@ -136,7 +149,11 @@ module TypedRb
         new_type = @current_type.join
         new_type = :unit if new_type == 'unit'
         if new_type.to_s.end_with?('...')
-          new_type =  { :type => 'Array', :kind => :rest, :parameters => [new_type.split('...').first] }
+          new_type = new_type.split('...').first
+          if new_type.nil?
+            new_type = @current_function.pop
+          end
+          new_type =  { :type => 'Array', :kind => :rest, :parameters => [new_type] }
         end
         new_type
       end

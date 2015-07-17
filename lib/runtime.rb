@@ -88,6 +88,7 @@ class BasicObject
           singleton_object.type_vars.map do |type_var|
             ::TypedRb::Types::Polymorphism::TypeVariable.new(type_var.variable,
                                                              :upper_bound => type_var.upper_bound,
+                                                             :lower_bound => type_var.lower_bound,
                                                              :gen_name => false)
           end
         else
@@ -203,7 +204,6 @@ class BasicObject
                 "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
-
             signatures_acc[method] = normalize_signature!(klass, signature)
             signatures_acc
           end

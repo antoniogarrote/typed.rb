@@ -38,12 +38,7 @@ module TypedRb
 
     def run_unification
       constraints = Types::TypingContext.all_constraints
-       TypedRb.log(binding, :debug, 'Constraints')
-       constraints.each do |(l,t,r)|
-         TypedRb.log(binding, :debug,  "  #{l} -> #{t} -> #{r}")
-       end
       unif = Types::Polymorphism::Unification.new(constraints)
-      #unif.print_constraints
       unif.run(true)
     end
 

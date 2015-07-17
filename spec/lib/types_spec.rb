@@ -103,4 +103,37 @@ __END
       expect(function.to).to eq(ty_string)
     end
   end
+
+  describe('#parse') do
+
+    context 'with a generic type' do
+
+      it 'should parse a generic singleton class if it the var is not bound' do
+        $TYPECHECK = true
+        code = <<__END
+
+         ts 'type A2[T]'
+         class A2
+            ts '#a / [T]... -> unit'
+            def a(*xs); end
+         end
+__END
+
+        eval(code)
+        ::BasicObject::TypeRegistry.normalize_types!
+
+        result = TypedRb::Types::Type.parse({:type       => 'Array',
+                                             :parameters =>  [{:type=>"T", :bound=>"BasicObject", :kind=>:type_var}],
+                                             :kind       => :rest}, A2)
+        expect(result).to be_instance_of(TypedRb::Types::TyGenericSingletonObject)
+        expect(result.type_vars[0].bound).to be_nil
+
+        result = TypedRb::Types::Type.parse({:type       => 'Array',
+                                             :parameters =>  ['Integer'],
+                                             :kind       => :rest}, A2)
+        expect(result).to be_instance_of(TypedRb::Types::TyGenericObject)
+        expect(result.type_vars[0].bound.ruby_type).to eq(Integer)
+      end
+    end
+  end
 end

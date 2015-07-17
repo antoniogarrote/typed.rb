@@ -3,11 +3,12 @@ module TypedRb
     module Polymorphism
       class TypeVariable
 
-        attr_accessor :bound, :variable, :upper_bound, :name
+        attr_accessor :bound, :variable, :upper_bound, :lower_bound, :name
 
         def initialize(var_name, options = {})
           gen_name = options[:gen_name].nil? ? true : options[:gen_name]
           @upper_bound = options[:upper_bound]
+          @lower_bound = options[:lower_bound]
           @name = var_name
           @variable = gen_name ? Model::GenSym.next("TV_#{var_name}") : var_name
           @bound = nil

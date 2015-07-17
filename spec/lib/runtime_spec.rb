@@ -188,6 +188,8 @@ __END
   it 'parses generic types' do
     $TYPECHECK = true
     code = <<__END
+     ts 'type Array[X]'
+
      ts 'type Container[X<Numeric]'
      class Container
 
@@ -201,18 +203,36 @@ __END
         @value
        end
 
+       ts '#test0 / -> [X>Numeric]'
+       def test0
+        @value
+       end
+
+       ts '#test1 / Array[X] -> unit'
+        def test1(xs)
+          @value = xs.first
+        end
      end
 __END
 
     eval(code)
     ::BasicObject::TypeRegistry.normalize_types!
+    expect(::BasicObject::TypeRegistry.send(:generic_types_registry)[Container]).to be_instance_of(TypedRb::Types::TyGenericSingletonObject)
     expect(::BasicObject::TypeRegistry.send(:generic_types_registry)[Container].ruby_type).to eq(Container)
     expect(::BasicObject::TypeRegistry.send(:generic_types_registry)[Container].type_vars[0].variable).to eq('Container:X')
     expect(::BasicObject::TypeRegistry.send(:generic_types_registry)[Container].type_vars[0].upper_bound.ruby_type).to eq(Numeric)
+
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push']).to be_instance_of(TypedRb::Types::TyGenericFunction)
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].from[0].variable).to eq('Container:X')
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].from[0].upper_bound.ruby_type).to eq(Numeric)
+
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].to.variable).to eq('Container:X')
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].to.upper_bound.ruby_type).to eq(Numeric)
+
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test1']).to be_instance_of(TypedRb::Types::TyGenericFunction)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0']).to be_instance_of(TypedRb::Types::TyGenericFunction)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].to).to be_instance_of(TypedRb::Types::Polymorphism::TypeVariable)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].to.lower_bound.ruby_type).to eq(Numeric)
   end
 
   it 'parses concrete generic types' do
@@ -238,6 +258,7 @@ __END
 
     f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f1']
     f2_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f2']
+    expect(f1_type).to be_instance_of(TypedRb::Types::TyFunction)
     expect(f1_type.from.first).to be_instance_of(TypedRb::Types::TyGenericObject)
     expect(f1_type.from.first.type_vars.first.bound.ruby_type).to eq(Integer)
     expect(f1_type.from.first.type_vars.first.variable).to eq('Array:X')

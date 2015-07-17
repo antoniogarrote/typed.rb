@@ -13,11 +13,19 @@ describe TypedRb::TypeSignature::Parser do
     expect(result).to eq('Bool')
   end
 
-  it 'parses an atomic type' do
+  it 'parses an atomic rest type' do
     result = described_class.parse('Bool...')
     expect(result).to eq({:type       => 'Array',
                           :parameters =>  ['Bool'],
                           :kind       => :rest})
+  end
+
+  it 'parses a type var rest type' do
+    result = described_class.parse('[T]...')
+    expect(result).to eq({:type       => 'Array',
+                          :parameters =>  [{:type=>"T", :kind => :type_var}],
+                          :kind       => :rest})
+
   end
 
   it 'parses a function type' do
@@ -31,7 +39,27 @@ describe TypedRb::TypeSignature::Parser do
                              :parameters =>  ['Bool'],
                              :kind       => :rest})
     expect(result[1]).to eq({:type       => 'Array',
-                             :parameters =>  [{:type=>"Bool", :bound=>"BasicObject", :kind=>:type_var}],
+                             :parameters =>  [{:type=>"Bool", :kind=>:type_var}],
+                             :kind       => :generic_type})
+  end
+
+  it 'parses applied type parameters in signatures' do
+    result = described_class.parse('Bool... -> Array[T < Bool]')
+    expect(result[0]).to eq({:type       => 'Array',
+                             :parameters =>  ['Bool'],
+                             :kind       => :rest})
+    expect(result[1]).to eq({:type       => 'Array',
+                             :parameters =>  [{:type =>"T", :kind =>:type_var, :bound => 'Bool', :binding => '<'}],
+                             :kind       => :generic_type})
+  end
+
+  it 'parses applied type parameters in signatures' do
+    result = described_class.parse('Bool... -> Array[T > Bool]')
+    expect(result[0]).to eq({:type       => 'Array',
+                             :parameters =>  ['Bool'],
+                             :kind       => :rest})
+    expect(result[1]).to eq({:type       => 'Array',
+                             :parameters =>  [{:type =>"T", :kind =>:type_var, :bound => 'Bool', :binding => '>'}],
                              :kind       => :generic_type})
   end
 
@@ -92,29 +120,34 @@ describe TypedRb::TypeSignature::Parser do
 
   it 'parses type variables' do
     result = described_class.parse('[X]')
-    expect(result).to eq({:type => 'X', :bound => 'BasicObject', :kind => :type_var })
+    expect(result).to eq({:type => 'X', :kind => :type_var })
   end
 
-  it 'parses bound type variables' do
-    result = described_class.parse('[X < Integer]')
-    expect(result).to eq({:type => 'X', :bound => 'Integer', :kind => :type_var })
+  it 'parses type variables with lower binding' do
+    result = described_class.parse('[X < Numeric]')
+    expect(result).to eq({:type => 'X', :kind => :type_var, :bound => 'Numeric', :binding => '<', :kind => :type_var })
+  end
+
+  it 'parses type variables with lower binding' do
+    result = described_class.parse('[X > Numeric]')
+    expect(result).to eq({:type => 'X', :kind => :type_var, :bound => 'Numeric', :binding => '>', :kind => :type_var })
   end
 
   it 'parses return type variables' do
     result = described_class.parse(' -> [X]')
-    expect(result).to eq([{:type => 'X', :bound => 'BasicObject', :kind => :type_var }])
+    expect(result).to eq([{:type => 'X', :kind => :type_var }])
   end
 
   it 'parses type variables in both sides' do
     result = described_class.parse('[X<String] -> [Y]')
-    expect(result).to eq([{:type => 'X', :bound => 'String', :kind => :type_var },
-                          {:type => 'Y', :bound => 'BasicObject', :kind => :type_var }])
+    expect(result).to eq([{:type => 'X', :bound => 'String', :kind => :type_var, :binding => '<' },
+                          {:type => 'Y', :kind => :type_var }])
   end
 
   it 'parses type variables in complex expressions' do
     result = described_class.parse('[X] -> ([Y] -> Integer)')
-    expect(result).to eq([{:type => 'X', :bound => 'BasicObject', :kind => :type_var },
-                          [{:type => 'Y', :bound => 'BasicObject', :kind => :type_var },
+    expect(result).to eq([{:type => 'X', :kind => :type_var },
+                          [{:type => 'Y', :kind => :type_var },
                            'Integer']])
   end
 
@@ -126,30 +159,29 @@ describe TypedRb::TypeSignature::Parser do
   it 'parses parametric types' do
     result = described_class.parse('Array[X] -> [X]')
     expect(result).to eq([{:type       => "Array",
-                           :parameters => [{:type => "X", :bound => "BasicObject", :kind => :type_var}],
+                           :parameters => [{:type => "X", :kind => :type_var}],
                            :kind       => :generic_type},
                           {:type => "X",
-                           :bound => "BasicObject",
                            :kind => :type_var}])
   end
 
   it 'parses parametric types with multiple var types' do
     result = described_class.parse('Int -> (Bool -> Array[X][Y][Z])')
     expect(result).to eq(["Int", ["Bool", {:type       => "Array",
-                                           :parameters => [{:type => "X", :bound => "BasicObject", :kind => :type_var},
-                                                           {:type => "Y", :bound => "BasicObject", :kind => :type_var},
-                                                           {:type => "Z", :bound => "BasicObject", :kind => :type_var}],
+                                           :parameters => [{:type => "X", :kind => :type_var},
+                                                           {:type => "Y", :kind => :type_var},
+                                                           {:type => "Z", :kind => :type_var}],
                                            :kind       => :generic_type}]])
   end
 
   it 'parses parametric types with bounds' do
     result = described_class.parse('Array[X<Int] -> Hash[T<String][U<Object]')
     expect(result).to eq([{:type       => "Array",
-                           :parameters => [{:type => "X", :bound => "Int", :kind => :type_var}],
+                           :parameters => [{:type => "X", :bound => "Int", :binding => '<', :kind => :type_var}],
                            :kind       => :generic_type},
                           {:type       => "Hash",
-                           :parameters =>  [{:type => "T", :bound => "String", :kind => :type_var},
-                                            {:type => "U", :bound => "Object", :kind => :type_var}],
+                           :parameters =>  [{:type => "T", :bound => "String", :binding => '<', :kind => :type_var},
+                                            {:type => "U", :bound => "Object", :binding => '<', :kind => :type_var}],
                            :kind       => :generic_type}])
   end
 end

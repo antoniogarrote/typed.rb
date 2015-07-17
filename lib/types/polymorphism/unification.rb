@@ -1,7 +1,12 @@
+require 'stringio'
+
 module TypedRb
   module Types
     # Polymorphic additions to Featherweight Ruby
     module Polymorphism
+
+      class UnitificationError < TypedRb::TypeCheckError; end
+
       # Common operations on types and restrictions.
       module TypeOperations
         # Check if two types are compatible for a certain restriction.
@@ -19,7 +24,7 @@ module TypedRb
             when :send
               compatible_send_type?(value_l, value_r)
             else
-              fail StandardError, "Unknown type constraint #{t}"
+              fail UnificationError, "Unknown type constraint #{t}"
             end
           end
         end
@@ -53,10 +58,10 @@ module TypedRb
                 graph[return_type][:type] = function.to
               end
             else
-              fail StandardError, "Message #{message} not found for type variable #{receiver}"
+              fail UnificationError, "Message #{message} not found for type variable #{receiver}"
             end
           else
-            fail StandardError, "Unbound variable #{receiver} type acting as receiver for #{message}"
+            fail UnificationError, "Unbound variable #{receiver} type acting as receiver for #{message}"
           end
         end
 
@@ -141,14 +146,19 @@ module TypedRb
         end
 
         def do_bindings!
-          TypedRb.log(binding, :debug, "Doing bindings:")
+          text = StringIO.new
+          text << "Doing bindings:\n"
+          num_bindings = 0
           groups.values.each do |group|
             next unless group[:type]
             group[:vars].keys.each do |var|
-              TypedRb.log(binding, :debug, "  #{var.variable} -> #{find_type(group[:type])}")
+              num_bindings += 1
+              text << "Final binding:  #{var.variable} -> #{find_type(group[:type])}\n"
               var.bind(find_type(group[:type]))
             end
           end
+          text << "Found #{num_bindings} bindings"
+          TypedRb.log(binding, :debug, text.string)
         end
 
         def find_type(value)
@@ -163,16 +173,17 @@ module TypedRb
             value
           # nil
           else
-            fail StandardError, 'Cannot find type in type_variable binding' if value.nil?
+            fail UnificationError, 'Cannot find type in type_variable binding' if value.nil?
           end
         end
 
         def print_groups
+          TypedRb.log(binding, :debug, "Variable groups:")
           groups.values.uniq.each do |group|
             vars = group[:vars].keys.map(&:to_s).join(',')
             type = group[:type] ? group[:type].to_s : '?'
             links = group[:links].map(&:to_s).join(' < ')
-            puts "#{vars}:#{type} => #{links}"
+            TypedRb.log(binding, :debug, "#{vars}:#{type} => #{links}")
           end
         end
 
@@ -241,7 +252,7 @@ module TypedRb
         end
 
         def run(bind_variables = true)
-          #print_constraints
+          print_constraints
           unify(@gt_constraints) # we create links between vars in unify, we need to fold groups afterwards
           @lt_constraints = graph.fold_groups.replace_groups(@lt_constraints)
           unify(@lt_constraints)
@@ -255,13 +266,15 @@ module TypedRb
         end
 
         def print_constraints
+          text = StringIO.new
+          text << "Running unification on #{constraints.size} constraints:\n"
           @gt_constraints.each do |(l, _t, r)|
             l = if l.is_a?(Hash)
                   l.keys.map(&:to_s).join(',')
                 else
                   l.to_s
                 end
-            puts "#{l} :gt #{r}"
+            text <<  "#{l} :gt #{r}\n"
           end
           @lt_constraints.each do |(l, _t, r)|
             l = if l.is_a?(Hash)
@@ -269,7 +282,7 @@ module TypedRb
                 else
                   l.to_s
                 end
-            puts "#{l} :lt #{r}"
+            text <<  "#{l} :lt #{r}\n"
           end
           @send_constraints.each do |(l, _t, send)|
             return_type = send[:return]
@@ -280,8 +293,10 @@ module TypedRb
                 else
                   l.to_s
                 end
-            puts "#{l} :send #{message}[ #{arg_types.join(',')} -> #{return_type}]"
+            text <<  "#{l} :send #{message}[ #{arg_types.join(',')} -> #{return_type}]\n"
           end
+
+          TypedRb.log binding, :debug, text.string
         end
 
         protected

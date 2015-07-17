@@ -141,7 +141,7 @@ module TypedRb
         elsif type.is_a?(Hash) && type[:kind]  == :generic_type
           parse_concrete_type(type, klass)
         elsif type.is_a?(Hash) && type[:kind]  == :rest
-          parse_rest_args(type)
+          parse_rest_args(type,klass)
         else
           parse_object_type(type)
         end
@@ -158,17 +158,30 @@ module TypedRb
       end
 
       def self.parse_type_var(type)
-        Polymorphism::TypeVariable.new(type[:type],
-                                       :upper_bound => TySingletonObject.new(Object.const_get(type[:bound])),
-                                       :gen_name    => false)
+        if type[:binding] == '<'
+          Polymorphism::TypeVariable.new(type[:type],
+                                         :upper_bound => TySingletonObject.new(Object.const_get(type[:bound])),
+                                         :gen_name    => false)
+        elsif type[:binding] == '>'
+          Polymorphism::TypeVariable.new(type[:type],
+                                         :lower_bound => TySingletonObject.new(Object.const_get(type[:bound])),
+                                         :gen_name    => false)
+        else
+          Polymorphism::TypeVariable.new(type[:type], :gen_name => false)
+        end
       end
 
-      def self.parse_rest_args(type)
-        type_var = Polymorphism::TypeVariable.new('Array:X',
-                                                  :upper_bound => TySingletonObject.new(BasicObject),
-                                                  :gen_name    => false)
-        type_var.bind(TySingletonObject.new(Object.const_get(type[:parameters].first)))
-        Types::TyGenericObject.new(Array, [type_var])
+      def self.parse_rest_args(type,  klass)
+        parsed_parameter = parse(type[:parameters].first, klass)
+        if parsed_parameter.is_a?(Polymorphism::TypeVariable)
+          #TODO: should I use #parse_singleton_object_type here?
+          Types::TyGenericSingletonObject.new(Array, [parsed_parameter])
+        else
+          type_var = Polymorphism::TypeVariable.new('Array:X', :gen_name => false)
+
+          type_var.bind(parsed_parameter)
+          Types::TyGenericObject.new(Array, [type_var])
+        end
       end
 
       def self.parse_concrete_type(type, klass)
@@ -192,8 +205,12 @@ module TypedRb
                               is_generic = true
                               maybe_bound_param
                             else
+                              # TODO: check upper bound for the concrete type?
+                              # As long as this type is < upper bound, check in the type structure
+                              # later will prove that this substitution is correct.
                               concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
                                                                                      :upper_bound => type_var.upper_bound,
+                                                                                     :lower_bound => type_var.lower_bound,
                                                                                      :gen_name => false)
                               concrete_param.bind(TySingletonObject.new(Object.const_get(param[:type])))
                               concrete_param
@@ -247,7 +264,11 @@ module TypedRb
                      else
                        nil
                      end
-        function_type = TyFunction.new(arg_types.map{ |arg| parse(arg, klass) }, return_type)
+        arg_types = arg_types.map{ |arg| parse(arg, klass) }
+        is_generic = (arg_types + [return_type]).any? { |var| var.is_a?(Types::TyGenericSingletonObject) ||
+                                                              var.is_a?(Types::Polymorphism::TypeVariable) }
+        functionClass = is_generic ? TyGenericFunction : TyFunction
+        function_type = functionClass.new(arg_types, return_type)
         function_type.with_block_type(block_type) if block_type
         function_type
       end

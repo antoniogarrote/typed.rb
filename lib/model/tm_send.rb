@@ -117,7 +117,7 @@ module TypedRb
       end
 
       def check_type_application_to_generic(generic_type, args, context)
-        generic_type.check_args_application(args, context)
+        generic_type.materialize(args, context)
       end
 
       def check_application(receiver_type, function_type, context)
@@ -127,6 +127,7 @@ module TypedRb
           formal_parameters = function_type.from
           method = receiver_type.resolve_ruby_method(message)
           parameters_info = method.parameters
+          TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{method.name}( #{parameters_info} )")
           check_args_application(parameters_info, formal_parameters, args, context)
           if @block
             block_type = @block.check_type(context)
