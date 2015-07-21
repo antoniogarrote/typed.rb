@@ -65,14 +65,18 @@ module TypedRb
       # for the constructor application (should be unit/nil).
       def check_instantiation(context)
         self_type = singleton_object_type(receiver,context).as_object_type
-        function_type = self_type.find_function_type(:initialize)
+        function_klass_type, function_type = self_type.find_function_type(:initialize)
         if function_type.nil?
           error_message = "Error typing message, type information for #{receiver_type} constructor found."
           fail TypeCheckError, error_message
         else
           # function application
           @message = :initialize
-          check_application(self_type, function_type, context)
+          begin
+            check_application(self_type, function_type, context)
+          rescue TypeCheckError => error
+            raise error if function_klass_type == self_type.ruby_type
+          end
           self_type
         end
       end
@@ -83,13 +87,23 @@ module TypedRb
           context.get_type_for(message)
         else
           self_type = context.get_type_for(:self) # check message in self type -> application
-          function_type = self_type.find_function_type(message)
-          if function_type.nil?
-            error_message = "Error typing message, type information for #{self_type}:#{message} found."
-            fail TypeCheckError error_message
-          else
-            # function application
-            check_application(self_type, function_type, context)
+          function_klass_type, function_type = self_type.find_function_type(message)
+          begin
+            if function_type.nil?
+              error_message = "Error typing message, type information for #{self_type}:#{message} found."
+              fail TypeCheckError error_message
+            else
+              # function application
+              check_application(self_type, function_type, context)
+            end
+          rescue TypeCheckError => error
+            if  !(function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject)) && function_klass_type != self_type.ruby_type
+              Types::TyDynamic.new(Object)
+            elsif function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject) && function_type.nil?
+              Types::TyDynamic.new(Object)
+            else
+              raise error
+            end
           end
         end
       end
@@ -100,20 +114,46 @@ module TypedRb
           arg_types = args.map { |arg| arg.check_type(context) }
           receiver_type.add_message_constraint(message, arg_types)
         elsif receiver_type.is_a?(Types::TyGenericSingletonObject) && (message == :call)
-          arg_types = args.map { |arg| arg.check_type(context) }
+          # Application of types accept a type class or a string with a type description
+          arg_types = parse_type_application_arguments(args, context)
           check_type_application_to_generic(receiver_type, arg_types, context)
         elsif receiver_type.is_a?(Types::TyFunction) && (message == :[] || message == :call)
           check_lambda_application(receiver_type, context)
         else
-          function_type = receiver_type.find_function_type(message)
-          if function_type.nil?
-            error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
-            fail TypeCheckError, error_message
-          else
-            # function application
-            check_application(receiver_type, function_type, context)
+          function_klass_type, function_type = receiver_type.find_function_type(message)
+          begin
+            if function_type.nil?
+              error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
+              fail TypeCheckError, error_message
+            else
+              # function application
+              check_application(receiver_type, function_type, context)
+            end
+          rescue TypeCheckError => error
+            if function_klass_type != receiver_type.ruby_type
+              Types::TyDynamic.new(Object)
+            else
+              raise error
+            end
           end
         end
+      end
+
+      def parse_type_application_arguments(arguments, context)
+        arguments.map do |argument|
+          if argument.is_a?(Model::TmString)
+            type = TypeSignature::Parser.parse(argument.node.children.first)
+            type[:type] = "type_app_#{type_application_counter}"
+            Types::Type.parse(type, nil)
+          else
+            argument.check_type(context)
+          end
+        end
+      end
+
+      def type_application_counter
+        @type_application_counter ||= 0
+        @type_application_counter += 1
       end
 
       def check_type_application_to_generic(generic_type, args, context)
@@ -145,8 +185,11 @@ module TypedRb
         parameters_info.each_with_index do |(require_info, arg_name), index|
           actual_argument = actual_arguments[index]
           formal_parameter_type = formal_parameters[index]
+          if formal_parameter_type.nil?
+            fail TypeCheckError, "Missing information about argument #{arg_name} in #{receiver}##{message}"
+          end
           if actual_argument.nil? && require_info != :opt && require_info != :rest
-            fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver_type}##{message}"
+            fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver}##{message}"
           else
             if require_info == :rest
               rest_type = formal_parameter_type.type_vars.first

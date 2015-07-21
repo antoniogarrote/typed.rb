@@ -33,7 +33,7 @@ module TypedRb
   end
 
   def set_level(logger)
-    logger.level = case ENV['LOG_LEVEL']
+    logger.level = case (ENV['LOG_LEVEL'] || ENV['log_level'] || '').upcase
                    when 'DEBUG'
                      Log4r::DEBUG
                    when 'INFO'

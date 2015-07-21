@@ -33,6 +33,10 @@ module TypedRb
         false
       end
 
+      def defaults_to_dynamic?
+        ! BasicObject::TypeRegistry.registered?(ruby_type)
+      end
+
       def compatible?(other_type, relation = :lt)
         if other_type.is_a?(TyObject)
           if relation == :gt
@@ -67,11 +71,11 @@ module TypedRb
 
       def find_function_type_in_hierarchy(kind, message)
         initial_value = BasicObject::TypeRegistry.find(kind, @hierarchy.first, message)
-        @hierarchy.drop(1).inject(initial_value) do |acc, type|
-          unless acc.is_a?(TyDynamicFunction)
-            acc
+        @hierarchy.drop(1).inject([@hierarchy.first, initial_value]) do |(klass, acc), type|
+          if acc.nil? || acc.is_a?(TyDynamicFunction)
+            [type, BasicObject::TypeRegistry.find(kind, type, message)]
           else
-            BasicObject::TypeRegistry.find(kind, type, message)
+            [klass, acc]
           end
         end
       end

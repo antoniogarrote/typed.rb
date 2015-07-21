@@ -22,11 +22,19 @@ module TypedRb
       def materialize(actual_arguments, context)
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
-            # TODO: This is only for matches T =:= Type1 -> T < Type1, T > Type1
-            # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
-            # Not implemented yet.
-            fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
-            fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
+            if argument.is_a?(Polymorphism::TypeVariable)
+              # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
+              if argument.upper_bound
+                fresh_vars_generic_type.type_vars[i].compatible?(argument.upper_bound, :lt)
+              end
+              if argument.lower_bound
+                fresh_vars_generic_type.type_vars[i].compatible?(argument.lower_bound, :gt)
+              end
+            else
+              # This is only for matches T =:= Type1 -> T < Type1, T > Type1
+              fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
+              fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
+            end
           end
         end
       end

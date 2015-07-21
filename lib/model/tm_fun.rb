@@ -65,7 +65,7 @@ module TypedRb
           fail TypeCheckError, "Function #{owner}##{name} cannot find owner type for #{owner}"
         end
 
-        function_type = owner_type.find_function_type(name)
+        function_klass_type, function_type = owner_type.find_function_type(name)
         if function_type.nil?
           fail TypeCheckError, "Function #{owner}##{name} cannot find function type information for owner."
         elsif function_type.is_a?(Types::TyDynamicFunction)
@@ -74,7 +74,11 @@ module TypedRb
         else
           # check matching args
           if function_type.from.size != args.size
-            fail TypeCheckError," Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}."
+            if function_klass_type != owner_type.ruby_type
+              Types::TyDynamicFunction.new(owner_type.ruby_type, name)
+            else
+              fail TypeCheckError," Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}."
+            end
           end
 
 

@@ -26,7 +26,7 @@ module TypedRb
 
       def check_type(context)
         type = context.get_type_for(@val)
-        fail TypeCheckError "Cannot find binding for var '#{@val}' in the context" if type.nil?
+        fail TypeCheckError, "Cannot find binding for var '#{@val}' in the context" if type.nil?
         type
       end
     end

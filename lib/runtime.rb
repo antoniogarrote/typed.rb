@@ -112,12 +112,27 @@ class BasicObject
       def find(kind, klass, message)
         class_data = registry[[kind, klass]]
         if class_data
+          # TODO: What should we when the class is in the registry but the method is missing?
+          # The class has been marked but only partially?
+          # Dynamic invokation or error?
+          # Maybe an additional @dynamic annotation can be added to distinguish the desired outcome.
+          # Preferred outcome right now is nil to catch errors in unification, safer assumption.
+          #class_data[message.to_s] || nil # ::TypedRb::Types::TyDynamicFunction.new(klass, message)
           class_data[message.to_s] || ::TypedRb::Types::TyDynamicFunction.new(klass, message)
         elsif kind == :instance_variable || kind == :class_variable
           nil
         else
-          ::TypedRb::Types::TyDynamicFunction.new(klass, message)
+          #if registered?(klass)
+          #  nil
+          #else
+            ::TypedRb::Types::TyDynamicFunction.new(klass, message)
+          #end
         end
+      end
+
+      ts '.registered / Class -> Boolean'
+      def registered?(klass)
+        registry.keys.map(&:last).include?(klass)
       end
 
       ts '.normalize_types! / -> unit'

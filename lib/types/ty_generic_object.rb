@@ -14,8 +14,9 @@ module TypedRb
       # The generic Function we retrieve from the registry might be generic
       # If it is generic we apply the bound parameters and we obtain a concrete function type
       def find_function_type(message)
-        function_type = find_function_type_in_hierarchy(:instance, message)
+        function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message)
         if function_type
+          # TODO: Type variables and generic methods?
           from_args = function_type.from.map do |arg|
             if arg.is_a?(Polymorphism::TypeVariable)
               matching_var = type_vars.detect { |type_var|  type_var.variable == arg.variable }
@@ -46,7 +47,7 @@ module TypedRb
 
           materialised_function = TyFunction.new(from_args, to_arg, function_type.parameters_info)
           materialised_function.with_block_type(function_type.block_type)
-          materialised_function
+          [function_klass_type, materialised_function]
         end
       end
 

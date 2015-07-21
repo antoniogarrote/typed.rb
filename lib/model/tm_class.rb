@@ -27,7 +27,7 @@ module TypedRb
             body.check_type(context)
           end
         else
-          body.check_type(context)
+          body.check_type(context) if body
         end
       end
 

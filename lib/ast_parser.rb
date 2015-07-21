@@ -218,7 +218,11 @@ module TypedRb
       class_name = parse_const(node.children[0])
       super_class_name = parse_const(node.children[1]) || 'Object'
       context.with_type([:class, class_name, super_class_name]) do
-        class_body = map(node.children[2], context)
+        class_body = if node.children[2]
+                       map(node.children[2], context)
+                     else
+                       nil
+                     end
         TmClass.new(class_name, super_class_name, class_body, node)
       end
     end

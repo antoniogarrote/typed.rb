@@ -5,7 +5,7 @@ module TypedRb
     # Polymorphic additions to Featherweight Ruby
     module Polymorphism
 
-      class UnitificationError < TypedRb::TypeCheckError; end
+      class UnificationError < TypedRb::TypeCheckError; end
 
       # Common operations on types and restrictions.
       module TypeOperations
@@ -41,27 +41,45 @@ module TypedRb
 
         def compatible_lt_type?(value_l, value_r)
           error_message = "Error checking type, #{value_l} is not a subtype of #{value_r}"
-          value_l <= value_r ? value_l : fail(error_message)
+          value_l <= value_r ? value_l : fail(UnificationError, error_message)
         end
 
+        # This function does not return the infered type.
+        # Types are assigned as a side effect.
         def compatible_send_type?(receiver, send_args)
           return_type = send_args[:return]
           arg_types = send_args[:args]
           message = send_args[:message]
-
-          if receiver
-            function = receiver.find_function_type(message)
+          inferred_receiver = infer_receiver(receiver)
+          if inferred_receiver
+            klass, function = inferred_receiver.find_function_type(message)
+            return true if function.is_a?(Types::TyDynamicFunction)
             if function && can_apply?(function, arg_types)
-              if return_type && graph[return_type][:type]
-                compatible_gt_type?(graph[return_type][:type], function.to, false)
+              if return_type && graph[return_type][:upper_type]
+                compatible_gt_type?(graph[return_type][:upper_type], function.to, false)
               else
-                graph[return_type][:type] = function.to
+                graph[return_type][:upper_type] = function.to
               end
             else
+              return true if klass != inferred_receiver.ruby_type
               fail UnificationError, "Message #{message} not found for type variable #{receiver}"
             end
           else
+            return true if klass != inferred_receiver.ruby_type
             fail UnificationError, "Unbound variable #{receiver} type acting as receiver for #{message}"
+          end
+        end
+
+        def infer_receiver(receiver)
+          if(receiver.is_a?(Hash))
+            receiver[:upper_type] = receiver[:lower_type]if receiver[:upper_type].nil?
+            if receiver[:upper_type]
+              receiver[:upper_type].as_object_type
+            else
+              nil
+            end
+          else
+            receiver
           end
         end
 
@@ -72,8 +90,12 @@ module TypedRb
             arg_types.each_with_index do |arg, i|
               fn_arg = fn.from[i]
               if arg.is_a?(TypeVariable)
-                type = compatible_lt_type?(graph[arg][:type], fn_arg)
-                graph[arg][:type] = type
+                if graph[arg][:lower_type]
+                  type = compatible_lt_type?(graph[arg][:lower_type], fn_arg)
+                  graph[arg][:lower_type] = type
+                else
+                  graph[arg][:lower_type] = fn_arg
+                end
               else
                 compatible_lt_type?(arg, fn_arg)
               end
@@ -107,7 +129,7 @@ module TypedRb
 
         # Is the variable in a group of variables?
         def grouped?(var)
-          groups[var][:links][:grouped]
+          groups[var][:grouped]
         end
 
         def [](var)
@@ -122,18 +144,8 @@ module TypedRb
           groups.keys
         end
 
-        def link(l, r)
+        def merge(l, r)
           merge_groups(groups[l], groups[r])
-        end
-
-        # Join types and groups of variables.
-        # The resulting type is the join type for all the
-        # variables, in the group and upper vars.
-        def fold_groups
-          groups.values.each do |group|
-            group[:type] = join_group_types(group)
-          end
-          self
         end
 
         def replace_groups(constraints)
@@ -148,32 +160,69 @@ module TypedRb
         def do_bindings!
           text = StringIO.new
           text << "Doing bindings:\n"
+
           num_bindings = 0
-          groups.values.each do |group|
-            next unless group[:type]
+          groups.values.uniq.each do |group|
+            next if (group[:upper_type].nil? && group[:lower_type].nil?)
             group[:vars].keys.each do |var|
-              num_bindings += 1
-              text << "Final binding:  #{var.variable} -> #{find_type(group[:type])}\n"
-              var.bind(find_type(group[:type]))
+              final_lower_type = find_type(group[:lower_type], :lower_type)
+              var.upper_bound = final_lower_type
+              final_upper_type = find_type(group[:upper_type], :upper_type)
+              var.lower_bound = final_upper_type
+              final_binding_type = if final_lower_type == final_upper_type
+                                     final_upper_type
+                                   elsif final_lower_type && final_upper_type.nil?
+                                     final_lower_type
+                                   else
+                                     final_upper_type
+                                   end
+              binding_string = "[#{var.lower_bound ? var.lower_bound : '?'},#{var.upper_bound ? var.upper_bound : '?'}]"
+              if final_binding_type
+                num_bindings += 1
+                text << "Final binding:  #{var.variable} -> #{binding_string} : #{final_binding_type}\n"
+                var.bind(final_binding_type)
+              else
+                text << "Final binding:  #{var.variable} -> #{binding_string} : UNKNOWN\n"
+              end
             end
           end
           text << "Found #{num_bindings} bindings"
           TypedRb.log(binding, :debug, text.string)
         end
 
-        def find_type(value)
+        def check_bindings
+          groups.values.each do |group|
+            next if (group[:upper_type].nil? && group[:lower_type].nil?)
+            group[:vars].keys.each do |var|
+              final_lower_type = find_type(group[:lower_type], :lower_type)
+              final_upper_type = find_type(group[:upper_type], :upper_type)
+              if final_lower_type && final_upper_type && final_lower_type != final_upper_type
+                # final lower <= final upper
+                compatible_lt_type?(final_upper_type, final_lower_type)
+              end
+            end
+          end
+        end
+
+        def find_type(value, type)
           # type variable
           if value.is_a?(TypeVariable)
-            find_type(value.bound)
+            value = if type == :lower_type
+                      value.upper_bound
+                    else
+                      value.lower_bound
+                    end
+            find_type(value, type)
           # group
-          elsif value.is_a?(Hash) && value[:type]
-            find_type(value[:type])
+          elsif value.is_a?(Hash) && value[type]
+            find_type(value[type], type)
           # type
           elsif value.is_a?(Type)
             value
           # nil
           else
-            fail UnificationError, 'Cannot find type in type_variable binding' if value.nil?
+            value
+            #fail UnificationError, 'Cannot find type in type_variable binding' if value.nil?
           end
         end
 
@@ -181,36 +230,28 @@ module TypedRb
           TypedRb.log(binding, :debug, "Variable groups:")
           groups.values.uniq.each do |group|
             vars = group[:vars].keys.map(&:to_s).join(',')
-            type = group[:type] ? group[:type].to_s : '?'
-            links = group[:links].map(&:to_s).join(' < ')
-            TypedRb.log(binding, :debug, "#{vars}:#{type} => #{links}")
+            lower_type = group[:lower_type] ? group[:lower_type].to_s : '?'
+            upper_type = group[:upper_type] ? group[:upper_type].to_s : '?'
+            TypedRb.log(binding, :debug, "#{vars}:[#{lower_type},#{upper_type}]")
           end
         end
 
         protected
 
-        def make_group(vars, links = {})
+        def make_group(vars)
           { vars: vars,
-            links: links,
             grouped: vars.keys.size > 1,
-            type: nil }
-        end
-
-        def join_group_types(group)
-          join_type_vars = (group[:vars].keys + group[:links].keys)
-          join_type = join_type_vars.map { |var| groups[var][:type] }.uniq
-          join_type.reduce do |ta, tb|
-            compatible_type? ta, :gt, tb
-          end
+            lower_type: nil,
+            upper_type: nil}
         end
 
         def merge_groups(group_l, group_r)
           vars_common = group_l[:vars].merge(group_r[:vars])
-          links_common = group_l[:links].merge(group_r[:links])
-          group_common = make_group(vars_common, links_common)
+          group_common = make_group(vars_common)
           group_common[:grouped] = true
           # TODO: types???
-          group_common[:type] = max_type(group_l[:type], group_r[:type])
+          group_common[:lower_type] = max_type(group_l[:lower_type], group_r[:lower_type])
+          group_common[:upper_type] = min_type(group_l[:upper_type], group_r[:upper_type])
           vars_common.keys.each { |var|  groups[var] = group_common }
         end
 
@@ -218,7 +259,15 @@ module TypedRb
           if type_a.nil? || type_b.nil?
             type_a || type_b
           else
-            compatible_type?(value_l, value_r, true)
+            compatible_type?(type_a, :gt, type_b)
+          end
+        end
+
+        def min_type(type_a, type_b)
+          if type_a.nil? || type_b.nil?
+            type_a || type_b
+          else
+            compatible_type?(type_a, :lt, type_b)
           end
         end
 
@@ -254,9 +303,11 @@ module TypedRb
         def run(bind_variables = true)
           print_constraints
           unify(@gt_constraints) # we create links between vars in unify, we need to fold groups afterwards
-          @lt_constraints = graph.fold_groups.replace_groups(@lt_constraints)
+          @lt_constraints = graph.replace_groups(@lt_constraints)
           unify(@lt_constraints)
           unify(@send_constraints)
+          graph.check_bindings
+          graph.print_groups
           graph.do_bindings! if bind_variables
           self
         end
@@ -309,7 +360,7 @@ module TypedRb
           else
             if r.is_a?(TypeVariable)
               # this is only going to happen in the first invocation to unify
-              graph.link(l, r)
+              graph.merge(l, r)
             else
               # - In the first invocation to unify, l must always be a TypeVar
               #   t :gt and r a type variable or a type,
@@ -322,12 +373,22 @@ module TypedRb
         end
 
         def check_constraint(l, t, r, bind = true)
-          value_l = graph[l][:type]
+          value_l = if t == :lt
+                      graph[l][:lower_type]
+                    elsif t == :gt
+                      graph[l][:upper_type]
+                    else
+                      graph[l]
+                    end
           #value_r = r.is_a?(Hash) ? graph[r][:type] : r
           value_r = r
           # this will throw an exception if types no compatible
           compatible_type = compatible_type?(value_l, t, value_r)
-          graph[l][:type] = compatible_type if bind
+          if t == :lt
+            graph[l][:lower_type] = compatible_type if bind
+          elsif t == :gt
+            graph[l][:upper_type] = compatible_type if bind
+          end
         end
       end
     end

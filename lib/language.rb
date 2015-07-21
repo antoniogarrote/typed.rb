@@ -11,7 +11,7 @@ module TypedRb
     def check(expr)
       ::BasicObject::TypeRegistry.clear
       $TYPECHECK = true
-      require_relative 'prelude'
+      load File.join(File.dirname(__FILE__), 'prelude.rb')
       eval(expr, TOPLEVEL_BINDING)
       $TYPECHECK = false
       TypedRb.log(binding, :debug, 'Normalize top level')

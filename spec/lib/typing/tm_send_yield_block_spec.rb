@@ -6,12 +6,12 @@ describe TypedRb::Model::TmSend do
   context 'with a yield blocking function' do
     it 'type-checks correctly the block yielding and the block passing' do
       expr = <<__END
-     ts '#wblock / Integer -> &(Integer -> Integer) -> Integer'
-     def wblock(x)
+     ts '#wblock1 / Integer -> &(Integer -> Integer) -> Integer'
+     def wblock1(x)
        yield x
      end
 
-     wblock(2) { |n| n + 1 }
+     wblock1(2) { |n| n + 1 }
 __END
 
       result = language.check(expr)
@@ -20,12 +20,12 @@ __END
 
     it 'type-checks correctly errors in the block arguments application' do
       expr = <<__END
-     ts '#wblock / Integer -> &(Integer -> Integer) -> Integer'
-     def wblock(x)
+     ts '#wblock2 / Integer -> &(Integer -> Integer) -> Integer'
+     def wblock2(x)
        yield x
      end
      lambda {
-       wblock('2') { |n| n + 1 }
+       wblock2('2') { |n| n + 1 }
      }
 __END
 
@@ -40,12 +40,12 @@ __END
        ts '#+ / Integer -> Integer'
      end
 
-     ts '#wblock / Integer -> &(Integer -> Integer) -> Integer'
-     def wblock(x)
+     ts '#wblock3 / Integer -> &(Integer -> Integer) -> Integer'
+     def wblock3(x)
        yield x
      end
      lambda {
-       wblock(2) { |n| n + '1' }
+       wblock3(2) { |n| n + '1' }
      }
 __END
 
@@ -56,12 +56,12 @@ __END
 
     it 'type-checks correctly errors in the block return type' do
       expr = <<__END
-     ts '#wblock / Integer -> &(Integer -> Integer) -> Integer'
-     def wblock(x)
+     ts '#wblock4 / Integer -> &(Integer -> Integer) -> Integer'
+     def wblock4(x)
        yield x
      end
 
-     wblock(2) { |n| '1' }
+     wblock4(2) { |n| '1' }
 __END
 
       expect {

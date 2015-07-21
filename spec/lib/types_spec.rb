@@ -73,11 +73,13 @@ __END
 
       ty_b = described_class.new(B1)
 
-      method = ty_b.find_function_type(:a)
+      klass, method = ty_b.find_function_type(:a)
       expect(method.to_s).to eq('(String -> NilClass)')
+      expect(klass).to eq(A1)
 
-      method = ty_b.find_function_type(:b)
+      klass, method = ty_b.find_function_type(:b)
       expect(method.to_s).to eq('(Numeric -> NilClass)')
+      expect(klass).to eq(B1)
     end
 
     it 'can find methods with functions as arguments' do
@@ -95,12 +97,13 @@ __END
 
       ty_b = described_class.new(B1)
 
-      method = ty_b.find_function_type(:a)
+      klass, method = ty_b.find_function_type(:a)
       function = method.from[1]
       expect(function).to be_instance_of(TypedRb::Types::TyFunction)
       expect(function.from.size).to eq(1)
       expect(function.from[0]).to eq(ty_string)
       expect(function.to).to eq(ty_string)
+      expect(klass).to eq(A1)
     end
   end
 

@@ -4,11 +4,13 @@ describe TypedRb::Types::Polymorphism::Unification do
   it 'should be able to unify a simple constraint' do
     type_var = tyvariable('@a')
     integer = tyobject(Integer)
-    type_var.compatible?(integer)
+    type_var.compatible?(integer, :lt)
 
     unification = described_class.new(type_var.constraints)
     unification.run
     expect(type_var.bound).to eq(integer)
+    expect(type_var.upper_bound).to eq(integer)
+    expect(type_var.lower_bound).to be_nil
   end
 
   context 'with variable instance assignations' do
@@ -26,6 +28,8 @@ describe TypedRb::Types::Polymorphism::Unification do
 
       # @a = max(Integer, Numeric)
       expect(type_var.bound).to eq(numeric)
+      expect(type_var.lower_bound).to eq(numeric)
+      expect(type_var.upper_bound).to be_nil
     end
 
     it 'should find the join of the types' do
@@ -45,6 +49,11 @@ describe TypedRb::Types::Polymorphism::Unification do
       expect(type_var.bound.ruby_type).to eq(Object)
       expect(type_var.bound.modules).to include(Comparable)
       expect(type_var.bound.modules).to include(Kernel)
+      expect(type_var.lower_bound.with_ruby_type).to be_falsey
+      expect(type_var.lower_bound.ruby_type).to eq(Object)
+      expect(type_var.lower_bound.modules).to include(Comparable)
+      expect(type_var.lower_bound.modules).to include(Kernel)
+      expect(type_var.upper_bound).to be_nil
     end
 
     it 'should be possible to unify multiple assignations' do
@@ -69,6 +78,12 @@ describe TypedRb::Types::Polymorphism::Unification do
       expect(type_var.bound).to eq(integer)
       expect(type_var2.bound).to eq(integer)
       expect(type_var3.bound).to eq(string)
+      expect(type_var.lower_bound).to eq(integer)
+      expect(type_var2.lower_bound).to eq(integer)
+      expect(type_var3.lower_bound).to eq(string)
+      expect(type_var.upper_bound).to be_nil
+      expect(type_var2.upper_bound).to be_nil
+      expect(type_var3.upper_bound).to be_nil
     end
 
     it 'should be possible to unify multiple assignations' do
@@ -91,6 +106,10 @@ describe TypedRb::Types::Polymorphism::Unification do
       # @a = @b = Numeric
       expect(type_var.bound).to eq(numeric)
       expect(type_var2.bound).to eq(numeric)
+      expect(type_var.lower_bound).to eq(numeric)
+      expect(type_var2.lower_bound).to eq(numeric)
+      expect(type_var.upper_bound).to be_nil
+      expect(type_var2.upper_bound).to be_nil
     end
 
     it 'should be possible to unify multiple assignations' do
@@ -113,6 +132,10 @@ describe TypedRb::Types::Polymorphism::Unification do
       # @a = @b = Numeric
       expect(type_var.bound).to eq(numeric)
       expect(type_var2.bound).to eq(numeric)
+      expect(type_var.lower_bound).to eq(numeric)
+      expect(type_var2.lower_bound).to eq(numeric)
+      expect(type_var.upper_bound).to be_nil
+      expect(type_var2.upper_bound).to be_nil
     end
   end
 
@@ -130,6 +153,8 @@ describe TypedRb::Types::Polymorphism::Unification do
 
       # @a = min(Integer, Integer) if Integer <= Integer
       expect(type_var.bound).to eq(integer)
+      expect(type_var.lower_bound).to eq(integer)
+      expect(type_var.upper_bound).to eq(integer)
     end
 
     it 'should be able to unify matching types' do
@@ -146,6 +171,8 @@ describe TypedRb::Types::Polymorphism::Unification do
 
       # @a = min(Integer, Numeric) if Integer <= Numeric
       expect(type_var.bound).to eq(integer)
+      expect(type_var.lower_bound).to eq(integer)
+      expect(type_var.upper_bound).to eq(numeric)
     end
 
     it 'should raise a unification exception for incompatible types' do

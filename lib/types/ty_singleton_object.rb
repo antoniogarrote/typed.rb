@@ -8,7 +8,7 @@ module TypedRb
 
       # No generic type, function will always be concrete
       def find_function_type(message)
-        BasicObject::TypeRegistry.find(:class, ruby_type, message)
+        [ruby_type, BasicObject::TypeRegistry.find(:class, ruby_type, message)]
       end
 
       def find_var_type(var)
