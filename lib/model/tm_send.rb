@@ -200,7 +200,7 @@ module TypedRb
                                       end
               actual_arguments[index..-1].each do |actual_argument|
                 unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
-                  error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
+                  error_message = "#{formal_parameter_type} expected, #{actual_argument_type} found"
                   fail TypeCheckError, error_message
                 end
               end
@@ -209,7 +209,7 @@ module TypedRb
               unless actual_argument.nil? # opt if this is nil
                 actual_argument_type = actual_argument.check_type(context)
                 unless actual_argument_type.compatible?(formal_parameter_type, :lt)
-                  error_message = "#{error_message} #{formal_parameter_type} expected, #{actual_argument_type} found"
+                  error_message = "#{formal_parameter_type} expected, #{actual_argument_type} found"
                   fail TypeCheckError, error_message
                 end
               end

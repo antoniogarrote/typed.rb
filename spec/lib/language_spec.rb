@@ -28,8 +28,9 @@ describe TypedRb::Language do
 
     it 'should be possible to type check errors about array invariance' do
       expect {
-        result = language.check_file(file)
-      }.to raise_error TypedRb::Types::UncomparableTypes
+        language.check_file(file)
+      }.to raise_error(TypedRb::TypeCheckError,
+                       'Array[Class[Animal1]] expected, Array[Class[Cat1]] found')
     end
   end
 end

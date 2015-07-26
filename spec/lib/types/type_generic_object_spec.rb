@@ -175,7 +175,7 @@ describe TypedRb::Types::TyGenericObject do
       expect(arg4.compatible?(array_super_numeric, :lt)).to be_falsey
     end
 
-    it 'checks correctly: Array<? super Numeric> :lt Array<? super Integer> => [Numeric, ?] /< [Integer, ?] => TRUE' do
+    it 'checks correctly: Array<? super Numeric> :lt Array<? super Integer> => [Numeric, ?] < [Integer, ?] => TRUE' do
       expect(array_super_numeric.compatible?(arg4, :lt)).to be_truthy
     end
 
@@ -187,8 +187,117 @@ describe TypedRb::Types::TyGenericObject do
       expect(arg5.compatible?(array_super_numeric, :lt)).to be_truthy
     end
 
-    it 'checks correctly: Array<? super Numeric> :lt Array<? super Object> => [Numeric, ?] < [Object, ?] => FALSE' do
+    it 'checks correctly: Array<? super Numeric> :lt Array<? super Object> => [Numeric, ?] /< [Object, ?] => FALSE' do
       expect(array_super_numeric.compatible?(arg5, :lt)).to be_falsey
+    end
+  end
+
+  context 'base of :gt comparison is a generic type with an upper_bound' do
+    it 'checks correctly: Array<?> :gt Array<? extends Integer> => [?, ?] > [?, Integer] => TRUE' do
+      expect(arg0.compatible?(array_extends_integer, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt  correctly: Array<?> => [?, Integer] /> [?, ?] => FALSE' do
+      expect(array_extends_integer.compatible?(arg0, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<Integer> :gt Array<? extends Integer> => [Integer, Integer] /> [?, Integer] => FALSE' do
+      expect(arg1.compatible?(array_extends_integer, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt Array<Integer> => [?, Integer] > [Integer, Integer] => TRUE' do
+      expect(array_extends_integer.compatible?(arg1, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<Numeric> :gt Array<? extends Integer> => [Numeric, Numeric] /> [?, Integer] => FALSE' do
+      expect(arg2.compatible?(array_extends_integer, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt Array<Numeric> => [?, Integer] /> [Numeric, Numeric] => FALSE' do
+      expect(array_extends_integer.compatible?(arg2, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt Array<? extends Integer> => [?, Integer] > [?, Integer] => TRUE' do
+      expect(array_extends_integer.compatible?(array_extends_integer, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<? extends Numeric> :gt Array<? extends Integer> => [?, Numeric] > [?, Integer] => TRUE' do
+      expect(arg3.compatible?(array_extends_integer, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt Array<? extends Numeric> => [?, Integer] > [?, Numeric] => FALSE' do
+      expect(array_extends_integer.compatible?(arg3, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Integer> :gt Array<? extends Integer> => [Integer, ?] /> [?, Integer] => FALSE' do
+      expect(arg4.compatible?(array_extends_integer, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt Array<? super Integer> => [?, Integer] /> [Integer, ?] => FALSE' do
+      expect(array_extends_integer.compatible?(arg4, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<? extends Integer> => [Numeric, ?] /> [?, Integer] => FALSE' do
+      expect(array_super_numeric.compatible?(array_extends_integer, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? extends Integer> :gt Array<? super Numeric> => [?, Integer] /> [Numeric, ?] => FALSE' do
+      expect(array_extends_integer.compatible?(array_super_numeric, :gt)).to be_falsey
+    end
+  end
+
+  context 'base of :gt comparison is a generic type with a lower_bound' do
+
+    it 'checks compatible? Array<?> :gt Array<? super Numeric> => [?, ?] > [Numeric, ?] => TRUE' do
+      expect(arg0.compatible?(array_super_numeric, :gt)).to be_truthy
+    end
+
+    it 'checks compatible? Array<? super Numeric> :gt Array<?> => [Numeric, ?] /> [?, ?] => FALSE' do
+      expect(array_super_numeric.compatible?(arg0, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<Integer> :gt Array<? super Numeric> => [Integer, Integer] /> [Numeric, ?] => FALSE' do
+      expect(arg1.compatible?(array_super_numeric, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<Integer> =>  [Numeric, ?] /> [Integer, Integer] => FALSE' do
+      expect(array_super_numeric.compatible?(arg1, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<Numeric> :gt Array<? super Numeric> => [Numeric, Numeric] /> [Numeric, ?] => FALSE' do
+      expect(arg2.compatible?(array_super_numeric, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<Numeric> =>  [Numeric, ?] > [Numeric, Numeric] => TRUE' do
+      expect(array_super_numeric.compatible?(arg2, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<? extends Numeric> :gt Array<? super Numeric> => [?, Numeric] /> [Numeric, ?] => FALSE' do
+      expect(arg3.compatible?(array_super_numeric, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<? extends Numeric> => [Numeric,?] /> [?, Numeric] => FALSE' do
+      expect(array_super_numeric.compatible?(arg3, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Integer> :gt Array<? super Numeric> => [Integer, ?] > [Numeric, ?] => TRUE' do
+      expect(arg4.compatible?(array_super_numeric, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<? super Integer> => [Numeric, ?] > [Integer, ?] => FALSE' do
+      expect(array_super_numeric.compatible?(arg4, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<? super Numeric> => [Numeric, ?] > [Numeric, ?] => TRUE' do
+      expect(array_super_numeric.compatible?(array_super_numeric, :gt)).to be_truthy
+    end
+
+    it 'checks correctly: Array<? super Object> :gt Array<? super Numeric> => [Object, ?] /> [Numeric, ?] => FALSE' do
+      expect(arg5.compatible?(array_super_numeric, :gt)).to be_falsey
+    end
+
+    it 'checks correctly: Array<? super Numeric> :gt Array<? super Object> => [Numeric, ?] > [Object, ?] => TRUE' do
+      expect(array_super_numeric.compatible?(arg5, :gt)).to be_truthy
     end
   end
 end
