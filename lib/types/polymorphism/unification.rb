@@ -163,7 +163,7 @@ module TypedRb
 
           num_bindings = 0
           groups.values.uniq.each do |group|
-            next if (group[:upper_type].nil? && group[:lower_type].nil?)
+            next if (group [:upper_type].nil? && group[:lower_type].nil?)
             group[:vars].keys.each do |var|
               final_lower_type = find_type(group[:lower_type], :lower_type)
               var.upper_bound = final_lower_type

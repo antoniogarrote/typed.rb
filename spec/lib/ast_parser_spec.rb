@@ -28,6 +28,13 @@ describe TypedRb::AstParser do
       expect(parsed.super_class_name).to be == 'Object'
     end
 
+    it 'should parse classes without body' do
+      parsed = parse('class A; end')
+      expect(parsed).to be_instance_of(TypedRb::Model::TmClass)
+      expect(parsed.class_name).to be == 'A'
+      expect(parsed.super_class_name).to be == 'Object'
+    end
+
     it 'should parse classes with namespaces' do
       parsed = parse('class Ma::Mb::A < Mc::B; 1; end')
       expect(parsed).to be_instance_of(TypedRb::Model::TmClass)

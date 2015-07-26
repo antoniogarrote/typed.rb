@@ -108,6 +108,8 @@ class BasicObject
         end
       end
 
+      # TODO: Generic types are retrieved without enforcing type constraints
+      # because they haven't been materialised.
       ts '.find / Symbol -> Class -> String -> TypedRb::Types::TyFunction'
       def find(kind, klass, message)
         class_data = registry[[kind, klass]]
@@ -197,8 +199,12 @@ class BasicObject
           klass_name = parts.drop(1).join('_')
           if klass_name == 'main'
             klass = :main
-            all_instance_methods = TOPLEVEL_BINDING.public_methods + TOPLEVEL_BINDING.protected_methods + TOPLEVEL_BINDING.private_methods
-            all_methods = TOPLEVEL_BINDING.receiver.class.public_methods + TOPLEVEL_BINDING.receiver.class.protected_methods + TOPLEVEL_BINDING.receiver.class.private_methods
+            all_instance_methods = TOPLEVEL_BINDING.public_methods +
+                                   TOPLEVEL_BINDING.protected_methods +
+                                   TOPLEVEL_BINDING.private_methods
+            all_methods = TOPLEVEL_BINDING.receiver.class.public_methods +
+                          TOPLEVEL_BINDING.receiver.class.protected_methods +
+                          TOPLEVEL_BINDING.receiver.class.private_methods
           else
             klass = Object.const_get(klass_name)
             all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods

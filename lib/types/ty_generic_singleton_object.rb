@@ -1,7 +1,11 @@
 require_relative 'ty_singleton_object'
+require_relative 'polymorphism/generic_comparisons'
+
 module TypedRb
   module Types
     class TyGenericSingletonObject < TySingletonObject
+
+      include Polymorphism::GenericComparisons
 
       attr_reader :type_vars
       attr_accessor :local_typing_context
@@ -39,11 +43,13 @@ module TypedRb
         end
       end
 
-      def materialize_with_type_vars(type_vars)
+      def materialize_with_type_vars(type_vars, bound_type)
         bound_type_vars = @type_vars.map do |type_var|
-          type_vars.detect{ |bound_type_var| type_var.variable == bound_type_var.variable }
+          type_vars.detect do |bound_type_var|
+            type_var.variable == bound_type_var.variable
+          end
         end
-        materialize(bound_type_vars.map{ |type_var| type_var.bound }, nil)
+        materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) }, nil)
       end
       # materialize will be invoked by the logic handling invocations like:
       # ts 'MyClass[X][Y]'

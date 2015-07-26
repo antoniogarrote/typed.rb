@@ -126,7 +126,7 @@ module TypedRb
     class Type
 
       # This is only used from the runtime parsing logic
-      # TODO: moved it to Runtime?
+      # TODO: move it to Runtime?
       def self.parse(type, klass)
         fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
         if type == 'unit'
@@ -177,8 +177,9 @@ module TypedRb
           #TODO: should I use #parse_singleton_object_type here?
           Types::TyGenericSingletonObject.new(Array, [parsed_parameter])
         else
-          type_var = Polymorphism::TypeVariable.new('Array:X', :gen_name => false)
-
+          type_var = Polymorphism::TypeVariable.new('Array:X', :gen_name => false,
+                                                               :upper_bound => parsed_parameter,
+                                                               :lower_bound => parsed_parameter)
           type_var.bind(parsed_parameter)
           Types::TyGenericObject.new(Array, [type_var])
         end
@@ -205,15 +206,25 @@ module TypedRb
                               is_generic = true
                               maybe_bound_param
                             else
-                              # TODO: check upper bound for the concrete type?
-                              # As long as this type is < upper bound, check in the type structure
-                              # later will prove that this substitution is correct.
-                              concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
-                                                                                     :upper_bound => type_var.upper_bound,
-                                                                                     :lower_bound => type_var.lower_bound,
-                                                                                     :gen_name => false)
-                              concrete_param.bind(TySingletonObject.new(Object.const_get(param[:type])))
-                              concrete_param
+                              # TODO: param might be a nested generic type
+                              if param[:bound]
+                                # A type parameter that is not bound in the generic type declaration.
+                                # It has to be local to the method (TODO: not implemented yet)
+                                # or a wildcard '?'
+                                is_generic = true
+                                # TODO: add some reference to the method if the variable is method specific?
+                                param[:type] = "#{type_var.name}:#{param[:type] == '?' ? type_application_counter : param[:type]}"
+                                parse(param, klass)
+                              else
+                                # The Generic type is bound to a concrete type: bound == upper_bound == lower_bound
+                                bound = TySingletonObject.new(Object.const_get(param[:type]))
+                                concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
+                                                                                       :upper_bound => bound,
+                                                                                       :lower_bound => bound,
+                                                                                       :gen_name => false)
+                                concrete_param.bind(bound)
+                                concrete_param
+                              end
                             end
           concrete_type_vars << parsed_type_var
         end
@@ -224,6 +235,12 @@ module TypedRb
           Types::TyGenericObject.new(ruby_type, concrete_type_vars)
         end
       end
+
+      def self.type_application_counter
+        @type_application_counter ||= 0
+        @type_application_counter += 1
+      end
+
 
       def self.parse_object_type(type)
         begin

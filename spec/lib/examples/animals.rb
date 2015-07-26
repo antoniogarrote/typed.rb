@@ -38,11 +38,12 @@ def mindless_func(xs)
   xs.push(Dog1.new)
 end
 
-cats = Array.(Cat1).new
-cats.push(Cat1.new)
+ cats = Array.(Cat1).new
+ cats.push(Cat1.new)
 
-horror = mindless_func(cats)
+ # Type error should be raised here
+ horror = mindless_func(cats)
 
-lambda {
-  horror.last.jump
-}
+ lambda {
+   horror.last.jump
+ }

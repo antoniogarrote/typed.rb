@@ -24,7 +24,7 @@ module TypedRb
           # coming from type var application when the generic type becomes
           # concrete to yield the final type.
           TmClass.with_fresh_bindings(class_type, context) do
-            body.check_type(context)
+            body.check_type(context) if body
           end
         else
           body.check_type(context) if body

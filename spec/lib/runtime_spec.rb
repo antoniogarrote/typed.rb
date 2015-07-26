@@ -250,6 +250,8 @@ __END
         ts '#f2 / Array[X] -> unit'
         def f2(a); end
 
+        ts '#f3 / Array[? < Numeric] -> unit'
+        def f3(a); end
      end
 __END
 
@@ -258,13 +260,22 @@ __END
 
     f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f1']
     f2_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f2']
+    f3_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f3']
     expect(f1_type).to be_instance_of(TypedRb::Types::TyFunction)
     expect(f1_type.from.first).to be_instance_of(TypedRb::Types::TyGenericObject)
     expect(f1_type.from.first.type_vars.first.bound.ruby_type).to eq(Integer)
+    expect(f1_type.from.first.type_vars.first.upper_bound.ruby_type).to eq(Integer)
+    expect(f1_type.from.first.type_vars.first.lower_bound.ruby_type).to eq(Integer)
     expect(f1_type.from.first.type_vars.first.variable).to eq('Array:X')
     expect(f2_type.from.first).to be_instance_of(TypedRb::Types::TyGenericSingletonObject)
     expect(f2_type.from.first.type_vars.first.bound).to eq(nil)
     expect(f2_type.from.first.type_vars.first.variable).to eq('Cnt1:X')
+
+    expect(f3_type.from.first).to be_instance_of(TypedRb::Types::TyGenericSingletonObject)
+    expect(f3_type.from.first.type_vars.first.bound).to eq(nil)
+    expect(f3_type.from.first.type_vars.first.upper_bound.ruby_type).to eq(Numeric)
+    expect(f3_type.from.first.type_vars.first.lower_bound).to eq(nil)
+    expect(f3_type.from.first.type_vars.first.variable).to match(/Cnt1:Array:X:[\d]+/)
   end
 
   it 'parses function types with variable rest args' do
