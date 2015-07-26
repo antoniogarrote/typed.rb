@@ -33,6 +33,10 @@ module TypedRb
         false
       end
 
+      def generic?
+        false
+      end
+
       def defaults_to_dynamic?
         ! BasicObject::TypeRegistry.registered?(ruby_type)
       end

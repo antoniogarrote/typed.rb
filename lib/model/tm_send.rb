@@ -116,7 +116,7 @@ module TypedRb
         elsif receiver_type.is_a?(Types::TyGenericSingletonObject) && (message == :call)
           # Application of types accept a type class or a string with a type description
           arg_types = parse_type_application_arguments(args, context)
-          check_type_application_to_generic(receiver_type, arg_types, context)
+          check_type_application_to_generic(receiver_type, arg_types)
         elsif receiver_type.is_a?(Types::TyFunction) && (message == :[] || message == :call)
           check_lambda_application(receiver_type, context)
         else
@@ -142,9 +142,20 @@ module TypedRb
       def parse_type_application_arguments(arguments, context)
         arguments.map do |argument|
           if argument.is_a?(Model::TmString)
+            binding.pry
             type = TypeSignature::Parser.parse(argument.node.children.first)
-            type[:type] = "type_app_#{type_application_counter}"
-            Types::Type.parse(type, nil)
+            # TODO: do this recursively in the case of nested generic type
+            # TODO: do we need it at all?
+            if type[:kind] == :type_var
+              type[:type] = "type_app_#{type_application_counter}"
+            end
+
+            klass = if type[:kind] == :generic_type
+                      Object.const_get(type[:type])
+                    else
+                      nil
+                    end
+            Types::Type.parse(type, klass)
           else
             argument.check_type(context)
           end
@@ -156,8 +167,8 @@ module TypedRb
         @type_application_counter += 1
       end
 
-      def check_type_application_to_generic(generic_type, args, context)
-        generic_type.materialize(args, context)
+      def check_type_application_to_generic(generic_type, args)
+        generic_type.materialize(args)
       end
 
       def check_application(receiver_type, function_type, context)

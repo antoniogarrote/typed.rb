@@ -1,6 +1,6 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
-describe TypedRb::Types::TyGenericObject do
+describe TypedRb::Types::Polymorphism::GenericComparisons do
   # Array[? < Integer]
   let(:int_bound) do
     TypedRb::Types::TySingletonObject.new(Integer)

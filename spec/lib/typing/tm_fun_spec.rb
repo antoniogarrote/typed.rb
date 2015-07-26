@@ -120,6 +120,8 @@ __CODE
     context 'with correct types' do
       let(:code) do
         text = <<__CODE
+       ts 'type Array[T]'
+
        ts '#f / Integer -> Integer... -> String'
        def f(a, *b)
          'string'
@@ -142,6 +144,8 @@ __CODE
     context 'with erroneous types' do
       let(:code) do
         text = <<__CODE
+       ts 'type Array[T]'
+
        ts '#f / Integer -> Integer... -> String'
        def f(a, *b)
          'string'
@@ -163,6 +167,8 @@ __CODE
     context 'with missing rest args' do
       let(:code) do
         text = <<__CODE
+       ts 'type Array[T]'
+
        ts '#f / Integer -> Integer... -> String'
        def f(a, *b)
          'string'

@@ -9,7 +9,7 @@ class BasicObject
       parametric_type_prefix = /\s*(module|class|type)\s*/
       if signature.index(parametric_type_prefix) == 0
         type_signature = signature.split(parametric_type_prefix).last
-        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature).first
+        generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature)
         TypeRegistry.register_generic_type_information(generic_type)
       else
         method, signature = signature.split(/\s+\/\s+/)
@@ -115,7 +115,7 @@ class BasicObject
         class_data = registry[[kind, klass]]
         if class_data
           # TODO: What should we when the class is in the registry but the method is missing?
-          # The class has been marked but only partially?
+          # The class has been typed but only partially?
           # Dynamic invokation or error?
           # Maybe an additional @dynamic annotation can be added to distinguish the desired outcome.
           # Preferred outcome right now is nil to catch errors in unification, safer assumption.

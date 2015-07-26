@@ -55,11 +55,16 @@ module TypedRb
 
         @current_function << new_type unless @current_type.empty?
         @current_type = []
+        final_function = transform_function_tokens(@current_function)
 
-        if @current_function.size == 1
-          @current_function.last
+        # Distinguis between function without arguments:
+        #   -> unit => [:<, 'unit']
+        # and generic type without function (e.g. in the  type parameter of a class Array.('Array[Integer]'))
+        #   Array[Integer] => ['Array', {:type ... }]
+        if @current_function.at(0) != :< && final_function.size == 1
+          final_function.last
         else
-          @current_function = transform_function_tokens(@current_function)
+          final_function
         end
       end
 
@@ -87,7 +92,9 @@ module TypedRb
         next_function_elem = next_function_elem.map do |token_group|
           if(token_group.is_a?(Array))
             if (token_group.size > 1 &&
-                token_group.drop(1).all?{ |token| token.is_a?(Hash) && token[:kind] == :type_var } &&
+                token_group.drop(1).all? do |token|
+                  token.is_a?(Hash) && (token[:kind] == :type_var || token[:kind] == :generic_type)
+                end &&
                 token_group[0].is_a?(String))
               { :type => token_group.first, :parameters => token_group.drop(1), :kind => :generic_type }
             else
@@ -129,7 +136,12 @@ module TypedRb
         bound = if @current_function.size == 1
                   { :type => @current_function.first, :kind => :type_var }
                 else
-                  { :type => @current_function.first, :bound => @current_function.last, :binding => @binding, :kind => :type_var }
+                  if @binding.nil?
+                    # This is the case for nested generic types
+                    { :type => @current_function.first, :parameters => @current_function.drop(1), :kind => :generic_type }
+                  else
+                    { :type => @current_function.first, :bound => @current_function.last, :binding => @binding, :kind => :type_var }
+                  end
                 end
         @binding = nil
         parent_function = @stack.pop

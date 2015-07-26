@@ -23,7 +23,7 @@ module TypedRb
       # MyClass.(TypeArg1, TypeArg2)  -> make X<TypeArg1, Y<TypeArg2, X>TypeArg1, X>TypeArg2
       # @see comment below
       # TODO: what if we want to materialize with a type variable? => def x:T; Array.(T).new; end
-      def materialize(actual_arguments, context)
+      def materialize(actual_arguments)
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
             if argument.is_a?(Polymorphism::TypeVariable)
@@ -49,7 +49,7 @@ module TypedRb
             type_var.variable == bound_type_var.variable
           end
         end
-        materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) }, nil)
+        materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) })
       end
       # materialize will be invoked by the logic handling invocations like:
       # ts 'MyClass[X][Y]'
@@ -150,6 +150,10 @@ module TypedRb
       def minimal_typing_context
         Model::TmClass.with_fresh_bindings(self, nil)
         self.local_typing_context
+      end
+
+      def generic?
+        true
       end
 
       def to_s

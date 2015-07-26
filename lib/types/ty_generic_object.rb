@@ -55,6 +55,10 @@ module TypedRb
         end
       end
 
+      def generic?
+        true
+      end
+
       def to_s
         base_string = super
         var_types_strings = @type_vars.map do |var_type|

@@ -55,7 +55,8 @@ class Array
   ts '#<< / [T] -> Array[T]'
   ts '#<=> / Array[T] -> Integer'
   ts '#== / Array[T] -> Array[T]'
-  ts '#[] / Integer -> [T]'
+  ts '#at / Integer -> [T]'
+  ts '#[] / Integer... -> Object'
 end
 
 

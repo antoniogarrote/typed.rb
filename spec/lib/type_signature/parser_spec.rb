@@ -13,6 +13,44 @@ describe TypedRb::TypeSignature::Parser do
     expect(result).to eq('Bool')
   end
 
+  it 'parses a generic type' do
+    result = described_class.parse('Array[Bool]')
+    expect(result).to eq({:type       => 'Array',
+                          :parameters => [{:type => 'Bool', :kind => :type_var}],
+                          :kind       => :generic_type})
+  end
+
+  it 'parses a nested generic type' do
+    result = described_class.parse('Array[Array[Integer]]')
+    expect(result).to eq({:type=>'Array',
+                          :parameters => [
+                            {:type=>'Array',
+                             :parameters => [{
+                               :type => 'Integer',
+                               :kind => :type_var
+                             }],
+                             :kind    => :generic_type }
+                          ],
+                          :kind => :generic_type})
+  end
+
+  it 'parses a nested generic type with multiple type arguments' do
+    result = described_class.parse('Array[Hash[Symbol][String]]')
+    expect(result).to eq({:type=>'Array',
+                          :parameters => [
+                            {:type=>'Hash',
+                             :parameters => [{
+                                               :type => 'Symbol',
+                                               :kind => :type_var
+                                             }, {
+                                               :type => 'String',
+                                               :kind => :type_var
+                                             }],
+                             :kind    => :generic_type }
+                          ],
+                          :kind => :generic_type})
+  end
+
   it 'parses an atomic rest type' do
     result = described_class.parse('Bool...')
     expect(result).to eq({:type       => 'Array',

@@ -86,6 +86,9 @@ module TypedRb
 
           args.each_with_index do |arg, i|
             function_arg_type = function_type.from[i]
+            # Generic arguments are parsed by runtime without checking constraints since they are not available at parsing type.
+            # We need to run unification in them before using the type to detect invalid type argument applications.
+            function_arg_type = check_type_self_application_to_generic(function_arg_type) if function_arg_type.is_a?(Types::TyObject) && function_arg_type.generic?
             context = case arg.first
                       when :arg, :restarg
                         context.add_binding(arg[1], function_arg_type)
@@ -123,20 +126,30 @@ module TypedRb
             body_return_type = body.check_type(context)
             if function_type.to.instance_of?(Types::TyUnit)
               function_type.to
-            elsif body_return_type.compatible?(function_type.to, :lt)
-              function_type
-            # TODO
-            # A TyObject(Symbol) should be returned not the function type
-            # x = def id(x); x; end / => x == :id
             else
-              error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
-              fail TypeCheckError, error_message
+              # Same as before but for the return type
+              function_type_to = function_type.to.is_a?(Types::TyObject) && function_type.to.generic? ? check_type_self_application_to_generic(function_type.to) : function_type.to
+              if body_return_type.compatible?(function_type_to, :lt)
+                function_type
+                # TODO:
+                # A TyObject(Symbol) should be returned not the function type
+                # x = def id(x); x; end / => x == :id
+              else
+                error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
+                fail TypeCheckError, error_message
+              end
             end
           end
         end
       end
 
       private
+
+      def check_type_self_application_to_generic(generic_type)
+        ruby_type = generic_type.ruby_type
+        type_vars = generic_type.type_vars
+        BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
+      end
 
       def parse_owner(owner)
         if owner.nil?
