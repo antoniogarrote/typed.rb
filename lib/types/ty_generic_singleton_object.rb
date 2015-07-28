@@ -29,12 +29,25 @@ module TypedRb
             if argument.is_a?(Polymorphism::TypeVariable)
               # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
               if argument.upper_bound
-                fresh_vars_generic_type.type_vars[i].compatible?(argument.upper_bound, :lt)
+                upper_bound = if argument.upper_bound.is_a?(TyGenericSingletonObject)
+                                argument.upper_bound.self_materialize
+                              else
+                                argument.upper_bound
+                              end
+                fresh_vars_generic_type.type_vars[i].compatible?(upper_bound, :lt)
               end
               if argument.lower_bound
-                fresh_vars_generic_type.type_vars[i].compatible?(argument.lower_bound, :gt)
+                lower_bound = if argument.lower_bound.is_a?(TyGenericSingletonObject)
+                                argument.lower_bound.self_materialize
+                              else
+                                argument.lower_bound
+                              end
+                fresh_vars_generic_type.type_vars[i].compatible?(lower_bound, :gt)
               end
             else
+              if argument.is_a?(TyGenericSingletonObject)
+                argument = argument.self_materialize
+              end
               # This is only for matches T =:= Type1 -> T < Type1, T > Type1
               fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
               fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
@@ -51,6 +64,11 @@ module TypedRb
         end
         materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) })
       end
+
+      def self_materialize
+        BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
+      end
+
       # materialize will be invoked by the logic handling invocations like:
       # ts 'MyClass[X][Y]'
       # class MyClass

@@ -142,7 +142,6 @@ module TypedRb
       def parse_type_application_arguments(arguments, context)
         arguments.map do |argument|
           if argument.is_a?(Model::TmString)
-            binding.pry
             type = TypeSignature::Parser.parse(argument.node.children.first)
             # TODO: do this recursively in the case of nested generic type
             # TODO: do we need it at all?

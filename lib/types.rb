@@ -207,30 +207,25 @@ module TypedRb
                               is_generic = true
                               maybe_bound_param
                             else
-                              binding.pry
-                              if param[:bound]
-                                if param[:binding].nil?
-                                  # It is a nested generic type
-                                  klass = Object.const_get(param[:type])
-                                  param[:kind] = :generic_type
-                                  param[:parameters] = [param[:bound]]
-                                  bound = parse(param, klass)
-                                  concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
-                                                                                         :upper_bound => bound,
-                                                                                         :lower_bound => bound,
-                                                                                         :gen_name => false)
-                                  concrete_param.bind(bound)
-                                  is_generic = bound.is_a?(Types::TyGenericSingletonObject) ? true : false
-                                  concrete_param
-                                else
-                                  # A type parameter that is not bound in the generic type declaration.
-                                  # It has to be local to the method (TODO: not implemented yet)
-                                  # or a wildcard '?'
-                                  is_generic = true
-                                  # TODO: add some reference to the method if the variable is method specific?
-                                  param[:type] = "#{type_var.name}:#{param[:type] == '?' ? type_application_counter : param[:type]}"
-                                  parse(param, klass)
-                                end
+                              if param[:kind] == :generic_type
+                                # It is a nested generic type
+                                klass = Object.const_get(param[:type])
+                                bound = parse(param, klass)
+                                concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
+                                                                                       :upper_bound => bound,
+                                                                                       :lower_bound => bound,
+                                                                                       :gen_name => false)
+                                concrete_param.bind(bound)
+                                is_generic = bound.is_a?(Types::TyGenericSingletonObject) ? true : false
+                                concrete_param
+                              elsif param[:bound]
+                                # A type parameter that is not bound in the generic type declaration.
+                                # It has to be local to the method (TODO: not implemented yet)
+                                # or a wildcard '?'
+                                is_generic = true
+                                # TODO: add some reference to the method if the variable is method specific?
+                                param[:type] = "#{type_var.name}:#{param[:type] == '?' ? type_application_counter : param[:type]}"
+                                parse(param, klass)
                               else
                                 # The Generic type is bound to a concrete type: bound == upper_bound == lower_bound
                                 bound = TySingletonObject.new(Object.const_get(param[:type]))

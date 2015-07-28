@@ -88,7 +88,7 @@ module TypedRb
             function_arg_type = function_type.from[i]
             # Generic arguments are parsed by runtime without checking constraints since they are not available at parsing type.
             # We need to run unification in them before using the type to detect invalid type argument applications.
-            function_arg_type = check_type_self_application_to_generic(function_arg_type) if function_arg_type.is_a?(Types::TyObject) && function_arg_type.generic?
+            function_arg_type = function_arg_type.self_materialize if function_arg_type.is_a?(Types::TyGenericSingletonObject)
             context = case arg.first
                       when :arg, :restarg
                         context.add_binding(arg[1], function_arg_type)
@@ -128,7 +128,7 @@ module TypedRb
               function_type.to
             else
               # Same as before but for the return type
-              function_type_to = function_type.to.is_a?(Types::TyObject) && function_type.to.generic? ? check_type_self_application_to_generic(function_type.to) : function_type.to
+              function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.self_materialize : function_type.to
               if body_return_type.compatible?(function_type_to, :lt)
                 function_type
                 # TODO:
@@ -144,12 +144,6 @@ module TypedRb
       end
 
       private
-
-      def check_type_self_application_to_generic(generic_type)
-        ruby_type = generic_type.ruby_type
-        type_vars = generic_type.type_vars
-        BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
-      end
 
       def parse_owner(owner)
         if owner.nil?
