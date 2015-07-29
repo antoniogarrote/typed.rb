@@ -132,7 +132,7 @@ class BasicObject
         end
       end
 
-      ts '.registered / Class -> Boolean'
+      ts '.registered? / Class -> Boolean'
       def registered?(klass)
         registry.keys.map(&:last).include?(klass)
       end

@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe TypedRb::Model::TmLet do
+describe TypedRb::Model::TmLocalVarAsgn do
   before :each do
     ::BasicObject::TypeRegistry.clear
   end

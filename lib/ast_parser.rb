@@ -69,7 +69,7 @@ module TypedRb
       when :lvar
         TmVar.new(node.children.first,node)
       when :lvasgn
-        parse_let(node, context)
+        parse_lvasgn(node, context)
       when :gvar
         parse_global_var(node, context)
       when :gvasgn
@@ -169,9 +169,9 @@ module TypedRb
                 node)
     end
 
-    def parse_let(node, context)
+    def parse_lvasgn(node, context)
       binding, term = node.children
-      TmLet.new(binding.to_s, map(term,context), node)
+      TmLocalVarAsgn.new(binding.to_s, map(term,context), node)
     end
 
     def parse_args(args, context)
