@@ -50,6 +50,11 @@ class BasicObject
     raise ::StandardError, "Error parsing type signature '#{type_signature}': #{ex.message}"
   end
 
+  def cast(from, _to)
+    # noop
+    from
+  end
+
   class TypeRegistry
     class << self
 
@@ -247,7 +252,7 @@ end
 
 class Class
   ts '.call / Class... -> unit'
-  def call(*types)
+  def call(*_types)
     self
   end
 end

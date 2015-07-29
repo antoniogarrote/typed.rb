@@ -15,7 +15,12 @@ module TypedRb
       end
 
       def find_function_type(message)
-        [:main, BasicObject::TypeRegistry.find(:instance, :main, message)]
+        found_type = BasicObject::TypeRegistry.find(:instance, :main, message)
+        if found_type && !found_type.is_a?(TyDynamicFunction)
+          [:main, found_type]
+        else
+          TyObject.new(ruby_type).find_function_type(message)
+        end
       end
 
       def find_var_type(var)

@@ -32,8 +32,8 @@ module TypedRb
       end
 
       def check_type(context)
-        if receiver.nil? && message.to_s == 'ts'
-        # ignore, => type annotation
+        if receiver.nil? && message.to_s == :ts
+          # ignore, => type annotation
         elsif message == :new && !singleton_object_type(receiver, context).nil?
           check_instantiation(context)
         elsif receiver == :self || receiver.nil?
@@ -92,6 +92,8 @@ module TypedRb
             if function_type.nil?
               error_message = "Error typing message, type information for #{self_type}:#{message} found."
               fail TypeCheckError error_message
+            elsif cast?(function_klass_type)
+              check_casting(context)
             else
               # function application
               check_application(self_type, function_type, context)
@@ -145,11 +147,11 @@ module TypedRb
             type = TypeSignature::Parser.parse(argument.node.children.first)
             # TODO: do this recursively in the case of nested generic type
             # TODO: do we need it at all?
-            if type[:kind] == :type_var
+            if type.is_a?(Hash) && type[:kind] == :type_var
               type[:type] = "type_app_#{type_application_counter}"
             end
 
-            klass = if type[:kind] == :generic_type
+            klass = if type.is_a?(Hash) && type[:kind] == :generic_type
                       Object.const_get(type[:type])
                     else
                       nil
@@ -226,6 +228,17 @@ module TypedRb
             end
           end
         end
+      end
+
+      def cast?(function_klass_type)
+        function_klass_type == BasicObject && message == :cast
+      end
+
+      def check_casting(context)
+        from = args[0].check_type(context)
+        to = parse_type_application_arguments([args[1]], context).first.as_object_type
+        TypedRb.log(binding, :info, "Casting #{from} into #{to}")
+        to
       end
     end
   end

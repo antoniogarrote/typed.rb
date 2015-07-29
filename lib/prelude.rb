@@ -14,6 +14,7 @@ class BasicObject
   ts '#singleton_method_removed / Symbol -> unit'
   ts '#singleton_method_undefined / Symbol -> unit'
   ts '#ts / String -> unit'
+  ts '#cast / BasicObject -> BasicObject -> BasicObject'
 end
 
 
