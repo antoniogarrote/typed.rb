@@ -63,8 +63,9 @@ __CODE
     end
 
     it 'should be possible to get the right type' do
-      type = ast.check_type(TypedRb::Types::TypingContext.top_level)
-      expect(type.to_s).to eq('String')
+      expect {
+        ast.check_type(TypedRb::Types::TypingContext.top_level)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
   end
 
@@ -109,12 +110,25 @@ __CODE
 __CODE
       end
 
-      it 'should be possible to be passed as an argument to a function' do
+      it 'should be possible to check the error' do
         expect {
           ast.check_type(TypedRb::Types::TypingContext.top_level)
         }.to raise_error(TypedRb::Types::UncomparableTypes)
       end
     end
-  end
 
+    context 'with variable assignment using casting' do
+      let(:code) do
+        <<__CODE
+           a = cast(1,Numeric)
+           a = 2.5
+__CODE
+      end
+
+      it 'should be possible to be passed as an argument to a function using casting' do
+        result = ast.check_type(TypedRb::Types::TypingContext.top_level)
+        expect(result.ruby_type).to eq(Numeric)
+      end
+    end
+  end
 end

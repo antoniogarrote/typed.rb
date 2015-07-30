@@ -25,8 +25,10 @@ module TypedRb
         maybe_binding = context.get_type_for(@binding)
         if maybe_binding
           maybe_binding.compatible?(binding_type, :gt)
+          maybe_binding
         else
-          context.add_binding!(@binding,binding_type)
+          context.add_binding!(@binding, binding_type)
+          binding_type
         end
       end
     end
