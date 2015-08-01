@@ -56,6 +56,8 @@ module TypedRb
         TypedRb.log(binding, :debug, "Parsing node #{node}:\n#{sexp}")
       end
       case node.type
+      when :nil
+        Types::TyUnit.new
       when :class
         parse_class(node, context)
       when :def
@@ -84,6 +86,8 @@ module TypedRb
         parse_rescue(node, context)
       when :int
         TmInt.new(node)
+      when :array
+        parse_array_literal(node, context)
       when :true,:false
         TmBoolean.new(node)
       when :str
@@ -108,6 +112,10 @@ module TypedRb
         parse_sclass(node, context)
       when :dstr
         parse_string_interpolation(node, context)
+      when :return
+        parse_return(node, context)
+      when :self
+        parse_self(node, context)
       else
         fail TermParsingError, "Unknown term #{node.type}: #{node.to_sexp}"
       end
@@ -328,6 +336,21 @@ module TypedRb
       else
         map(rescue_body, context)
       end
+    end
+
+    def parse_array_literal(node, context)
+      TmArrayLiteral.new(node.children.map do |child|
+                           map(child, context)
+                         end, node)
+    end
+
+    def parse_return(node, context)
+      elements = node.children.map { |element| map(element, context) }
+      TmReturn.new(elements, node)
+    end
+
+    def parse_self(node, context)
+      TmSelf.new(node)
     end
   end
 end

@@ -133,14 +133,22 @@ module TypedRb
       protected
 
       def compare_ruby_ruby(other)
-        if other.ruby_type == ruby_type
+        if ruby_type == NilClass && other.ruby_type == NilClass
           0
-        elsif other.hierarchy.include?(ruby_type)
-          1
-        elsif hierarchy.include?(other.ruby_type)
+        elsif ruby_type == NilClass
           -1
+        elsif other.ruby_type == NilClass
+          1
         else
-          fail UncomparableTypes.new(self, other)
+          if other.ruby_type == ruby_type
+            0
+          elsif other.hierarchy.include?(ruby_type)
+            1
+          elsif hierarchy.include?(other.ruby_type)
+            -1
+          else
+            fail UncomparableTypes.new(self, other)
+          end
         end
       end
 

@@ -124,6 +124,9 @@ module TypedRb
           else
             # check the body with the new bindings for the args
             body_return_type = body.check_type(context)
+            if body_return_type.is_a?(TmReturn)
+              body_return_type = body_return_type.check_type(context)
+            end
             if function_type.to.instance_of?(Types::TyUnit)
               function_type.to
             else
