@@ -37,6 +37,10 @@ module TypedRb
         false
       end
 
+      def check_type(_context)
+        self
+      end
+
       def defaults_to_dynamic?
         ! BasicObject::TypeRegistry.registered?(ruby_type)
       end

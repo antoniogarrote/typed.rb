@@ -74,6 +74,8 @@ module TypedRb
         parse_global_var(node, context)
       when :gvasgn
         parse_global_var_assign(node, context)
+      when :masgn
+        parse_mass_assign(node, context)
       when :begin, :kwbegin
         parse_begin(node, context)
       when :rescue
@@ -170,8 +172,15 @@ module TypedRb
     end
 
     def parse_lvasgn(node, context)
-      binding, term = node.children
-      TmLocalVarAsgn.new(binding.to_s, map(term,context), node)
+      lhs, rhs = node.children
+      TmLocalVarAsgn.new(lhs.to_s, map(rhs,context), node)
+    end
+
+    def parse_mass_assign(node, context)
+      # each children is a :lvasgn
+      lhs = node.children.first.children
+      rhs = map(node.children.last, context)
+      TmMassAsgn.new(lhs, rhs, node)
     end
 
     def parse_args(args, context)
