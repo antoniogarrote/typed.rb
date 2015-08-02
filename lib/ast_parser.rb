@@ -31,6 +31,10 @@ module TypedRb
       @types_stack.last.join('::')
     end
 
+    def path_name
+      @types_stack.map{ |key| key[1] }.join("::")
+    end
+
     def singleton_class?
       @types_stack.last.first == :self rescue false
     end
@@ -58,6 +62,8 @@ module TypedRb
       case node.type
       when :nil
         Types::TyUnit.new
+      when :module
+        parse_module(node, context)
       when :class
         parse_class(node, context)
       when :def
@@ -230,6 +236,18 @@ module TypedRb
       TmSend.new(nil, :yield, args.map { |arg| map(arg,context) }, node)
     end
 
+    def parse_module(node, context)
+      module_name = parse_const(node.children[0])
+      context.with_type([:module, module_name]) do
+        module_body = if node.children[1]
+                       map(node.children[1], context)
+                     else
+                       nil
+                     end
+        TmModule.new(context.path_name, module_body, node)
+      end
+    end
+
     def parse_class(node, context)
       fail StandardError, "Nil value parsing class" if node.nil? # No explicit class -> Object by default
       class_name = parse_const(node.children[0])
@@ -240,7 +258,7 @@ module TypedRb
                      else
                        nil
                      end
-        TmClass.new(class_name, super_class_name, class_body, node)
+        TmClass.new(context.path_name, super_class_name, class_body, node)
       end
     end
 

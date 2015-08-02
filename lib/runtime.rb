@@ -81,6 +81,15 @@ class BasicObject
         end
       end
 
+      def find_existential_type(type)
+        existential_type = existential_types_registry[type]
+        if existential_type.nil?
+          existential_type = TypedRb::Types::TyExistentialType.new(type)
+          @existential_types_registry[type] = existential_type
+        end
+        existential_type
+      end
+
       ts '.find_generic_type / Class -> TypedRb::Types::TyGenericSingletonObject'
       def find_generic_type(type)
         @generic_types_registry[type]
@@ -154,6 +163,10 @@ class BasicObject
       def registry
         @registry ||= {}
         @registry
+      end
+
+      def existential_types_registry
+        @existential_types_registry ||= {}
       end
 
       ts '.generic_types_registry / -> Hash[Class][ TypedRb::Types::TyGenericSingletonObject ]'

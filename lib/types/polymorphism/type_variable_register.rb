@@ -26,10 +26,15 @@ module TypedRb
             upper_level.type_variables_register[constructed_key]
           end
           if key.nil?
-            new_var_name = "#{hierarchy.first}:#{variable}"
-            type_var = TypeVariable.new(new_var_name)
-            type_variables_register[[type, hierarchy.first, variable]] = type_var
-            type_var
+            type_var = type_variables_register[[type, hierarchy.first, variable]]
+            if type_var.nil?
+              new_var_name = "#{hierarchy.first}:#{variable}"
+              type_var = TypeVariable.new(new_var_name)
+              type_variables_register[[type, hierarchy.first, variable]] = type_var
+              type_var
+            else
+              type_var
+            end
           else
             upper_level.type_variables_register[key]
           end
