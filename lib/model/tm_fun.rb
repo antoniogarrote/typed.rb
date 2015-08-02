@@ -112,7 +112,12 @@ module TypedRb
           end
 
           # pointing self to the right type
-          context = context.add_binding(:self, owner_type)
+          self_type = if owner_type.is_a?(Types::TyExistentialType)
+                        owner_type.self_variable
+                      else
+                        owner_type
+                      end
+          context = context.add_binding(:self, self_type)
 
           # adding yield binding if present
           context = context.add_binding(:yield, function_type.block_type) if function_type.block_type

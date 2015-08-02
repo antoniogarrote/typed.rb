@@ -254,35 +254,37 @@ module TypedRb
 
 
       def self.parse_object_type(type)
-        begin
-          if type == :unit
-            TyUnit.new
-          else
-            ruby_type = Object.const_get(type)
-            TyObject.new(ruby_type)
-          end
-        rescue StandardError => e
-          TypedRb.log(binding, :error, "Error parsing object from type #{type}, #{e.message}")
-          fail TypeParsingError, "Unknown Ruby type #{type}"
+        if type == :unit
+          TyUnit.new
+        else
+          ruby_type = Object.const_get(type)
+          TyObject.new(ruby_type)
         end
+      rescue StandardError => e
+        TypedRb.log(binding, :error, "Error parsing object from type #{type}, #{e.message}")
+        fail TypeParsingError, "Unknown Ruby type #{type}"
+      end
+
+      def self.parse_existential_object_type(type)
+        ruby_type = Object.const_get(type)
+        BasicObject::TypeRegistry.find_existential_type(ruby_type)
+      rescue StandardError => e
+        TypedRb.log(binding, :error, "Error parsing existential object from type #{type}, #{e.message}")
+        raise TypeParsingError, "Unknown Ruby type #{type}"
       end
 
       def self.parse_singleton_object_type(type)
-        begin
-          ruby_type = Object.const_get(type)
-          generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
-          if generic_type
-            generic_type
-          else
-            TySingletonObject.new(ruby_type)
-          end
-        rescue StandardError => e
-          TypedRb.log(binding, :error, "Error parsing singleton object from type #{type}, #{e.message}")
-          fail TypeParsingError, "Unknown Ruby type #{type}"
+        ruby_type = Object.const_get(type)
+        generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
+        if generic_type
+          generic_type
+        else
+          TySingletonObject.new(ruby_type)
         end
+      rescue StandardError => e
+        TypedRb.log(binding, :error, "Error parsing singleton object from type #{type}, #{e.message}")
+        raise TypeParsingError, "Unknown Ruby type #{type}"
       end
-
-      protected
 
       def self.parse_function_type(arg_types, klass)
         return_type = parse(arg_types.pop, klass)

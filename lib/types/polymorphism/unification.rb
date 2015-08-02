@@ -65,8 +65,9 @@ module TypedRb
               fail UnificationError, "Message #{message} not found for type variable #{receiver}"
             end
           else
-            return true if klass != inferred_receiver.ruby_type
-            fail UnificationError, "Unbound variable #{receiver} type acting as receiver for #{message}"
+            unless @allow_unbound_receivers
+              fail UnificationError, "Unbound variable #{receiver} type acting as receiver for #{message}"
+            end
           end
         end
 
@@ -288,7 +289,8 @@ module TypedRb
         include Polymorphism::TypeOperations
         attr_reader :constraints, :graph
 
-        def initialize(constraints)
+        def initialize(constraints, options = {})
+          @allow_unbound_receivers = options[:allow_unbound_receivers] || false
           @constraints = constraints
           @gt_constraints = @constraints.select { |(_, t, _r)| t == :gt }.sort do |(_, _, r1), (_, _, r2)|
             -(r1 <=> r2) || 0 rescue 0

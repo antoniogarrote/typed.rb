@@ -60,6 +60,9 @@ class Array
   ts '#[] / Integer... -> Object'
 end
 
+class Module
+  ts '#include / Module... -> Class'
+end
 
 ts 'type Hash[T][U]'
 class Hash; end

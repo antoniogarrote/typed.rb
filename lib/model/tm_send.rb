@@ -32,7 +32,7 @@ module TypedRb
       end
 
       def check_type(context)
-        if receiver.nil? && message.to_s == :ts
+        if receiver.nil? && message == :ts
           # ignore, => type annotation
         elsif message == :new && !singleton_object_type(receiver, context).nil?
           check_instantiation(context)
@@ -87,24 +87,32 @@ module TypedRb
           context.get_type_for(message)
         else
           self_type = context.get_type_for(:self) # check message in self type -> application
-          function_klass_type, function_type = self_type.find_function_type(message)
-          begin
-            if function_type.nil?
-              error_message = "Error typing message, type information for #{self_type}:#{message} found."
-              fail TypeCheckError error_message
-            elsif cast?(function_klass_type)
-              check_casting(context)
-            else
-              # function application
-              check_application(self_type, function_type, context)
-            end
-          rescue TypeCheckError => error
-            if  !(function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject)) && function_klass_type != self_type.ruby_type
-              Types::TyDynamic.new(Object)
-            elsif function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject) && function_type.nil?
-              Types::TyDynamic.new(Object)
-            else
-              raise error
+          if self_type.is_a?(Types::Polymorphism::TypeVariable) # Existential type (Module)
+            # TODO: what can we do if this is the inclusion of a module?
+            arg_types = args.map { |arg| arg.check_type(context) }
+            self_type.add_message_constraint(message, arg_types)
+          else
+            function_klass_type, function_type = self_type.find_function_type(message)
+            begin
+              if function_type.nil?
+                error_message = "Error typing message, type information for #{self_type}:#{message} found."
+                fail TypeCheckError error_message
+              elsif cast?(function_klass_type)
+                check_casting(context)
+              elsif module_include_implementation?(function_klass_type)
+                check_module_inclusions(self_type, context)
+              else
+                # function application
+                check_application(self_type, function_type, context)
+              end
+            rescue TypeCheckError => error
+              if  !(function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject)) && function_klass_type != self_type.ruby_type
+                Types::TyDynamic.new(Object)
+              elsif function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject) && function_type.nil?
+                Types::TyDynamic.new(Object)
+              else
+                raise error
+              end
             end
           end
         end
@@ -127,6 +135,8 @@ module TypedRb
             if function_type.nil?
               error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
               fail TypeCheckError, error_message
+            elsif module_include_implementation?(function_klass_type)
+              check_module_inclusions(receiver_type, context)
             else
               # function application
               check_application(receiver_type, function_type, context)
@@ -239,6 +249,24 @@ module TypedRb
         to = parse_type_application_arguments([args[1]], context).first.as_object_type
         TypedRb.log(binding, :info, "Casting #{from} into #{to}")
         to
+      end
+
+      def module_include_implementation?(function_klass_type)
+        function_klass_type == Module && message == :include
+      end
+
+      def check_module_inclusions(self_type, context)
+        args.map do |arg|
+          arg.check_type(context)
+        end.each do |module_type|
+          if module_type.is_a?(Types::TyExistentialType)
+            module_type.check_inclusion(self_type)
+          else
+            error_message = "Module type expected for inclusion in #{self_type}, #{module_type} found"
+            fail TypeCheckError, error_message
+          end
+        end
+        self_type
       end
     end
   end

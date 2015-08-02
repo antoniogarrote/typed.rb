@@ -19,6 +19,8 @@ module TypedRb
         value = Object.const_get(@val)
         if value.instance_of?(Class)
           Types::Type.parse_singleton_object_type(value.name)
+        elsif value.instance_of?(Module)
+          Types::Type.parse_existential_object_type(value.name)
         else
           Types::Type.parse_object_type(value.name)
         end
