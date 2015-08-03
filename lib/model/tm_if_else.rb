@@ -14,7 +14,7 @@ module TypedRb
       def rename(from_binding, to_binding)
         @condition_expr.rename(from_binding, to_binding)
         @then_expr.rename(from_binding, to_binding)
-        @else_expr.rename(from_binding, to_binding)
+        @else_expr.rename(from_binding, to_binding) if @else_expr
         self
       end
 

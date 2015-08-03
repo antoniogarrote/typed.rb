@@ -61,7 +61,7 @@ module TypedRb
       end
       case node.type
       when :nil
-        Types::TyUnit.new
+        TmNil.new(node)
       when :module
         parse_module(node, context)
       when :class

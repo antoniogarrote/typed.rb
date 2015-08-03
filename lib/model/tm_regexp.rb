@@ -14,7 +14,7 @@ module TypedRb
 
       def rename(from_binding, to_binding)
         exp.rename(from_binding, to_binding)
-        optoins.rename(from_binding, to_binding)
+        options.rename(from_binding, to_binding) if options
         self
       end
 

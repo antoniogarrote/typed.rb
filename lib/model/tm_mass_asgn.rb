@@ -7,34 +7,35 @@ module TypedRb
 
       def initialize(lhs, rhs,node)
         super(node)
-        @lhs = lhs
+        @lhs = lhs.map { |lhs_node| lhs_node.children.first }
+        @lhs_children = lhs
         @rhs = rhs
       end
 
       def rename(from_binding, to_binding)
-        @lhs = lhs.map { |node| node.renam(from_binding, to_binding) }
-        @rhs = rhs.renam(from_binding, to_binding)
+        @lhs = lhs.map { |node| node == from_binding ? to_binding : from_binding }
+        @rhs = rhs.rename(from_binding, to_binding)
         self
       end
 
       def check_type(context)
         rhs_type = rhs.check_type(context)
         if (rhs_type.ruby_type == Array)
-          lhs.each do |node|
-            local_asgn = TmLocalVarAsgn.new(node.children.first,
+          lhs.each_with_index do |node, i|
+            local_asgn = TmLocalVarAsgn.new(node,
                                             rhs_type.type_vars.first,
-                                            node)
+                                            @lhs_children[i])
             local_asgn.check_type(context)
           end
         else
-          local_asgn = TmLocalVarAsgn.new(lhs.first.children.first,
+          local_asgn = TmLocalVarAsgn.new(lhs.first,
                                           rhs_type,
-                                          lhs.first)
+                                          @lhs_children.first)
           local_asgn.check_type(context)
-          lhs.drop(1).each do |node|
-            local_asgn = TmLocalVarAsgn.new(node.children.first,
+          lhs.drop(1).each_with_index do |node, i|
+            local_asgn = TmLocalVarAsgn.new(node,
                                             Types::TyUnit.new,
-                                            node)
+                                            @lhs_children[i + 1])
             local_asgn.check_type(context)
           end
         end
