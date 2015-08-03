@@ -118,6 +118,8 @@ module TypedRb
         parse_sclass(node, context)
       when :dstr
         parse_string_interpolation(node, context)
+      when :dsym
+        parse_symbol_interpolation(node, context)
       when :return
         parse_return(node, context)
       when :self
@@ -152,6 +154,11 @@ module TypedRb
     def parse_string_interpolation(node, context)
       units = node.children.map{ |child| map(child, context) }
       TmStringInterpolation.new(units, node)
+    end
+
+    def parse_symbol_interpolation(node, context)
+      units = node.children.map{ |child| map(child, context) }
+      TmSymbolInterpolation.new(units, node)
     end
 
     def parse_regexp(node, context)
@@ -327,10 +334,11 @@ module TypedRb
 
     def parse_if_then_else(node, context)
       cond_expr, then_expr, else_expr = node.children
+      else_expr_term = else_expr.nil? ? else_expr : map(else_expr, context)
       TmIfElse.new(node,
                    map(cond_expr, context),
                    map(then_expr, context),
-                   map(else_expr, context))
+                   else_expr_term)
     end
 
     def parse_begin(node, context)
