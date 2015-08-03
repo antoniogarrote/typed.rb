@@ -5,6 +5,13 @@ module TypedRb
       class TypeVariableRegister
         attr_accessor :parent, :constraints, :children, :type_variables_register, :kind
 
+        class << self
+          def local_var_counter
+            @local_var_counter ||= 0
+            @local_var_counter += 1
+          end
+        end
+
         def initialize(parent=nil, kind)
           @kind = kind
           @parent = parent
@@ -95,7 +102,13 @@ module TypedRb
           end
         end
 
-
+        def local_type_variable
+          var_name = "local_var_#{TypeVariableRegister.local_var_counter}"
+          key = [:local,  nil, var_name]
+          type_var_in_registry = Polymorphism::TypeVariable.new(var_name)
+          type_variables_register[key] = type_var_in_registry
+          type_var_in_registry
+        end
 
         def constraints_for(variable)
           found = constraints[variable]

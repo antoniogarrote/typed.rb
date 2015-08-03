@@ -37,6 +37,10 @@ module TypedRb
           type_variables_register.type_variable_for_generic_type(type_var)
         end
 
+        def local_type_variable
+          type_variables_register.local_type_variable
+        end
+
         def all_constraints
           type_variables_register.all_constraints
         end

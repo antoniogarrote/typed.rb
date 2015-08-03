@@ -123,7 +123,9 @@ module TypedRb
       when :self
         parse_self(node, context)
       when :or
-        parse_boolean(:or, node, context)
+        parse_boolean_operation(:or, node, context)
+      when :and
+        parse_boolean_operation(:and, node, context)
       else
         fail TermParsingError, "Unknown term #{node.type}: #{node.to_sexp}"
       end
@@ -373,11 +375,11 @@ module TypedRb
       TmSelf.new(node)
     end
 
-    def parse_boolean(operation, node, context)
-      TmBooleanOperator(operation,
-                        map(node.children.first, context),
-                        map(node.children.last, context),
-                        node)
+    def parse_boolean_operation(operation, node, context)
+      TmBooleanOperator.new(operation,
+                            map(node.children.first, context),
+                            map(node.children.last, context),
+                            node)
     end
   end
 end

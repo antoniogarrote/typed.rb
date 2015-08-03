@@ -21,12 +21,11 @@ module TypedRb
       def check_type(context)
         lhs_type = @lhs.check_type(context)
         rhs_type = @rhs.check_type(context)
-        if lhs_type.is_a?(Types::TypeVariable) && rhs_type.is_a?(Types::TypeVariable)
-
-        elsif lhs_type.is_a?(Types::TypeVariable)
-
-        elsif rhs_type.is_a?(Types::TypeVariable)
-
+        if lhs_type.is_a?(Types::Polymorphism::TypeVariable) || rhs_type.is_a?(Types::Polymorphism::TypeVariable)
+          var = Types::TypingContext.local_type_variable
+          var.compatible?(lhs_type, :gt)
+          var.compatible?(rhs_type, :gt)
+          var
         else
           [lhs_type, rhs_type].max rescue Types::TyObject.new(Object)
         end
