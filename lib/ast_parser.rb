@@ -94,6 +94,8 @@ module TypedRb
         TmInt.new(node)
       when :array
         parse_array_literal(node, context)
+      when :hash
+        parse_hash_literal(node, context)
       when :true,:false
         TmBoolean.new(node)
       when :str
@@ -372,6 +374,13 @@ module TypedRb
       TmArrayLiteral.new(node.children.map do |child|
                            map(child, context)
                          end, node)
+    end
+
+    def parse_hash_literal(node, context)
+      pairs = node.children.map do |pair|
+        [map(pair.children.first, context), map(pair.children.last, context)]
+      end
+      TmHashLiteral.new(pairs, node)
     end
 
     def parse_return(node, context)
