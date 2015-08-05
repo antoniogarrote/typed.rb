@@ -171,6 +171,8 @@ module TypedRb
     def parse_block(node, context)
       if node.children[0].type == :send && node.children[0].children[1] == :lambda
         parse_lambda(node, context)
+      elsif node.children[0].type == :send && node.children[0].children[0].children[1] == :Proc
+        parse_proc(node, context)
       else
         parse_send_block(node, context)
       end
@@ -194,7 +196,22 @@ module TypedRb
       # TODO deal with abs with a provided type, like block passed to typed functions.
       TmAbs.new(args,
                 body,
-                nil, # no type for the lambda so far.
+                :lambda, # no type for the lambda so far.
+                node)
+    end
+
+    def parse_proc(node, context)
+      args,body  = node.children[1],node.children[2]
+      if args.type != :args
+        fail StandardError,"Error parsing function args [#{args}]"
+      end
+      args = parse_args(args.children, context)
+      body = map(body, context)
+
+      # TODO deal with abs with a provided type, like block passed to typed functions.
+      TmAbs.new(args,
+                body,
+                :proc, # no type for the lambda so far.
                 node)
     end
 

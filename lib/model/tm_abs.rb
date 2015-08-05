@@ -4,12 +4,13 @@ module TypedRb
   module Model
     # abstraction
     class TmAbs < Expr
-      attr_accessor :args, :term, :arity
-      def initialize(args, term, type, node)
+      attr_accessor :args, :term, :arity, :abs_type
+      def initialize(args, term, abs_type, node)
         super(node, type)
-        @args  = args
-        @term  = term
-        @arity = args.select { |(arg_type, _, _)|  arg_type == :arg }.count
+        @args     = args
+        @term     = term
+        @abs_type = abs_type
+        @arity    = args.select { |(arg_type, _, _)|  arg_type == :arg }.count
         @instantiation_count = 0
       end
 
