@@ -68,5 +68,122 @@ __END
         language.check(expr)
       }.to raise_error(TypedRb::TypeCheckError)
     end
+
+    it 'type-checks block-passing args' do
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> String'
+        def f(&b)
+          b[1]
+        end
+
+        p = Proc.new { |arg| 'string' }
+
+        f(&p)
+__CODE
+
+      result = language.check(expr)
+
+      expect(result.ruby_type).to eq(String)
+    end
+
+    it 'captures errors type-checking block-passing args' do
+
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> String'
+        def f(&b)
+          b[1]
+        end
+
+        p = Proc.new { |arg| 0 }
+
+        f(&p)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+
+    end
+
+    it 'captures errors type-checking block-passing args' do
+
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> Integer'
+        def f(&b)
+          b[1]
+        end
+
+        p = Proc.new { |arg| 'string' }
+
+        f(&p)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+
+    end
+
+    it 'type-checks yielded block-passing args' do
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> String'
+        def f(&b)
+          yield 1
+        end
+
+        p = Proc.new { |arg| 'string' }
+
+        f(&p)
+__CODE
+
+      result = language.check(expr)
+
+      expect(result.ruby_type).to eq(String)
+    end
+
+    it 'captures errors in yielded type-checking block-passing args' do
+
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> String'
+        def f(&b)
+          yield 1
+        end
+
+        p = Proc.new { |arg| 0 }
+
+        f(&p)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+
+    end
+
+    it 'captures errors yielded type-checking block-passing args' do
+
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> Integer'
+        def f(&b)
+          yield 1
+        end
+
+        p = Proc.new { |arg| 'string' }
+
+        f(&p)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+
+    end
+
   end
 end

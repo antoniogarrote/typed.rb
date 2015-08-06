@@ -6,7 +6,6 @@ describe TypedRb::Model::TmHashLiteral do
     code = '{:a => 1, :b => 2}'
 
     parsed = TypedRb::Language.new.check(code)
-    puts parsed.to_s
     expect(parsed.ruby_type).to eq(Hash)
     expect(parsed.type_vars.first.bound.ruby_type).to eq(Symbol)
     expect(parsed.type_vars.last.bound.ruby_type).to eq(Integer)

@@ -130,6 +130,8 @@ module TypedRb
         parse_boolean_operation(:or, node, context)
       when :and
         parse_boolean_operation(:and, node, context)
+      when :block_pass
+        parse_block_pass(node, context)
       else
         fail TermParsingError, "Unknown term #{node.type}: #{node.to_sexp}"
       end
@@ -171,11 +173,15 @@ module TypedRb
     def parse_block(node, context)
       if node.children[0].type == :send && node.children[0].children[1] == :lambda
         parse_lambda(node, context)
-      elsif node.children[0].type == :send && node.children[0].children[0].children[1] == :Proc
+      elsif node.children[0].type == :send && node.children[0].children[0] && node.children[0].children[0].children[1] == :Proc
         parse_proc(node, context)
       else
         parse_send_block(node, context)
       end
+    end
+
+    def parse_block_pass(node, context)
+      [:block_pass, map(node.children.first, context)]
     end
 
     def parse_send_block(node, context)
@@ -256,7 +262,15 @@ module TypedRb
           TmError.new(node)
         else
           receiver = receiver.nil? ? receiver : map(receiver, context)
-          TmSend.new(receiver, message, args.map { |arg| map(arg,context) }, node)
+          arg_terms = args.map { |arg| map(arg,context) }
+          if arg_terms.last.is_a?(Array) && arg_terms.last.first == :block_pass
+            block_pass = arg_terms.pop
+            tm_send = TmSend.new(receiver, message, arg_terms, node)
+            tm_send.with_block(block_pass.last)
+            tm_send
+          else
+            TmSend.new(receiver, message, arg_terms, node)
+          end
         end
       end
     end

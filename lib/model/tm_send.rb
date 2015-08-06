@@ -85,6 +85,13 @@ module TypedRb
         # local variables take precedence over message sending
         if context.get_type_for(message) && args.size == 0
           context.get_type_for(message)
+        elsif message == :yield
+          yield_abs_type = context.get_type_for(:yield)
+          if yield_abs_type
+            check_lambda_application(yield_abs_type, context)
+          else
+            fail TypeCheckError, 'Cannot find yield function.'
+          end
         else
           self_type = context.get_type_for(:self) # check message in self type -> application
           if self_type.is_a?(Types::Polymorphism::TypeVariable) # Existential type (Module)
@@ -193,7 +200,7 @@ module TypedRb
           check_args_application(parameters_info, formal_parameters, args, context)
           if @block
             block_type = @block.check_type(context)
-            function_type.with_block_type(block_type).compatible?(block_type, :lt)
+            block_type.compatible?(function_type.block_type, :lt) if function_type.block_type
           end
           function_type.to
         end
@@ -207,10 +214,10 @@ module TypedRb
         parameters_info.each_with_index do |(require_info, arg_name), index|
           actual_argument = actual_arguments[index]
           formal_parameter_type = formal_parameters[index]
-          if formal_parameter_type.nil?
+          if formal_parameter_type.nil? && !require_info == :block
             fail TypeCheckError, "Missing information about argument #{arg_name} in #{receiver}##{message}"
           end
-          if actual_argument.nil? && require_info != :opt && require_info != :rest
+          if actual_argument.nil? && require_info != :opt && require_info != :rest && require_info != :block
             fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver}##{message}"
           else
             if require_info == :rest
@@ -228,7 +235,7 @@ module TypedRb
               end
               break
             else
-              unless actual_argument.nil? # opt if this is nil
+              unless actual_argument.nil? # opt or block if this is nil
                 actual_argument_type = actual_argument.check_type(context)
                 unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                   error_message = "#{formal_parameter_type} expected, #{actual_argument_type} found"

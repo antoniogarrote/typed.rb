@@ -73,7 +73,7 @@ module TypedRb
         # TODO: raise a warning here
         else
           # check matching args
-          if function_type.from.size != args.size
+          if function_type.from.size < args.select { |(arg_type, _)| arg_type == :arg }.size
             if function_klass_type != owner_type.ruby_type
               Types::TyDynamicFunction.new(owner_type.ruby_type, name)
             else
