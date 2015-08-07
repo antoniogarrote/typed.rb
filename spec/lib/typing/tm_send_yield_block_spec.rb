@@ -185,5 +185,51 @@ __CODE
 
     end
 
+    it 'type-checks symbol.to_proc converted arguments' do
+      expr = <<__CODE
+        class TStP1
+          ts '#test / -> String'
+          def test
+            'string'
+          end
+        end
+
+        ts '#ftstp1 / TStP1 -> &(TStP1 -> String) -> String'
+        def ftstp1(obj, &b)
+          yield obj
+        end
+
+        ftstp1(TStP1.new, &:test)
+__CODE
+
+      # TODO: the correct signature for this method would be #ftstp1 / [T] -> &([T] -> String) -> String
+      # but we don't have generic methods yet
+      result = language.check(expr)
+      expect(result.ruby_type).to eq(String)
+    end
+
+    it 'captures errors in the application of  symbol.to_proc converted arguments' do
+      expr = <<__CODE
+        class TStP2
+          ts '#test / -> String'
+          def test
+            'string'
+          end
+        end
+
+        ts '#ftstp2 / TStP2 -> &(TStP2 -> Integer) -> Integer'
+        def ftstp2(obj, &b)
+          yield obj
+        end
+
+        ftstp2(TStP2.new, &:test)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+
+    # TODO: Check for a generic class, see TODO above.
   end
 end

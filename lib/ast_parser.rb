@@ -181,7 +181,13 @@ module TypedRb
     end
 
     def parse_block_pass(node, context)
-      [:block_pass, map(node.children.first, context)]
+      passed = if node.children.first.type == :sym
+                 symbol = node.children.first.children.first
+                 map(ast("Proc.new { |obj| obj.#{symbol} }"), context)
+               else
+                 map(node.children.first, context)
+               end
+      [:block_pass, passed]
     end
 
     def parse_send_block(node, context)
