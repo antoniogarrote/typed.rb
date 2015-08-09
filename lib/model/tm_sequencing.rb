@@ -11,7 +11,7 @@ module TypedRb
       end
 
       def rename(from_binding, to_binding)
-        @terms.each{|term| term.rename(from_binding, to_binding) }
+        @terms = @terms.each { |term| term.rename(from_binding, to_binding) }
         self
       end
 

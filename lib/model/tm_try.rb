@@ -13,6 +13,7 @@ module TypedRb
       def rename(from_binding, to_binding)
         @try_term.rename(from_binding, to_binding)
         @rescue_terms.each{|term| term.rename(from_binding, to_binding) }
+        self
       end
 
       def check_type(context)

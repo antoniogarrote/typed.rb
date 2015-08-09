@@ -13,7 +13,7 @@ module TypedRb
       end
 
       def rename(from_binding, to_binding)
-        @lhs = lhs.map { |node| node == from_binding ? to_binding : from_binding }
+        @lhs = lhs.map { |node| node == from_binding ? to_binding : node }
         @rhs = rhs.rename(from_binding, to_binding)
         self
       end

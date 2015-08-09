@@ -378,10 +378,11 @@ module TypedRb
 
     def parse_if_then_else(node, context)
       cond_expr, then_expr, else_expr = node.children
+      then_expr_term = then_expr.nil? ? then_expr : map(then_expr, context)
       else_expr_term = else_expr.nil? ? else_expr : map(else_expr, context)
       TmIfElse.new(node,
                    map(cond_expr, context),
-                   map(then_expr, context),
+                   then_expr_term,
                    else_expr_term)
     end
 

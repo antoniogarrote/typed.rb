@@ -20,28 +20,22 @@ module TypedRb
 
       def check_type(context)
         if @condition_expr.check_type(context).compatible?(Types::TyObject.new(BasicObject), :lt)
-          then_expr_type = @then_expr.check_type(context)
+          then_expr_type = @then_expr.nil? ? @then_expr : @then_expr.check_type(context)
           else_expr_type = @else_expr.nil? ? @else_expr : @else_expr.check_type(context)
 
-          is_return = false
-
-          if then_expr_type.is_a?(TmReturn)
-            then_expr_type = then_expr_type.check_type(context)
-            is_return = true
-          end
-
           if else_expr_type.nil?
-            if is_return
+            if then_expr.is_a?(TmReturn)
               TmReturn.new(then_expr_type, node)
             else
               then_expr_type
             end
-          else
-            if else_expr_type.is_a?(TmReturn)
-              else_expr_type = else_expr_type.check_type(context)
-              is_return = true
+          elsif then_expr_type.nil?
+            if else_expr.is_a?(TmReturn)
+              TmReturn.new(else_expr_type, node)
+            else
+              else_expr_type
             end
-
+          else
             if then_expr_type.compatible?(else_expr_type) && else_expr_type.compatible?(then_expr_type)
               result_type = if then_expr_type.is_a?(Types::Polymorphism::TypeVariable)
                               then_expr_type
@@ -54,8 +48,10 @@ module TypedRb
                             else
                               then_expr_type
                             end
-              if is_return
+              if else_expr_type.is_a?(TmReturn) && then_expr_type.is_a?(TmReturn)
                 TmReturn.new(result_type, node)
+              elsif else_expr_type.is_a?(TmReturn) && then_expr_type.is_a?(TmReturn)
+                fail TypeCheckError, 'Return statemen in only one branch of a conditional'
               else
                 result_type
               end

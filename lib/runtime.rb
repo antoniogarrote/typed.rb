@@ -196,7 +196,8 @@ class BasicObject
 
       ts '.normalize_generic_types! / -> unit'
       def normalize_generic_types!
-        @generic_types_registry = generic_types_parser_registry.inject({}) do |acc, (_, info)|
+        @generic_types_registry = generic_types_parser_registry.inject({}) do |acc, type_info|
+          _, info = type_info
           info[:type] = Object.const_get(info[:type])
           TypedRb.log(binding, :debug,  "Normalising generic type: #{info[:type]}")
 
@@ -229,7 +230,8 @@ class BasicObject
             all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
           end
 
-          method_signatures = method_signatures.inject({}) do |signatures_acc, (method, signature)|
+          method_signatures = method_signatures.inject({}) do |signatures_acc, method_info|
+            method, signature = method_info
             TypedRb.log(binding, :debug, "Normalizing method #{type}[#{klass}] :: #{method} / #{signature}")
 
             if type == :instance
