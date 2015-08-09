@@ -9,7 +9,12 @@ module TypedRb
         @elements = if elements.is_a?(Array)
                       elements
                     else
-                      [elements]
+                      if elements.is_a?(TmReturn)
+                        # flattening nested tm_return
+                        elments.elements
+                      else
+                        [elements]
+                      end
                     end
       end
 

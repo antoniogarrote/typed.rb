@@ -4,6 +4,7 @@ require_relative '../model'
 module TypedRb
   module Model
     class TmIfElse < Expr
+      attr_reader :condition_expr, :then_expr, :else_expr
       def initialize(node, condition_expr, then_expr, else_expr)
         super(node, nil)
         @condition_expr = condition_expr
@@ -14,14 +15,14 @@ module TypedRb
       def rename(from_binding, to_binding)
         @condition_expr.rename(from_binding, to_binding)
         @then_expr.rename(from_binding, to_binding)
-        @else_expr.rename(from_binding, to_binding) if @else_expr
+        @else_expr.rename(from_binding, to_binding) if else_expr
         self
       end
 
       def check_type(context)
         if @condition_expr.check_type(context).compatible?(Types::TyObject.new(BasicObject), :lt)
-          then_expr_type = @then_expr.nil? ? @then_expr : @then_expr.check_type(context)
-          else_expr_type = @else_expr.nil? ? @else_expr : @else_expr.check_type(context)
+          then_expr_type = then_expr.nil? ? then_expr : then_expr.check_type(context)
+          else_expr_type = else_expr.nil? ? else_expr : else_expr.check_type(context)
 
           if else_expr_type.nil?
             if then_expr.is_a?(TmReturn)
