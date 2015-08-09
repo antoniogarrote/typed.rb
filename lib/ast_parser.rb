@@ -132,6 +132,8 @@ module TypedRb
         parse_boolean_operation(:and, node, context)
       when :block_pass
         parse_block_pass(node, context)
+      when :or_asgn, :and_asgn
+        parse_boolean_asgn(node, context)
       else
         fail TermParsingError, "Unknown term #{node.type}: #{node.to_sexp}"
       end
@@ -258,24 +260,27 @@ module TypedRb
 
     def parse_send(node, context)
       children = node.children
-      receiver = children[0]
+      receiver_node = children[0]
+      receiver = receiver_node.nil? ? receiver_node : map(receiver_node, context)
       message = children[1]
-      args = children.drop(2) || []
+      args = (children.drop(2) || []).map { |arg| map(arg,context) }
+      build_send_message(receiver, message, args, node, context)
+    end
+
+    def build_send_message(receiver, message, args, node, context)
       if message == :typesig
       # ignore
       else
         if receiver.nil? && (message == :fail || message == :raise)
           TmError.new(node)
         else
-          receiver = receiver.nil? ? receiver : map(receiver, context)
-          arg_terms = args.map { |arg| map(arg,context) }
-          if arg_terms.last.is_a?(Array) && arg_terms.last.first == :block_pass
-            block_pass = arg_terms.pop
-            tm_send = TmSend.new(receiver, message, arg_terms, node)
+          if args.last.is_a?(Array) && args.last.first == :block_pass
+            block_pass = args.pop
+            tm_send = TmSend.new(receiver, message, args, node)
             tm_send.with_block(block_pass.last)
             tm_send
           else
-            TmSend.new(receiver, message, arg_terms, node)
+            TmSend.new(receiver, message, args, node)
           end
         end
       end
@@ -434,6 +439,27 @@ module TypedRb
                             map(node.children.first, context),
                             map(node.children.last, context),
                             node)
+    end
+
+    def parse_boolean_asgn(node, context)
+      lhs = node.children.first
+      rhs = map(node.children.last, context)
+      case lhs.type
+      when :ivasgn
+        ivar = TmInstanceVar.new(lhs.children.first, lhs)
+        TmBooleanOperator.new(:or, ivar, TmInstanceVarAssignment.new(ivar, rhs, node), node)
+      when :gvasgn
+        gvar = TmGlobalVar.new(lhs.children.first, lhs)
+        TmBooleanOperator.new(:or, gvar, TmGlobalVarAssignment.new(gvar, rhs, node), node)
+      when :lvasgn
+        TmLocalVarAsgn.new(lhs.children.first.to_s, rhs, node)
+      when :send
+        receiver = map(lhs.children.first, context)
+        message = lhs.children.last
+        attr_reader = build_send_message(receiver, message, [], lhs, context)
+        attr_writer = build_send_message(receiver, "#{message}=", [rhs], lhs, context)
+        TmBooleanOperator.new(:or, attr_reader, attr_writer, node)
+      end
     end
   end
 end

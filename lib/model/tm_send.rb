@@ -237,6 +237,7 @@ module TypedRb
             else
               unless actual_argument.nil? # opt or block if this is nil
                 actual_argument_type = actual_argument.check_type(context)
+                fail TypeCheckError, "Missing type information for argument '#{arg_name}'" if formal_parameter_type.nil?
                 unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                   error_message = "#{formal_parameter_type} expected, #{actual_argument_type} found"
                   fail TypeCheckError, error_message
