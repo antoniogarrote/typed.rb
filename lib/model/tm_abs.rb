@@ -25,7 +25,7 @@ module TypedRb
         with_fresh_bindings(context) do |var_type_args, var_type_return, context|
           type_term = term.check_type(context)
           if var_type_return.compatible?(type_term, :gt)
-            Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
+            Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters, node)
           else
             # TODO: improve message
             error_msg = "Error parsing abstraction, incompatible return type found: #{var_type_return} < #{type_term}"
@@ -41,6 +41,7 @@ module TypedRb
         Types::TypingContext.push_context(:lambda)
         fresh_args = args.map do |(type, var, opt)|
           type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}", context)
+          type_var_arg.node = node
           context = case type
                     when :arg, :block
                       context.add_binding(var, type_var_arg)
@@ -54,6 +55,7 @@ module TypedRb
         end
 
         return_type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, nil, context)
+        return_type_var_arg.node = node
         lambda_type  = yield fresh_args, return_type_var_arg, context
         lambda_type.local_typing_context = Types::TypingContext.pop_context
         lambda_type

@@ -20,7 +20,7 @@ module TypedRb
         try_term_type = @try_term.check_type(context)
         rescue_term_types = @rescue_terms.map do |term|
           if term.nil?
-            TyUnit.new
+            TyUnit.new(node)
           else
             term.check_type(context)
           end

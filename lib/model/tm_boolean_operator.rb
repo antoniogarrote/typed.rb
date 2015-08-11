@@ -27,7 +27,9 @@ module TypedRb
           var.compatible?(rhs_type, :gt)
           var
         else
-          [lhs_type, rhs_type].max rescue Types::TyObject.new(Object)
+          type = [lhs_type, rhs_type].max rescue Types::TyObject.new(Object, node)
+          type.node = node
+          type
         end
       end
     end

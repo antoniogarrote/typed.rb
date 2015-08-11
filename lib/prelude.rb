@@ -65,7 +65,9 @@ class Module
 end
 
 ts 'type Hash[T][U]'
-class Hash; end
+class Hash
+  ts '#initialize / [U]... -> Hash[T][U]'
+end
 
 ts 'type Range[T]'
 class Range; end

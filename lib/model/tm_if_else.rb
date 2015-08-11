@@ -20,17 +20,17 @@ module TypedRb
       end
 
       def check_type(context)
-        if @condition_expr.check_type(context).compatible?(Types::TyObject.new(BasicObject), :lt)
+        if @condition_expr.check_type(context).compatible?(Types::TyObject.new(BasicObject, node), :lt)
           then_expr_type = then_expr.nil? ? then_expr : then_expr.check_type(context)
           else_expr_type = else_expr.nil? ? else_expr : else_expr.check_type(context)
 
-          if else_expr_type.nil?
+          if else_expr_type.nil? || else_expr_type.is_a?(Types::TyUnit)
             if then_expr.is_a?(TmReturn)
               TmReturn.new(then_expr_type, node)
             else
               then_expr_type
             end
-          elsif then_expr_type.nil?
+          elsif then_expr_type.nil? || then_expr_type.is_a?(Types::TyUnit)
             if else_expr.is_a?(TmReturn)
               TmReturn.new(else_expr_type, node)
             else

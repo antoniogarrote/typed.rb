@@ -3,17 +3,20 @@ module TypedRb
   class TypeCheckError < TypeError
     attr_reader :node
 
-    def initialize(msg, node=nil)
+    def initialize(msg, node = nil)
       super(build_message_error(msg, node))
       @node = node
     end
 
     private
 
-    def build_message_error(msg, node)
-      if node
-        line = node.loc.line
-        "#NO FILE:#{line}\n  #{msg}\n...\n#{'=' * (node.loc.column - 2)}> #{node.loc.expression.source}\n...\n"
+    def build_message_error(msg, nodes)
+      if nodes && nodes.is_a?(Array)
+        "\n  #{msg}\n...\n#NO FILE:#{nodes.first.loc.line}\n#{'=' * (nodes.first.loc.column - 2)}> #{nodes.first.loc.expression.source}\n\
+#NO FILE:#{nodes.last.loc.line}\n#{'=' * (nodes.last.loc.column - 2)}> #{nodes.last.loc.expression.source}\n...\n"
+      elsif nodes
+        line = nodes.loc.line
+        "\n#NO FILE:#{line}\n  #{msg}\n...\n#{'=' * (nodes.loc.column - 2)}> #{nodes.loc.expression.source}\n...\n"
       else
         msg
       end
@@ -142,7 +145,7 @@ module TypedRb
     end
 
     class Type
-      attr_reader :node
+      attr_accessor :node
 
       def initialize(node)
         @node = node
@@ -296,13 +299,14 @@ module TypedRb
         raise TypeParsingError, "Unknown Ruby type #{type}"
       end
 
-      def self.parse_singleton_object_type(type)
+      def self.parse_singleton_object_type(type, node=nil)
         ruby_type = Object.const_get(type)
         generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
         if generic_type
+          generic_type.node = node
           generic_type
         else
-          TySingletonObject.new(ruby_type)
+          TySingletonObject.new(ruby_type, node)
         end
       rescue StandardError => e
         TypedRb.log(binding, :error, "Error parsing singleton object from type #{type}, #{e.message}")

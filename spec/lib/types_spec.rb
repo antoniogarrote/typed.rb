@@ -23,10 +23,10 @@ describe TypedRb::Types::TyObject do
     expect(ty_integer < ty_numeric).to be_truthy
     expect(ty_integer < ty_object).to be_truthy
 
-    expect{ ty_string < ty_integer }.to raise_error TypedRb::Types::UncomparableTypes
-    expect{ ty_integer < ty_string }.to raise_error TypedRb::Types::UncomparableTypes
-    expect{ ty_string > ty_integer }.to raise_error TypedRb::Types::UncomparableTypes
-    expect{ ty_integer > ty_string }.to raise_error TypedRb::Types::UncomparableTypes
+    expect{ ty_string < ty_integer }.to raise_error ArgumentError
+    expect{ ty_integer < ty_string }.to raise_error ArgumentError
+    expect{ ty_string > ty_integer }.to raise_error ArgumentError
+    expect{ ty_integer > ty_string }.to raise_error ArgumentError
 
 
     expect(ty_numeric <= ty_numeric).to be_truthy

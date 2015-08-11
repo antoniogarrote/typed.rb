@@ -15,7 +15,8 @@ module TypedRb
 
       def check_type(context)
         module_type = Types::Type.parse_existential_object_type(module_name)
-        module_typing_context = TmModule.with_local_context(module_type) do |module_self_variable|
+        module_type.node = node
+        module_typing_context = TmModule.with_local_context(module_type, node) do |module_self_variable|
           context = context.add_binding(:self, module_type)
           body.check_type(context) if body
         end
@@ -28,10 +29,11 @@ module TypedRb
       end
 
 
-      def self.with_local_context(module_type)
+      def self.with_local_context(module_type, node)
         Types::TypingContext.push_context(:module)
         # Deal with upper/lower bounds here if required
         module_self_variable = Types::TypingContext.type_variable_for(module_type.ruby_type, :module_self, [module_type.ruby_type])
+        module_self_variable.node = node
         module_type.self_variable = module_self_variable
         yield(module_self_variable)
 

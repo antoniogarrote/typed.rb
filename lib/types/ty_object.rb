@@ -3,8 +3,17 @@ module TypedRb
 
     class UncomparableTypes < TypeCheckError
       attr_reader :from, :to
-      def initialize(from, to, node=nil)
-        super("Cannot compare types #{from} <=> #{to}", node)
+      def initialize(from, to, node = nil)
+        nodes = [from.node, to.node].compact
+        if node
+          super("Cannot compare types #{from} <=> #{to}", node)
+        elsif nodes.size == 2
+          super("Cannot compare types #{from} <=> #{to}", nodes)
+        elsif nodes.size == 1
+          super("Cannot compare types #{from} <=> #{to}", nodes.first)
+        else
+          super("Cannot compare types #{from} <=> #{to}", nil)
+        end
       end
     end
 
@@ -14,6 +23,7 @@ module TypedRb
       attr_reader :hierarchy, :classes, :modules, :ruby_type, :with_ruby_type
 
       def initialize(ruby_type, node=nil, classes=[], modules=[])
+        super(node)
         if ruby_type
           @ruby_type = ruby_type
           @hierarchy = ruby_type.ancestors
@@ -47,10 +57,14 @@ module TypedRb
 
       def compatible?(other_type, relation = :lt)
         if other_type.is_a?(TyObject)
-          if relation == :gt
-            self >= other_type
-          elsif relation == :lt
-            self <= other_type
+          begin
+            if relation == :gt
+              self >= other_type
+            elsif relation == :lt
+              self <= other_type
+            end
+          rescue ArgumentError
+            raise UncomparableTypes.new(self, other_type)
           end
         else
           other_type.compatible?(self, relation == :lt ? :gt : :lt)
@@ -73,7 +87,9 @@ module TypedRb
           var_type
         else
           # If no types has been declared, we'll find a var type in the registry
-          Types::TypingContext.type_variable_for(:instance_variable, var, hierarchy)
+          var_type = Types::TypingContext.type_variable_for(:instance_variable, var, hierarchy)
+          var_type.node = node
+          var_type
         end
       end
 
@@ -147,7 +163,8 @@ module TypedRb
           elsif hierarchy.include?(other.ruby_type)
             -1
           else
-            fail UncomparableTypes.new(self, other)
+            nil
+            #fail UncomparableTypes.new(self, other)
           end
         end
       end
@@ -163,7 +180,8 @@ module TypedRb
         elsif hierarchy.include?(ruby_type) && all_those_modules_included && !all_these_modules_included
           -1
         else
-          fail UncomparableTypes.new(self, other)
+          nil
+          #fail UncomparableTypes.new(self, other)
         end
       end
     end

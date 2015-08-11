@@ -9,8 +9,8 @@ module TypedRb
 
       attr_reader :type_vars
 
-      def initialize(ruby_type, type_vars)
-        super(ruby_type)
+      def initialize(ruby_type, type_vars, node = nil)
+        super(ruby_type, node)
         @type_vars = type_vars
       end
 
@@ -25,7 +25,7 @@ module TypedRb
             if arg.is_a?(Polymorphism::TypeVariable)
               matching_var = type_vars.detect { |type_var|  type_var.variable == arg.variable }
               if matching_var && matching_var.lower_bound
-                matching_var.lower_bound || TyUnboundType.new(matching_var.variable, :lower_bound)
+                matching_var.lower_bound || TyUnboundType.new(matching_var.variable, :lower_bound, node)
               else
                 arg
               end
@@ -49,7 +49,7 @@ module TypedRb
                      function_type.to
                    end
 
-          materialised_function = TyFunction.new(from_args, to_arg, function_type.parameters_info)
+          materialised_function = TyFunction.new(from_args, to_arg, function_type.parameters_info, node)
           materialised_function.with_block_type(function_type.block_type)
           [function_klass_type, materialised_function]
         end

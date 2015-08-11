@@ -19,7 +19,7 @@ module TypedRb
         units.each do |unit|
           unit.check_type(context)
         end
-        Types::TySymbol.new
+        Types::TySymbol.new(node)
       end
     end
   end

@@ -4,8 +4,8 @@ module TypedRb
   module Types
     class TyBoolean < TyObject
 
-      def initialize
-        super(TrueClass)
+      def initialize(node=nil)
+        super(TrueClass, node)
       end
 
       def to_s

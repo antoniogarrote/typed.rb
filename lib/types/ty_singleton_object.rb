@@ -2,10 +2,10 @@ module TypedRb
   module Types
     class TySingletonObject < TyObject
 
-      def initialize(ruby_type)
+      def initialize(ruby_type, node = nil)
         #super(ruby_type.class)
         #@ruby_type = ruby_type
-        super(ruby_type)
+        super(ruby_type, node)
       end
 
       # No generic type, function will always be concrete
@@ -36,7 +36,9 @@ module TypedRb
         if var_type
           var_type
         else
-          Types::TypingContext.type_variable_for(:class_variable, var, hierarchy)
+          var_type = Types::TypingContext.type_variable_for(:class_variable, var, hierarchy)
+          var_type.node = node
+          var_type
         end
       end
 

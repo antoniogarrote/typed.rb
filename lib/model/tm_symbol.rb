@@ -7,7 +7,7 @@ module TypedRb
     class TmSymbol < Expr
       attr_accessor :val
       def initialize(node)
-        super(node,Types::TySymbol.new)
+        super(node,Types::TySymbol.new(node))
         @val = node.children.first
       end
     end

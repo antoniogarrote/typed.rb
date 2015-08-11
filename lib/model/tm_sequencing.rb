@@ -40,7 +40,7 @@ module TypedRb
           end
         end
         if return_types.size > 1
-          final_return_type = return_types.max rescue Types::TyObject.new(BasicObject)
+          final_return_type = return_types.max rescue Types::TyObject.new(BasicObject, node)
           TmReturn.new(final_return_type, node)
         else
           return_types.first

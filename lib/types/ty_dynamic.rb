@@ -14,8 +14,8 @@ module TypedRb
     end
 
     class TyDynamicFunction < TyFunction
-      def initialize(klass, message, with_block = true)
-        super([], TyDynamic.new(Object))
+      def initialize(klass, message, with_block = true, node=nil)
+        super([], TyDynamic.new(Object, node), nil, node)
         @klass = klass
         @message = message
         @block_type = TyDynamicFunction.new(Proc, :cal, false) if with_block

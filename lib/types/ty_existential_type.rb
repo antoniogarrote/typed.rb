@@ -6,8 +6,8 @@ module TypedRb
 
       attr_accessor :local_typing_context, :self_variable
 
-      def initialize(ruby_type)
-        super(ruby_type)
+      def initialize(ruby_type, node=nil)
+        super(ruby_type, node)
       end
 
       def check_inclusion(self_type)

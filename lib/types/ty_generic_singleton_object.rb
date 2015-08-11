@@ -10,8 +10,8 @@ module TypedRb
       attr_reader :type_vars
       attr_accessor :local_typing_context
 
-      def initialize(ruby_type, type_vars)
-        super(ruby_type)
+      def initialize(ruby_type, type_vars, node = nil)
+        super(ruby_type, node)
         @type_vars = type_vars
         @application_count = 0
       end
@@ -88,7 +88,7 @@ module TypedRb
 
         @application_count += 1
         substitutions = @local_typing_context.generic_type_local_var_types.each_with_object({}) do |type_var, acc|
-          cloned_type_var = Polymorphism::TypeVariable.new("#{type_var.variable}_#{@application_count}")
+          cloned_type_var = Polymorphism::TypeVariable.new("#{type_var.variable}_#{@application_count}", :node => node)
           cloned_type_var.upper_bound = type_var.upper_bound
           cloned_type_var.lower_bound = type_var.lower_bound
           acc[type_var.variable] = cloned_type_var
@@ -166,7 +166,7 @@ module TypedRb
       end
 
       def minimal_typing_context
-        Model::TmClass.with_fresh_bindings(self, nil)
+        Model::TmClass.with_fresh_bindings(self, nil, node)
         self.local_typing_context
       end
 

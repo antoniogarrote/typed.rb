@@ -35,17 +35,21 @@ module TypedRb
 
         def compatible_gt_type?(value_l, value_r, join_if_false = true)
           value_l > value_r ? value_l : value_r
-        rescue Types::UncomparableTypes => error
+        rescue Types::UncomparableTypes, ArgumentError
           if join_if_false
             value_l.join(value_r)
           else
-            fail error
+            raise Types::UncomparableTypes.new(value_l, value_r)
           end
         end
 
         def compatible_lt_type?(value_l, value_r)
           error_message = "Error checking type, #{value_l} is not a subtype of #{value_r}"
-          value_l <= value_r ? value_l : fail(UnificationError, error_message)
+          begin
+            value_l <= value_r ? value_l : fail(UnificationError, error_message)
+          rescue ArgumentError
+            fail(Types::UncomparableTypes.new(value_l, value_r))
+          end
         end
 
         # This function does not return the infered type.

@@ -26,10 +26,14 @@ module TypedRb
         binding_type = rhs.check_type(context)
         maybe_binding = context.get_type_for(lhs)
         if maybe_binding
-          if maybe_binding.compatible?(binding_type, :gt)
-            maybe_binding
-          else
-            fail Types::UncomparableTypes.new(maybe_binding, binding_type, node)
+          begin
+            if maybe_binding.compatible?(binding_type, :gt)
+              maybe_binding
+            else
+              raise Types::UncomparableTypes.new(maybe_binding, binding_type, node)
+            end
+          rescue Types::UncomparableTypes
+            raise Types::UncomparableTypes.new(maybe_binding, binding_type, node)
           end
         else
           context.add_binding!(lhs, binding_type)

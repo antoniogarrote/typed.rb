@@ -14,14 +14,16 @@ class BasicObject
       else
         method, signature = signature.split(/\s+\/\s+/)
 
-        kind, receiver, message = if method.index('#')
-                                    [:instance] + method.split('#')
-                                  elsif method.index('.')
-                                    [:class] + method.split('.')
-                                  else
-                                    fail ::TypedRb::Types::TypeParsingError,
-                                    "Error parsing receiver, method signature: #{signature}"
-                                  end
+        if method.index('#')
+          kind = :instance
+          receiver, message =  method.split('#')
+        elsif method.index('.')
+          kind = :class
+          receiver, message = method.split('.')
+        else
+          fail ::TypedRb::Types::TypeParsingError,
+          "Error parsing receiver, method signature: #{signature}"
+        end
 
         if receiver == ''
           if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
@@ -106,7 +108,7 @@ class BasicObject
                                                              :gen_name => false)
           end
         else
-          []
+          Array.(TypedRb::Types::Polymorphism::TypeVariable).new
         end
       end
 
@@ -130,7 +132,7 @@ class BasicObject
         if class_data
           # TODO: What should we when the class is in the registry but the method is missing?
           # The class has been typed but only partially?
-          # Dynamic invokation or error?
+          # Dynamic invocation or error?
           # Maybe an additional @dynamic annotation can be added to distinguish the desired outcome.
           # Preferred outcome right now is nil to catch errors in unification, safer assumption.
           #class_data[message.to_s] || nil # ::TypedRb::Types::TyDynamicFunction.new(klass, message)
@@ -175,19 +177,19 @@ class BasicObject
         @generic_types_registry
       end
 
-      ts '.parser_registry / Hash[ String ][ Hash[String][Object] ]'
+      ts '.parser_registry / -> Hash[ String ][ Hash[String][Object] ]'
       def parser_registry
         @parser_registry ||= {}
         @parser_registry
       end
 
-      ts '.generic_types_parser_registry / Hash[String][ Hash[Object][Object] ]'
+      ts '.generic_types_parser_registry / -> Hash[String][ Hash[Object][Object] ]'
       def generic_types_parser_registry
         @generic_types_parser_registry ||= {}
         @generic_types_parser_registry
       end
 
-      ts '.methods_for / String -> String -> Hash[String][Object]'
+      ts '.methods_for / Symbol -> String -> Hash[String][Object]'
       def methods_for(kind, receiver)
         method_registry = parser_registry[object_key(kind, receiver)] || {}
         parser_registry[object_key(kind, receiver)] = method_registry
@@ -196,7 +198,8 @@ class BasicObject
 
       ts '.normalize_generic_types! / -> unit'
       def normalize_generic_types!
-        @generic_types_registry = generic_types_parser_registry.inject({}) do |acc, type_info|
+        initial_value = Hash.(Class, TypedRb::Types::TyGenericSingletonObject).new
+        @generic_types_registry = generic_types_parser_registry.inject(initial_value) do |acc, type_info|
           _, info = type_info
           info[:type] = Object.const_get(info[:type])
           TypedRb.log(binding, :debug,  "Normalising generic type: #{info[:type]}")
@@ -246,6 +249,10 @@ class BasicObject
               end
             end
             signatures_acc[method] = normalize_signature!(klass, signature)
+            if (type != :class_variable && type != :instance_variable) && !signatures_acc[method].is_a?(TypedRb::Types::TyFunction)
+              fail ::TypedRb::Types::TypeParsingError,
+              "Error parsing receiver, method signature: #{type}[#{klass}] :: '#{method}', function expected, got '#{signatures_acc[method]}'"
+            end
             signatures_acc
           end
           @registry[[type,klass]] = method_signatures

@@ -19,7 +19,9 @@ module TypedRb
       end
 
       def check_type(context)
-        Types::TypingContext.type_variable_for_global(val)
+        type = Types::TypingContext.type_variable_for_global(val)
+        type.node = node
+        type
       end
     end
   end

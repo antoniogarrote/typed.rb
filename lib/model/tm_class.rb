@@ -23,7 +23,7 @@ module TypedRb
           # This context will be complemented with the remaining restrictions
           # coming from type var application when the generic type becomes
           # concrete to yield the final type.
-          TmClass.with_fresh_bindings(class_type, context) do
+          TmClass.with_fresh_bindings(class_type, context, node) do
             body.check_type(context) if body
           end
         else
@@ -32,11 +32,12 @@ module TypedRb
       end
 
 
-      def self.with_fresh_bindings(generic_class, context)
+      def self.with_fresh_bindings(generic_class, context, node)
         Types::TypingContext.push_context(:class)
         # Deal with upper/lower bounds here if required
         generic_class.type_vars.each do |type_var|
           type_var = Types::TypingContext.type_variable_for_generic_type(type_var)
+          type_var.node = node
 
           if type_var.upper_bound
             type_var.compatible?(type_var.upper_bound, :lt)

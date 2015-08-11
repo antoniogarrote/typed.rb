@@ -115,9 +115,9 @@ module TypedRb
               end
             rescue TypeCheckError => error
               if  !(function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject)) && function_klass_type != self_type.ruby_type
-                Types::TyDynamic.new(Object)
+                Types::TyDynamic.new(Object, node)
               elsif function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject) && function_type.nil?
-                Types::TyDynamic.new(Object)
+                Types::TyDynamic.new(Object, node)
               else
                 raise error
               end
@@ -151,7 +151,7 @@ module TypedRb
             end
           rescue TypeCheckError => error
             if function_klass_type != receiver_type.ruby_type
-              Types::TyDynamic.new(Object)
+              Types::TyDynamic.new(Object, node)
             else
               raise error
             end
@@ -239,9 +239,13 @@ module TypedRb
               unless actual_argument.nil? # opt or block if this is nil
                 actual_argument_type = actual_argument.check_type(context)
                 fail TypeCheckError.new("Error type checking message sent '#{message}': Missing type information for argument '#{arg_name}'", node) if formal_parameter_type.nil?
-                unless actual_argument_type.compatible?(formal_parameter_type, :lt)
+                begin
                   error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
-                  fail TypeCheckError.new(error_message, node)
+                  unless actual_argument_type.compatible?(formal_parameter_type, :lt)
+                    fail TypeCheckError.new(error_message, node)
+                  end
+                rescue Types::UncomparableTypes, ArgumentError
+                  fail Types::UncomparableTypes.new(actual_argument_type, formal_parameter_type, node)
                 end
               end
             end

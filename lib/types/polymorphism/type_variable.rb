@@ -3,12 +3,13 @@ module TypedRb
     module Polymorphism
       class TypeVariable
 
-        attr_accessor :bound, :variable, :upper_bound, :lower_bound, :name
+        attr_accessor :bound, :variable, :upper_bound, :lower_bound, :name, :node
 
         def initialize(var_name, options = {})
           gen_name = options[:gen_name].nil? ? true : options[:gen_name]
           @upper_bound = options[:upper_bound]
           @lower_bound = options[:lower_bound]
+          @node = options[:node]
           @name = var_name
           @variable = gen_name ? Model::GenSym.next("TV_#{var_name}") : var_name
           @bound = nil
@@ -20,6 +21,7 @@ module TypedRb
 
         def add_message_constraint(message, args)
           return_type = TypingContext.type_variable_for_message(variable, message)
+          return_type.node = node
           # add constraint for this
           add_constraint(:send, args: args, return: return_type, message: message)
           # return return type
@@ -52,7 +54,7 @@ module TypedRb
         end
 
         def to_s
-          "#{@variable}:#{@bound || '?'}"
+          "#{@variable}::#{@bound || '?'}"
         end
       end
     end
