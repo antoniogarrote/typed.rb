@@ -12,7 +12,7 @@ module TypedRb
       def check_type(context)
         self_type = context.get_type_for(:self)
         if self_type.nil?
-          fail TypeCheckError, 'Cannot find self reference in context'
+          fail TypeCheckError.new.new('Error type checking self reference: Cannot find self reference in typing context', node)
         else
           self_type
         end

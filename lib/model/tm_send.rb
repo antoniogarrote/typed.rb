@@ -32,6 +32,7 @@ module TypedRb
       end
 
       def check_type(context)
+        TypedRb.log(binding, :debug,  "Type checking message sent: #{message} at line #{node.loc.line}")
         if receiver.nil? && message == :ts
           # ignore, => type annotation
         elsif message == :new && !singleton_object_type(receiver, context).nil?
@@ -67,8 +68,8 @@ module TypedRb
         self_type = singleton_object_type(receiver,context).as_object_type
         function_klass_type, function_type = self_type.find_function_type(:initialize)
         if function_type.nil?
-          error_message = "Error typing message, type information for #{receiver_type} constructor found."
-          fail TypeCheckError, error_message
+          error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type} constructor not found"
+          fail TypeCheckError.new(error_message, node)
         else
           # function application
           @message = :initialize
@@ -90,7 +91,7 @@ module TypedRb
           if yield_abs_type
             check_lambda_application(yield_abs_type, context)
           else
-            fail TypeCheckError, 'Cannot find yield function.'
+            fail TypeCheckError.new("Error type checking message sent '#{message}': Cannot find yield function defined in typing context", node)
           end
         else
           self_type = context.get_type_for(:self) # check message in self type -> application
@@ -102,8 +103,8 @@ module TypedRb
             function_klass_type, function_type = self_type.find_function_type(message)
             begin
               if function_type.nil?
-                error_message = "Error typing message, type information for #{self_type}:#{message} found."
-                fail TypeCheckError error_message
+                error_message = "Error type checking message sent '#{message}': Type information for #{self_type}:#{message} not found"
+                fail TypeCheckError.new(error_message, node)
               elsif cast?(function_klass_type)
                 check_casting(context)
               elsif module_include_implementation?(function_klass_type)
@@ -140,8 +141,8 @@ module TypedRb
           function_klass_type, function_type = receiver_type.find_function_type(message)
           begin
             if function_type.nil?
-              error_message = "Error typing message, type information for #{receiver_type}:#{message} found."
-              fail TypeCheckError, error_message
+              error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."
+              fail TypeCheckError.new(error_message, node)
             elsif module_include_implementation?(function_klass_type)
               check_module_inclusions(receiver_type, context)
             else
@@ -215,10 +216,10 @@ module TypedRb
           actual_argument = actual_arguments[index]
           formal_parameter_type = formal_parameters[index]
           if formal_parameter_type.nil? && !require_info == :block
-            fail TypeCheckError, "Missing information about argument #{arg_name} in #{receiver}##{message}"
+            fail TypeCheckError.new("Error type checking message sent '#{message}': Missing information about argument #{arg_name} in #{receiver}##{message}", node)
           end
           if actual_argument.nil? && require_info != :opt && require_info != :rest && require_info != :block
-            fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver}##{message}"
+            fail TypeCheckError.new("Error type checking message sent '#{message}': Missing mandatory argument #{arg_name} in #{receiver}##{message}", node)
           else
             if require_info == :rest
               rest_type = formal_parameter_type.type_vars.first
@@ -229,18 +230,18 @@ module TypedRb
                                       end
               actual_arguments[index..-1].each do |actual_argument|
                 unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
-                  error_message = "#{formal_parameter_type} expected, #{actual_argument_type} found"
-                  fail TypeCheckError, error_message
+                  error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
+                  fail TypeCheckError.new(error_message, node)
                 end
               end
               break
             else
               unless actual_argument.nil? # opt or block if this is nil
                 actual_argument_type = actual_argument.check_type(context)
-                fail TypeCheckError, "Missing type information for argument '#{arg_name}'" if formal_parameter_type.nil?
+                fail TypeCheckError.new("Error type checking message sent '#{message}': Missing type information for argument '#{arg_name}'", node) if formal_parameter_type.nil?
                 unless actual_argument_type.compatible?(formal_parameter_type, :lt)
-                  error_message = "#{formal_parameter_type} expected, #{actual_argument_type} found"
-                  fail TypeCheckError, error_message
+                  error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
+                  fail TypeCheckError.new(error_message, node)
                 end
               end
             end
@@ -270,8 +271,8 @@ module TypedRb
           if module_type.is_a?(Types::TyExistentialType)
             module_type.check_inclusion(self_type)
           else
-            error_message = "Module type expected for inclusion in #{self_type}, #{module_type} found"
-            fail TypeCheckError, error_message
+            error_message = "Error type checking message sent '#{message}': Module type expected for inclusion in #{self_type}, #{module_type} found"
+            fail TypeCheckError.new(error_message, node)
           end
         end
         self_type

@@ -42,7 +42,7 @@ module TypedRb
       end
 
       def check_type(_context)
-        fail TypeCheckError, 'Unknown type' if @type.nil?
+        fail TypeCheckError.new('Type error: Unknown type', node) if @type.nil?
         @type
       end
 

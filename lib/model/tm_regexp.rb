@@ -24,8 +24,8 @@ module TypedRb
         if exp_type.compatible?(Types::TyString.new, :lt)
           Types::TyRegexp.new
         else
-          error_message = "Error typing Regexp, expected String type for expression, found #{exp_type}"
-          fail Types::TypeCheckError, error_message
+          error_message = "Error type checking  Regexp: Expected String type for expression, found #{exp_type}"
+          fail Types::TypeCheckError.new(error_message, node)
         end
       end
     end

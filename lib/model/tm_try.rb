@@ -27,7 +27,7 @@ module TypedRb
         end
         incompatible_type = rescue_term_types.detect{|term_type| !try_term_type.compatible?(term_type) }
         if incompatible_type
-          fail TypeCheckError "Error in rescue clause, expected type #{try_term_type} got #{incompatible_type}"
+          fail TypeCheckError.new("Type error checking try statement: Error in rescue clause, expected type #{try_term_type} got #{incompatible_type}", node)
         else
           try_term_type
         end

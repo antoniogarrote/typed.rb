@@ -298,7 +298,7 @@ __END
     f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt2]]['f1']
     expect(f1_type.from[1]).to be_instance_of(TypedRb::Types::TyGenericObject)
     expect(f1_type.from[1].type_vars.first.bound.ruby_type).to eq(Integer)
-    expect(f1_type.from[1].type_vars.first.variable).to eq('Array:X')
+    expect(f1_type.from[1].type_vars.first.variable).to eq('Array:T')
   end
 
   it 'parses function types with block arguments' do

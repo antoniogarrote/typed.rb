@@ -3,7 +3,7 @@ module TypedRb
     module Polymorphism
       module GenericComparisons
         def compatible?(other_type, relation = :lt)
-          if other_type.is_a?(TyDynamic)
+          if other_type.is_a?(TyDynamic) || other_type.is_a?(TyError)
             true
           elsif (other_type.is_a?(TyGenericObject) || other_type.is_a?(TyGenericSingletonObject))
             if check_generic_type_relation(other_type.ruby_type, relation)

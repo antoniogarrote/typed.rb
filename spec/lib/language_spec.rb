@@ -30,7 +30,7 @@ describe TypedRb::Language do
       expect {
         language.check_file(file)
       }.to raise_error(TypedRb::TypeCheckError,
-                       'Array[Class[Animal1]] expected, Array[Class[Cat1]] found')
+                       /Error type checking message sent 'mindless_func': Array\[Class\[Animal1\]\] expected, Array\[Class\[Cat1\]\] found/)
     end
   end
 end

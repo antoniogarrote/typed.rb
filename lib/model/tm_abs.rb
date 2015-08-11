@@ -28,7 +28,8 @@ module TypedRb
             Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters)
           else
             # TODO: improve message
-            fail TypeCheckError, 'Incompatible type function found'
+            error_msg = "Error parsing abstraction, incompatible return type found: #{var_type_return} < #{type_term}"
+            fail TypeCheckError.new(error_msg, node)
           end
         end
       end

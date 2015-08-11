@@ -135,7 +135,7 @@ module TypedRb
       when :or_asgn, :and_asgn
         parse_boolean_asgn(node, context)
       else
-        fail TermParsingError, "Unknown term #{node.type}: #{node.to_sexp}"
+        fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
     end
 
@@ -202,9 +202,9 @@ module TypedRb
     def parse_lambda(node, context)
       args,body  = node.children[1],node.children[2]
       if args.type != :args
-        fail StandardError,"Error parsing function args [#{args}]"
+        fail Types::TypeParsingError.new("Error parsing function args [#{args}]", node)
       end
-      args = parse_args(args.children, context)
+      args = parse_args(args.children, context, node)
       body = map(body, context)
 
       # TODO deal with abs with a provided type, like block passed to typed functions.
@@ -217,9 +217,9 @@ module TypedRb
     def parse_proc(node, context)
       args,body  = node.children[1],node.children[2]
       if args.type != :args
-        fail StandardError,"Error parsing function args [#{args}]"
+        fail Types::TypeParsingError.new("Error parsing function args [#{args}]", node)
       end
-      args = parse_args(args.children, context)
+      args = parse_args(args.children, context, node)
       body = map(body, context)
 
       # TODO deal with abs with a provided type, like block passed to typed functions.
@@ -241,7 +241,7 @@ module TypedRb
       TmMassAsgn.new(lhs, rhs, node)
     end
 
-    def parse_args(args, context)
+    def parse_args(args, context, node)
       args.map do |arg|
         case arg.type
         when :arg
@@ -253,7 +253,7 @@ module TypedRb
         when :restarg
           [:restarg, arg.children.last]
         else
-          fail StandardError, "Unknown type of arg '#{arg.type}'"
+          fail Types::TypeParsingError.new("Unknown type of arg '#{arg.type}'", node)
         end
       end
     end
@@ -304,7 +304,7 @@ module TypedRb
     end
 
     def parse_class(node, context)
-      fail StandardError, "Nil value parsing class" if node.nil? # No explicit class -> Object by default
+      fail Types::TypeParsingError.new("Nil value parsing class") if node.nil? # No explicit class -> Object by default
       class_name = parse_const(node.children[0])
       super_class_name = parse_const(node.children[1]) || 'Object'
       context.with_type([:class, class_name, super_class_name]) do
@@ -356,7 +356,7 @@ module TypedRb
 
     def parse_fun(owner, fun_name, args, body, node, context)
       if args.type != :args
-        fail StandardError,"Error parsing function args [#{args}]"
+        fail Types::TypeParsingError.new("Error parsing function args [#{args}]", node)
       end
       # parse the owner of the function
       owner = if owner.nil? || owner == :self
@@ -373,7 +373,8 @@ module TypedRb
                 else
                   map(body, context)
                 end
-      TmFun.new(owner, fun_name, parse_args(args.children, context), tm_body, node)
+      parsed_args = parse_args(args.children, context, node)
+      TmFun.new(owner, fun_name, parsed_args, tm_body, node)
     end
 
     def parse_if_then_else(node, context)

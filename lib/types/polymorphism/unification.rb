@@ -5,7 +5,11 @@ module TypedRb
     # Polymorphic additions to Featherweight Ruby
     module Polymorphism
 
-      class UnificationError < TypedRb::TypeCheckError; end
+      class UnificationError < TypedRb::TypeCheckError
+        def initialize(message)
+          super(message)
+        end
+      end
 
       # Common operations on types and restrictions.
       module TypeOperations

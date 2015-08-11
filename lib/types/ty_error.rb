@@ -5,12 +5,12 @@ module TypedRb
         'error'
       end
 
-      def compatible?(_relation, _other_type)
+      def compatible?(_relation, _other_type = :lt)
         true
       end
 
       def self.is?(type)
-        type == TyError || type.instance_of?(TypeError)
+        type == TyError || type.is_a?(TyError)
       end
     end
   end

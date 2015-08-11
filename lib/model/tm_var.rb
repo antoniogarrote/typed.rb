@@ -27,7 +27,7 @@ module TypedRb
       def check_type(context)
         type = context.get_type_for(@val)
         if type.nil?
-          fail TypeCheckError, "Cannot find binding for var '#{@val}' in the context"
+          fail TypeCheckError.new("Type error checking local var #{@val}: Cannot find binding local var in the typing context", node)
         end
         type
       end

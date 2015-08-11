@@ -29,7 +29,7 @@ module TypedRb
           if maybe_binding.compatible?(binding_type, :gt)
             maybe_binding
           else
-            fail Types::UncomparableTypes.new(maybe_binding, binding_type)
+            fail Types::UncomparableTypes.new(maybe_binding, binding_type, node)
           end
         else
           context.add_binding!(lhs, binding_type)

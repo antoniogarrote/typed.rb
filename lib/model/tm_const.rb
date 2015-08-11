@@ -22,7 +22,8 @@ module TypedRb
         elsif value.instance_of?(Module)
           Types::Type.parse_existential_object_type(value.name)
         else
-          Types::Type.parse_object_type(value.name)
+          # Must be a user defined constant
+          Types::Type.parse_object_type(value.receiver.class.name)
         end
       end
     end

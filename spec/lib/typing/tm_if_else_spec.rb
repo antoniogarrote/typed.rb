@@ -75,4 +75,30 @@ __CODE
     result = language.check(expr)
     expect(result).to eq(tyinteger)
   end
+
+  it 'types correctly if/then/else statements with errors in the then branch' do
+    expr = <<__CODE
+     if false
+      fail StandardError, 'error'
+     else
+       1
+     end
+__CODE
+
+    result = language.check(expr)
+    expect(result.ruby_type).to eq(Integer)
+  end
+
+  it 'types correctly if/then/else statements with errors in the else branch' do
+    expr = <<__CODE
+     if true
+       1
+     else
+       fail StandardError, 'error'
+     end
+__CODE
+
+    result = language.check(expr)
+    expect(result.ruby_type).to eq(Integer)
+  end
 end

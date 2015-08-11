@@ -62,12 +62,12 @@ module TypedRb
 
 
         if owner_type.nil?
-          fail TypeCheckError, "Function #{owner}##{name} cannot find owner type for #{owner}"
+          fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find owner type for #{owner}", node)
         end
 
         function_klass_type, function_type = owner_type.find_function_type(name)
         if function_type.nil?
-          fail TypeCheckError, "Function #{owner}##{name} cannot find function type information for owner."
+          fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
         elsif function_type.is_a?(Types::TyDynamicFunction)
         # missing type information stop checking types
         # TODO: raise a warning here
@@ -77,7 +77,7 @@ module TypedRb
             if function_klass_type != owner_type.ruby_type
               Types::TyDynamicFunction.new(owner_type.ruby_type, name)
             else
-              fail TypeCheckError," Function #{owner}##{name} number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}."
+              fail TypeCheckError.new("Error type checking function #{owner}##{name}: Number of arguments don't match type signature, expected #{function_type.from.size} found #{args.size}.", node)
             end
           end
 
@@ -97,17 +97,17 @@ module TypedRb
                         if declared_arg_type.compatible?(function_arg_type)
                           context.add_binding(arg[1], function_arg_type)
                         else
-                          error_message = "Function #{owner}##{name} expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
-                          fail TypeCheckError, error_message
+                          error_message = "Error type checking function #{owner}##{name}: Expected arg #{arg[1]} with type #{function_arg_type}, found type #{declared_arg_type}"
+                          fail TypeCheckError.new(error_message, node)
                         end
                       when :blockarg
                         if(function_type.block_type)
                           context.add_binding(arg[1], function_type.block_type)
                         else
-                          fail TypeCheckError, "Function #{owner}##{name} missing block type for block argument #{arg[1]}"
+                          fail TypeCheckError.new("Error type checking function #{owner}##{name}: Missing block type for block argument #{arg[1]}", node)
                         end
                       else
-                        fail TypeCheckError, "Function #{owner}##{name} unknown type of arg #{arg.first}"
+                        fail TypeCheckError.new("Error type checking function #{owner}##{name}: Unknown type of arg #{arg.first}", node)
                       end
           end
 
@@ -143,8 +143,8 @@ module TypedRb
                 # A TyObject(Symbol) should be returned not the function type
                 # x = def id(x); x; end / => x == :id
               else
-                error_message = "Wrong return type for function type #{owner}##{name}, expected #{function_type.to}, found #{body_return_type}."
-                fail TypeCheckError, error_message
+                error_message = "Error type checking function type #{owner}##{name}: Wrong return type, expected #{function_type.to}, found #{body_return_type}."
+                fail TypeCheckError.new(error_message, node)
               end
             end
           end

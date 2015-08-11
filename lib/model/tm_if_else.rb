@@ -42,8 +42,10 @@ module TypedRb
                               then_expr_type
                             elsif else_expr_type.is_a?(Types::Polymorphism::TypeVariable)
                               else_expr_type
-                            elsif Types::TyError.is?(then_expr_type)
+                            elsif Types::TyError.is?(then_expr_type) && !Types::TyError.is?(else_expr_type)
                               else_expr_type
+                            elsif Types::TyError.is?(else_expr_type) && !Types::TyError.is?(then_expr_type)
+                              then_expr_type
                             elsif then_expr_type.is_a?(Types::TyDynamic) || then_expr_type.is_a?(Types::TyDynamicFunction)
                               else_expr_type
                             else
@@ -52,16 +54,16 @@ module TypedRb
               if else_expr_type.is_a?(TmReturn) && then_expr_type.is_a?(TmReturn)
                 TmReturn.new(result_type, node)
               elsif else_expr_type.is_a?(TmReturn) && then_expr_type.is_a?(TmReturn)
-                fail TypeCheckError, 'Return statemen in only one branch of a conditional'
+                fail TypeCheckError.new('Error type checking if/then/else statement: Return statement in only one branch of a conditional', node)
               else
                 result_type
               end
             else
-              fail TypeCheckError, 'Arms of conditional have different types'
+              fail TypeCheckError.new("Error type checking if/then/else statement: Arms of conditional have incompatible types #{then_expr_type} vs #{else_expr_type}", node)
             end
           end
         else
-          fail TypeCheckError, 'Expected Bool type in if conditional expression'
+          fail TypeCheckError.new('Error type checking if/then/else statement: Expected valid True/False value type in if conditional expression', node)
         end
       end
     end

@@ -2,6 +2,7 @@ module TypedRb
   module Types
     class TyFunction < Type
       attr_accessor :from, :to, :parameters_info, :block_type
+      attr_writer :name
 
       def initialize(from, to, parameters_info = nil)
         @from            = from.is_a?(Array) ? from : [from]
@@ -26,18 +27,23 @@ module TypedRb
         "(#{@from.map(&:to_s).join(',')} -> #{@to})"
       end
 
+      def name
+        @name || "lambda"
+      end
+
       def check_args_application(actual_arguments, context)
         parameters_info.each_with_index do |(require_info, arg_name), index|
           actual_argument = actual_arguments[index]
           from_type = from[index]
           if actual_argument.nil? && require_info != :opt
-            fail TypeCheckError, "Missing mandatory argument #{arg_name} in #{receiver_type}##{message}"
+            error_msg = "Type error checking function '#{name}': Missing mandatory argument #{arg_name} in #{receiver_type}##{message}"
+            fail TypeCheckError.new(error_msg)
           else
             unless actual_argument.nil? # opt if this is nil
               actual_argument_type = actual_argument.check_type(context)
               unless actual_argument_type.compatible?(from_type, :lt)
-                error_message = "#{error_message} #{from_type} expected, #{argument_type} found"
-                fail TypeCheckError, error_message
+                error_message = "Type error checking function '#{name}': #{error_message} #{from_type} expected, #{argument_type} found"
+                fail TypeCheckError.new(error_message)
               end
             end
           end
@@ -61,7 +67,7 @@ module TypedRb
             return false
           end
         else
-          fail TypeCheckError, 'Comparing function type with no function type'
+          fail TypeCheckError.new("Type error checking function '#{name}': Comparing function type with no function type")
         end
 
         return true
@@ -79,7 +85,8 @@ module TypedRb
 
       def materialize
         if @local_typing_context.nil?
-          fail StandardError, 'Cannot materialize function because of missing local typing context'
+          fail TypeCheckError.new("Type error checking function '#{name}': Cannot materialize function because of \
+missing local typing context")
         end
         materialized_from_args = []
         materialized_to_arg = nil
@@ -97,14 +104,19 @@ module TypedRb
         end
 
         if materialized_from_args.size != from.size
-          fail StandardError, 'Cannot find all the type variables for function application in the local typing context, expected #{from.size} got #{materialized_from_args.size}.'
+          error_msg = "Type error checking function '#{name}': Cannot find all the type variables for function \
+application in the local typing context, expected #{from.size} got #{materialized_from_args.size}."
+          fail TypeCheckError.new(error_msg)
         end
 
         if materialized_to_arg.nil?
-          fail StandardError, 'Cannot find the return type variable for function application in the local typing context.'
+          error_msg = "Type error checking function '#{name}': Cannot find the return type variable for function \
+application in the local typing context."
+          fail TypeCheckError.new(error_msg)
         end
         applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
         materialized_function = TyFunction.new(materialized_from_args, materialized_to_arg, parameters_info)
+        materialized_function.name = name
         TypingContext.with_context(applied_typing_context) do
           yield materialized_function
         end
@@ -115,7 +127,9 @@ module TypedRb
         bound_from_args = materialized_function.from.map  { |arg| arg.bound || arg }
         bound_to_arg = materialized_function.to.bound || materialized_function.to
         #
-        TyFunction.new(bound_from_args, bound_to_arg, parameters_info)
+        materialized_function = TyFunction.new(bound_from_args, bound_to_arg, parameters_info)
+        materialized_function.name = name
+        materialized_function
       end
 
       def check_args_application(actual_arguments, context)

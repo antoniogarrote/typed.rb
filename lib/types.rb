@@ -1,8 +1,22 @@
 module TypedRb
 
   class TypeCheckError < TypeError
-    def initialize(msg)
-      super(msg)
+    attr_reader :node
+
+    def initialize(msg, node=nil)
+      super(build_message_error(msg, node))
+      @node = node
+    end
+
+    private
+
+    def build_message_error(msg, node)
+      if node
+        line = node.loc.line
+        "#NO FILE:#{line}\n  #{msg}\n...\n#{'=' * (node.loc.column - 2)}> #{node.loc.expression.source}\n...\n"
+      else
+        msg
+      end
     end
   end
 
@@ -181,7 +195,7 @@ module TypedRb
           #TODO: should I use #parse_singleton_object_type here?
           Types::TyGenericSingletonObject.new(Array, [parsed_parameter])
         else
-          type_var = Polymorphism::TypeVariable.new('Array:X', :gen_name => false,
+          type_var = Polymorphism::TypeVariable.new('Array:T', :gen_name => false,
                                                                :upper_bound => parsed_parameter,
                                                                :lower_bound => parsed_parameter)
           type_var.bind(parsed_parameter)
@@ -301,6 +315,7 @@ module TypedRb
         arg_types = arg_types.map{ |arg| parse(arg, klass) }
         is_generic = (arg_types + [return_type]).any? { |var| var.is_a?(Types::TyGenericSingletonObject) ||
                                                               var.is_a?(Types::Polymorphism::TypeVariable) }
+
         functionClass = is_generic ? TyGenericFunction : TyFunction
         function_type = functionClass.new(arg_types, return_type)
         function_type.with_block_type(block_type) if block_type

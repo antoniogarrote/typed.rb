@@ -3,8 +3,8 @@ module TypedRb
 
     class UncomparableTypes < TypeCheckError
       attr_reader :from, :to
-      def initialize(from, to)
-        super("Cannot compare types #{from} <=> #{to}")
+      def initialize(from, to, node=nil)
+        super("Cannot compare types #{from} <=> #{to}", node)
       end
     end
 
