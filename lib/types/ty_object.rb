@@ -13,7 +13,7 @@ module TypedRb
 
       attr_reader :hierarchy, :classes, :modules, :ruby_type, :with_ruby_type
 
-      def initialize(ruby_type, classes=[], modules=[])
+      def initialize(ruby_type, node=nil, classes=[], modules=[])
         if ruby_type
           @ruby_type = ruby_type
           @hierarchy = ruby_type.ancestors
@@ -124,9 +124,9 @@ module TypedRb
         common_classes = classes & other.classes
         common_modules = modules & other.modules
         if common_modules.size == 1
-          TyObject.new(common_modules.first)
+          TyObject.new(common_modules.first, (self.node || other.node))
         else
-          TyObject.new(nil, common_classes, common_modules)
+          TyObject.new(nil, (self.node || other.node), common_classes, common_modules)
         end
       end
 

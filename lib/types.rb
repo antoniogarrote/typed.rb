@@ -142,6 +142,11 @@ module TypedRb
     end
 
     class Type
+      attr_reader :node
+
+      def initialize(node)
+        @node = node
+      end
 
       # This is only used from the runtime parsing logic
       # TODO: move it to Runtime?
@@ -331,38 +336,38 @@ module TypedRb
     # Aliases for different basic types
 
     class TyInteger < TyObject
-      def initialize
-        super(Integer)
+      def initialize(node = nil)
+        super(Integer, node)
       end
     end
 
     class TyFloat < TyObject
-      def initialize
-        super(Float)
+      def initialize(node = nil)
+        super(Float, node)
       end
     end
 
     class TyString < TyObject
-      def initialize
-        super(String)
+      def initialize(node = nil)
+        super(String, node)
       end
     end
 
     class TyUnit < TyObject
-      def initialize
-        super(NilClass)
+      def initialize(node = nil)
+        super(NilClass, node)
       end
     end
 
     class TySymbol < TyObject
-      def initialize
-        super(Symbol)
+      def initialize(node = nil)
+        super(Symbol, node)
       end
     end
 
     class TyRegexp < TyObject
-      def initialize
-        super(Regexp)
+      def initialize(node = nil)
+        super(Regexp, node)
       end
     end
   end

@@ -1,6 +1,10 @@
 module TypedRb
   module Types
     class TyError < Type
+      def initialize(node = nil)
+        super(node)
+      end
+
       def to_s
         'error'
       end

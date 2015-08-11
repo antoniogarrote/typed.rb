@@ -19,7 +19,7 @@ module TypedRb
         if found_type && !found_type.is_a?(TyDynamicFunction)
           [:main, found_type]
         else
-          TyObject.new(ruby_type).find_function_type(message)
+          TyObject.new(ruby_type, node).find_function_type(message)
         end
       end
 

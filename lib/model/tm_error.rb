@@ -9,7 +9,7 @@ module TypedRb
       end
 
       def check_type(_context)
-        Types::TyError.new
+        Types::TyError.new(node)
       end
     end
   end

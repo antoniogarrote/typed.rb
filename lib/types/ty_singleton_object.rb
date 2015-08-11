@@ -45,7 +45,7 @@ module TypedRb
       end
 
       def as_object_type
-        TyObject.new(ruby_type)
+        TyObject.new(ruby_type, node)
       end
 
       def to_s
