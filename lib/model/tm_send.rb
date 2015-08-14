@@ -194,20 +194,38 @@ module TypedRb
         if function_type.is_a?(Types::TyDynamicFunction)
           function_type.to
         else
-          formal_parameters = function_type.from
-          method = receiver_type.resolve_ruby_method(message)
-          parameters_info = method.parameters
-          TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{method.name}( #{parameters_info} )")
-          check_args_application(parameters_info, formal_parameters, args, context)
-          if @block
-            block_type = @block.check_type(context)
-            block_type.compatible?(function_type.block_type, :lt) if function_type.block_type
+          if function_type.generic?
+            function_type.materialize do |materialized_function|
+              check_application(receiver_type, materialized_function, context)
+            end.to
+          else
+            formal_parameters = function_type.from
+            method = receiver_type.resolve_ruby_method(message)
+            parameters_info = method.parameters
+            TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{method.name}( #{parameters_info} )")
+            check_args_application(parameters_info, formal_parameters, args, context)
+            if @block
+              block_type = @block.check_type(context)
+              # TODO:
+              # Unification is run here
+              # Algorithm is failing:
+              # G > String,
+              # G < E
+              # ========
+              # G = [String, ?]
+              # -----
+              # G = [String, E]
+              # E = [String, ?]
+              block_type.compatible?(function_type.block_type, :lt) if function_type.block_type
+            end
+            function_type.to
           end
-          function_type.to
         end
       end
 
       def check_lambda_application(lambda_type, context)
+        # TODO: please, refactor this.
+        #Types::TyFunction.instance_method(:check_args_application).bind(lambda_type).call(args, context).to
         lambda_type.check_args_application(args, context).to
       end
 

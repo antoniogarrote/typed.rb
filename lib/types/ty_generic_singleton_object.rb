@@ -95,7 +95,7 @@ module TypedRb
         end
         applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
         fresh_type_vars = type_vars.map do |type_var|
-          applied_typing_context.type_variables_register[[:generic, nil, type_var.variable]]
+          applied_typing_context.type_variables_register[[:generic, false, type_var.variable]]
         end
 
         fresh_vars_generic_type = TyGenericSingletonObject.new(ruby_type, fresh_type_vars)

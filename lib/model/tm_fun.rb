@@ -69,8 +69,8 @@ module TypedRb
         if function_type.nil?
           fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
         elsif function_type.is_a?(Types::TyDynamicFunction)
-        # missing type information stop checking types
-        # TODO: raise a warning here
+        # Missing type information stops the type checking process
+        # TODO: raise a warning here about the previous fact
         else
           # check matching args
           if function_type.from.size < args.select { |(arg_type, _)| arg_type == :arg }.size
@@ -124,31 +124,62 @@ module TypedRb
 
           if is_constructor
             # constructor
-            body.check_type(context)
-            function_type
+            with_fresh_bindings(function_klass_type, function_type, context, node) do
+              body.check_type(context)
+              function_type
+            end
           else
             # check the body with the new bindings for the args
-            body_return_type = body.check_type(context)
-            if body_return_type.is_a?(TmReturn)
-              body_return_type = body_return_type.check_type(context)
-            end
-            if function_type.to.instance_of?(Types::TyUnit)
-              function_type.to
-            else
-              # Same as before but for the return type
-              function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.self_materialize : function_type.to
-              if body_return_type.compatible?(function_type_to, :lt)
-                function_type
+            with_fresh_bindings(function_klass_type, function_type, context, node) do
+              body_return_type = body.check_type(context)
+              if body_return_type.is_a?(TmReturn)
+                body_return_type = body_return_type.check_type(context)
+              end
+              if function_type.to.instance_of?(Types::TyUnit)
+                function_type.to
+              else
+                # Same as before but for the return type
+                function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.self_materialize : function_type.to
+                if body_return_type.compatible?(function_type_to, :lt)
+                  function_type
                 # TODO:
                 # A TyObject(Symbol) should be returned not the function type
                 # x = def id(x); x; end / => x == :id
-              else
-                error_message = "Error type checking function type #{owner}##{name}: Wrong return type, expected #{function_type.to}, found #{body_return_type}."
-                fail TypeCheckError.new(error_message, node)
+                else
+                  error_message = "Error type checking function type #{owner}##{name}: Wrong return type, expected #{function_type.to}, found #{body_return_type}."
+                  fail TypeCheckError.new(error_message, node)
+                end
               end
             end
           end
         end
+      end
+
+      # TODO:
+      # 1 Find free type variables for the generic function.
+      # 2 Create a new local typing context for the generic function
+      # 3 Add free type variables to the typing context
+      def with_fresh_bindings(klass, function_type, context, node)
+        if function_type.generic?
+          Types::TypingContext.push_context(:method)
+          # TODO implement this function
+          function_type.free_type_variables(klass).each do |type_var|
+            # TODO implement this function
+            # This will add the variable to the context
+            Types::TypingContext.type_variable_for_function_type(type_var)
+          end
+
+          yield
+
+          # # Since every single time we find the generic type the same instance
+          # # will be returned, the local_typing_context will still be associated.
+          # # This is the reason we need to build a new typing context cloning this
+          # # one while type materialization.
+          function_type.local_typing_context = Types::TypingContext.pop_context
+        else
+          yield
+        end
+        function_type
       end
 
       private

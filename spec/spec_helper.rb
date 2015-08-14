@@ -81,7 +81,7 @@ def tyregexp
 end
 
 def tyvariable(name)
-  TypedRb::Types::Polymorphism::TypeVariable.new(name)
+  TypedRb::Types::Polymorphism::TypeVariable.new(name, :gen_name => false)
 end
 
 def eval_with_ts(code)

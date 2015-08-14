@@ -30,6 +30,11 @@ module TypedRb
     class TypingContext
 
       class << self
+
+        def empty_typing_context
+          Polymorphism::TypeVariableRegister.new(nil, :local)
+        end
+
         def type_variables_register
           @type_variables_register ||= Polymorphism::TypeVariableRegister.new(nil, :top_level)
         end
@@ -48,6 +53,10 @@ module TypedRb
 
         def type_variable_for_abstraction(abs_kind, variable, context)
           type_variables_register.type_variable_for_abstraction(abs_kind, variable, context)
+        end
+
+        def type_variable_for_function_type(type_var)
+          type_variables_register.type_variable_for_generic_type(type_var, true)
         end
 
         def type_variable_for_generic_type(type_var)
@@ -92,8 +101,9 @@ module TypedRb
         def with_context(context)
           old_context = @type_variables_register
           @type_variables_register = context
-          yield
+          result = yield
           @type_variables_register = old_context
+          result
         end
 
         def clear(type)
@@ -325,8 +335,9 @@ module TypedRb
         is_generic = (arg_types + [return_type]).any? { |var| var.is_a?(Types::TyGenericSingletonObject) ||
                                                               var.is_a?(Types::Polymorphism::TypeVariable) }
 
-        functionClass = is_generic ? TyGenericFunction : TyFunction
-        function_type = functionClass.new(arg_types, return_type)
+        function_class = is_generic ? TyGenericFunction : TyFunction
+        function_type = function_class.new(arg_types, return_type)
+        function_type.local_typing_context = TypingContext.empty_typing_context if function_type.generic?
         function_type.with_block_type(block_type) if block_type
         function_type
       end

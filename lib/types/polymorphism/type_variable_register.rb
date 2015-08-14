@@ -26,18 +26,18 @@ module TypedRb
 
         def type_variable_for(type, variable, hierarchy)
           ensure_string(variable)
-          upper_level = upper_class_register
+          upper_level = upper_class_register # we need to get a class register
           key = hierarchy.map do |ruby_type|
             [type, ruby_type, variable]
           end.detect do |constructed_key|
             upper_level.type_variables_register[constructed_key]
           end
           if key.nil?
-            type_var = type_variables_register[[type, hierarchy.first, variable]]
+            type_var = upper_level.type_variables_register[[type, hierarchy.first, variable]]
             if type_var.nil?
               new_var_name = "#{hierarchy.first}:#{variable}"
-              type_var = TypeVariable.new(new_var_name)
-              type_variables_register[[type, hierarchy.first, variable]] = type_var
+              type_var = TypeVariable.new(new_var_name, :gen_name => false)
+              upper_level.type_variables_register[[type, hierarchy.first, variable]] = type_var
               type_var
             else
               type_var
@@ -88,15 +88,15 @@ module TypedRb
           type_var
         end
 
-        def type_variable_for_generic_type(type_var)
-          key = [:generic,  nil, type_var.variable]
+        def type_variable_for_generic_type(type_var, method = false)
+          key = [:generic,  method, type_var.variable]
           type_var_in_registry = type_variables_register[key]
           if type_var_in_registry
             type_var_in_registry
           else
-            type_var_in_registry = Polymorphism::TypeVariable.new(type_var.variable,
-                                                                  :upper_bound => type_var.upper_bound,
-                                                                  :gen_name    => false)
+            type_var_in_registry = TypeVariable.new(type_var.variable,
+                                                    :upper_bound => type_var.upper_bound,
+                                                    :gen_name    => false)
             type_variables_register[key] = type_var_in_registry
             type_var_in_registry
           end
@@ -105,7 +105,7 @@ module TypedRb
         def local_type_variable
           var_name = "local_var_#{TypeVariableRegister.local_var_counter}"
           key = [:local,  nil, var_name]
-          type_var_in_registry = Polymorphism::TypeVariable.new(var_name)
+          type_var_in_registry = TypeVariable.new(var_name)
           type_variables_register[key] = type_var_in_registry
           type_var_in_registry
         end
@@ -138,9 +138,17 @@ module TypedRb
         end
 
         def add_constraint(variable_name, relation_type, type)
-          var_constraints = @constraints[variable_name] || []
-          var_constraints << [relation_type, type]
-          @constraints[variable_name] = var_constraints
+          #puts "SEARCHING #{variable_name} in #{kind}"
+          #puts type_variables_register.values.map(&:name).inspect
+          if type_variables_register.values.detect { |variable| variable.variable == variable_name }
+            var_constraints = @constraints[variable_name] || []
+            var_constraints << [relation_type, type]
+            @constraints[variable_name] = var_constraints
+          elsif parent
+            parent.add_constraint(variable_name, relation_type, type)
+          else
+            fail StandardError, "Cannot find variable #{variable_name} to add a constraint"
+          end
         end
 
         def apply_type(parent, type_variable_mapping)
@@ -220,7 +228,7 @@ module TypedRb
         # The registry can be the current one.
         def upper_class_register
           current = self
-          while current.kind != :top_level && current.kind != :class
+          while current.kind != :top_level && current.kind != :class && current.kind != :module
             current = current.parent
           end
           current

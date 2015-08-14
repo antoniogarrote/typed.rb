@@ -20,6 +20,10 @@ module TypedRb
         self
       end
 
+      def generic?
+        false
+      end
+
       def dynamic?
         false
       end
@@ -84,6 +88,10 @@ module TypedRb
         @application_count = 0
       end
 
+      def generic?
+        true
+      end
+
       def materialize
         if @local_typing_context.nil?
           fail TypeCheckError.new("Type error checking function '#{name}': Cannot materialize function because of \
@@ -95,11 +103,13 @@ missing local typing context")
         @application_count += 1
         substitutions = @local_typing_context.local_var_types.each_with_object({}) do |var_type, acc|
           acc[var_type.variable] = Polymorphism::TypeVariable.new("#{var_type}_#{@application_count}", :node => node)
-          maybe_from_arg_index = from.index(var_type)
-          if maybe_from_arg_index
-            materialized_from_args[maybe_from_arg_index] = acc[var_type.variable]
+          maybe_from_arg = from.detect do |from_var|
+            from_var.is_a?(Polymorphism::TypeVariable) && from_var.variable == var_type.variable
           end
-          if to == var_type
+          if maybe_from_arg
+            materialized_from_args[from.index(maybe_from_arg)] = acc[var_type.variable]
+          end
+          if to.is_a?(Polymorphism::TypeVariable) && to.variable == var_type.variable
             materialized_to_arg = acc[var_type.variable]
           end
         end
@@ -118,6 +128,26 @@ application in the local typing context."
         applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
         materialized_function = TyFunction.new(materialized_from_args, materialized_to_arg, parameters_info, node)
         materialized_function.name = name
+        if block_type
+          block_materialized_from = block_type.from.map do |block_from_arg|
+            if block_from_arg.is_a?(Polymorphism::TypeVariable)
+              substitutions[block_from_arg.variable] || block_from_arg
+            else
+              block_from_arg
+            end
+          end
+          block_materialized_to = if block_type.to.is_a?(Polymorphism::TypeVariable)
+                                    substitutions[block_type.to.variable] || block_type.to
+                                  else
+                                    block_type.to
+                                  end
+
+          materialized_function.block_type = TyFunction.new(block_materialized_from,
+                                                            block_materialized_to,
+                                                            block_type.parameters_info,
+                                                            block_type.node)
+        end
+
         TypingContext.with_context(applied_typing_context) do
           yield materialized_function
         end
@@ -133,9 +163,28 @@ application in the local typing context."
         materialized_function
       end
 
+      def free_type_variables(klass)
+        class_type = Type.parse_singleton_object_type(klass.name)
+        if class_type.generic?
+          type_variables.reject do |type_var|
+            class_type.type_vars.detect{ |class_type_var| class_type_var.variable == type_var.variable }
+          end
+        else
+          type_variables
+        end
+      end
+
+      def type_variables
+        (from + [ to ]).select{ |arg| arg.is_a?(Polymorphism::TypeVariable) }
+      end
+
       def check_args_application(actual_arguments, context)
-        materialize do |materialized_function|
-          materialized_function.check_args_application(actual_arguments, context)
+        if @local_typing_context.kind != :lambda
+          super(actual_arguments, context)
+        else
+          materialize do |materialized_function|
+            materialized_function.check_args_application(actual_arguments, context)
+          end
         end
       end
 

@@ -299,7 +299,7 @@ module TypedRb
 
         def initialize(constraints, options = {})
           @allow_unbound_receivers = options[:allow_unbound_receivers] || false
-          @constraints = constraints
+          @constraints = canonical_form(constraints)
           @gt_constraints = @constraints.select { |(_, t, _r)| t == :gt }.sort do |(_, _, r1), (_, _, r2)|
             -(r1 <=> r2) || 0 rescue 0
           end
@@ -310,9 +310,21 @@ module TypedRb
           @graph = Topography.new(@constraints)
         end
 
+        def canonical_form(constraints)
+          constraints.map do |(l, t, r)|
+            if(l.is_a?(TypeVariable) && r.is_a?(TypeVariable) && t == :lt)
+              [r, :gt, l]
+            else
+              [l, t, r]
+            end
+          end
+        end
+
         def run(bind_variables = true)
           print_constraints
           unify(@gt_constraints) # we create links between vars in unify, we need to fold groups afterwards
+          # this just references to vars in the same group, by the group itself
+          # in the remaining @lt constraints
           @lt_constraints = graph.replace_groups(@lt_constraints)
           unify(@lt_constraints)
           unify(@send_constraints)
@@ -383,6 +395,7 @@ module TypedRb
         end
 
         def check_constraint(l, t, r, bind = true)
+          # ONE BOUND
           value_l = if t == :lt
                       graph[l][:lower_type]
                     elsif t == :gt
@@ -390,8 +403,19 @@ module TypedRb
                     else
                       graph[l]
                     end
-          #value_r = r.is_a?(Hash) ? graph[r][:type] : r
-          value_r = r
+          #value_r = r
+          value_r = if  r.is_a?(Hash) && t != :send
+                      if t == :lt
+                        graph[r][:lower_type]
+                      elsif t == :gt
+                        graph[r][:upper_type]
+                      else
+                        graph[r]
+                      end
+                    else
+                      r
+                    end
+
           # this will throw an exception if types no compatible
           compatible_type = compatible_type?(value_l, t, value_r)
           if t == :lt
@@ -399,7 +423,68 @@ module TypedRb
           elsif t == :gt
             graph[l][:upper_type] = compatible_type if bind
           end
+
+#          # OTHER BOUND
+#
+#          value_l = if t == :lt
+#                      graph[l][:upper_type]
+#                    elsif t == :gt
+#                      graph[l][:lower_type]
+#                    else
+#                      graph[l]
+#                    end
+#          #value_r = r
+#          value_r = if  r.is_a?(Hash)
+#                      if t == :lt
+#                        graph[r][:upper_type]
+#                      elsif t == :gt
+#                        graph[r][:lower_type]
+#                      else
+#                        graph[r]
+#                      end
+#                    else
+#                      r
+#                    end
+#
+#          # this will throw an exception if types no compatible
+#          compatible_type = compatible_type?(value_l, (t == :gt ? :lt : :gt), value_r)
+#          if t == :lt
+#            graph[l][:upper_type] = compatible_type if bind
+#          elsif t == :gt
+#            graph[l][:lower_type] = compatible_type if bind
+#          end
         end
+
+        # def check_constraint(l, t, r, bind = true)
+        #   value_l = if t == :lt
+        #               graph[l][:lower_type]
+        #             elsif t == :gt
+        #               graph[l][:upper_type]
+        #             else
+        #               graph[l]
+        #             end
+        #   #value_r = r
+        #   value_r = if  r.is_a?(Hash)
+        #               if t == :lt
+        #                 graph[r][:lower_type]
+        #               elsif t == :gt
+        #                 graph[r][:upper_type]
+        #               else
+        #                 graph[r]
+        #               end
+        #             else
+        #               r
+        #             end
+        #
+        #   # this will throw an exception if types no compatible
+        #   compatible_type = compatible_type?(value_l, t, value_r)
+        #   if t == :lt
+        #     graph[l][:lower_type] = compatible_type if bind
+        #   elsif t == :gt
+        #     graph[l][:upper_type] = compatible_type if bind
+        #   end
+        # end
+
       end
     end
   end

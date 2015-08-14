@@ -14,7 +14,6 @@ module TypedRb
         Types::TypingContext.with_context(local_typing_context.dup) do
           context_self_type = Types::TypingContext.type_variable_for(ruby_type, :module_self, [ruby_type])
           context_self_type.compatible?(self_type, :lt)
-
           Types::Polymorphism::Unification.new(Types::TypingContext.all_constraints).run
         end
       end
