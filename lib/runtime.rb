@@ -4,7 +4,7 @@ require_relative './types'
 class BasicObject
 
   def ts signature
-    ::TypedRb.log(binding, :debug,  "Parsing signature: #{signature} and #{signature} and #{2}")
+    ::TypedRb.log(binding, :debug,  "Parsing signature: #{signature}")
     if $TYPECHECK
       parametric_type_prefix = /\s*(module|class|type)\s*/
       if signature.index(parametric_type_prefix) == 0
@@ -12,8 +12,7 @@ class BasicObject
         generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature)
         TypeRegistry.register_generic_type_information(generic_type)
       else
-        method, signature = signature.split(/\s+\/\s+/)
-
+        method, signature = signature.split(/\s*\/\s*/)
         if method.index('#')
           kind = :instance
           receiver, message =  method.split('#')
@@ -41,14 +40,22 @@ class BasicObject
         end
 
         kind = :"#{kind}_variable" if message.index('@')
+        method_variables = message.scan(/(\[\w+\])/).flatten.map do |var|
+          ::TypedRb::TypeSignature::Parser.parse(var)
+        end
 
-        type_ast = ::TypedRb::TypeSignature::Parser.parse(signature)
+        message = message.split(/\[[\w]+/).first
+        method_var_info = method_variables.each_with_object(::Hash.(::String,'Hash[Symbol][String]').new) do |variable, acc|
+          var_name = variable[:type]
+          variable[:type] = "#{message}:#{var_name}"
+          acc[var_name] = variable
+        end
+        type_ast = ::TypedRb::TypeSignature::Parser.parse(signature, method_var_info)
 
         TypeRegistry.register_type_information(kind, receiver, message, type_ast)
       end
     end
   rescue ::StandardError => ex
-    puts ex.backtrace.join("\n")
     raise ::StandardError, "Error parsing type signature '#{type_signature}': #{ex.message}"
   end
 

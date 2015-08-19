@@ -7,19 +7,46 @@ module TypedRb
             true
           elsif (other_type.is_a?(TyGenericObject) || other_type.is_a?(TyGenericSingletonObject))
             if check_generic_type_relation(other_type.ruby_type, relation)
-              acc = true
               type_vars.each_with_index do |type_var, i|
                 other_type_var = other_type.type_vars[i]
-                acc = acc && check_type_var_inclusion(type_var, other_type_var, relation)
-                return acc if acc == false
+                compatible = if incompatible_free_type_vars?(type_var, other_type_var)
+                               false
+                             elsif compatible_free_type_vars?(type_var, other_type_var)
+                               true
+                             else
+                               check_type_var_inclusion(type_var, other_type_var, relation)
+                             end
+                return false unless compatible
               end
-              acc
+              true
             else
               false
             end
           else
             false
           end
+        end
+
+        def incompatible_free_type_vars?(type_var, other_type_var)
+          left_var = type_var.bound || type_var.lower_bound || type_var.upper_bound || type_var
+          right_var = other_type_var.bound || other_type_var.lower_bound || other_type_var.upper_bound || other_type_var
+
+          left_var.is_a?(Polymorphism::TypeVariable) &&
+          right_var.is_a?(Polymorphism::TypeVariable) &&
+          left_var.variable != right_var.variable &&
+          (TypingContext.bound_generic_type_var?(left_var) &&
+           TypingContext.bound_generic_type_var?(right_var))
+        end
+
+        def compatible_free_type_vars?(type_var, other_type_var)
+          left_var = type_var.bound || type_var.lower_bound || type_var.upper_bound || type_var
+          right_var = other_type_var.bound || other_type_var.lower_bound || other_type_var.upper_bound || other_type_var
+
+          left_var.is_a?(Polymorphism::TypeVariable) &&
+          right_var.is_a?(Polymorphism::TypeVariable) &&
+          left_var.variable == right_var.variable &&
+          (TypingContext.bound_generic_type_var?(left_var) &&
+           TypingContext.bound_generic_type_var?(right_var))
         end
 
         def check_generic_type_relation(other_ruby_type, relation)

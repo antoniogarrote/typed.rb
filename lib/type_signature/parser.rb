@@ -8,11 +8,14 @@ module TypedRb
 
     class Parser
 
-      def self.parse(expr)
-        (@parser || Parser.new).parse(expr)
+      def self.parse(expr, method_info = {})
+        (@parser || Parser.new(method_info)).parse(expr)
       end
 
-      def initialize
+      attr_reader :method_info
+
+      def initialize(method_info = {})
+        @method_info = method_info
         @current_type = []
         @current_function = []
         @stack = []
@@ -143,6 +146,11 @@ module TypedRb
                     { :type => @current_function.first, :bound => @current_function.last, :binding => @binding, :kind => :type_var }
                   end
                 end
+        # method variables
+        if bound[:kind] == :type_var && method_info[bound[:type]]
+          bound = method_info[bound[:type]].dup
+          bound[:sub_kind] = :method_type_var
+        end
         @binding = nil
         parent_function = @stack.pop
         parent_function << bound

@@ -58,6 +58,7 @@ class Array
   ts '#== / Array[T] -> Array[T]'
   ts '#at / Integer -> [T]'
   ts '#[] / Integer... -> Object'
+  ts '#push / [T]... -> Array[T]'
 end
 
 class Module

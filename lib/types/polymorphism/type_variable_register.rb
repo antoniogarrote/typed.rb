@@ -110,6 +110,19 @@ module TypedRb
           type_var_in_registry
         end
 
+        def bound_generic_type_var?(type_variable)
+          found = type_variables_register[[:generic, false, type_variable.name]] ||
+                  type_variables_register[[:generic, true, type_variable.name]]
+
+          if found
+            kind == :method || kind == :class
+          elsif !parent.nil?
+            parent.bound_generic_type_var?(type_variable)
+          else
+            false
+          end
+        end
+
         def constraints_for(variable)
           found = constraints[variable]
           children_found = children.map{ |child_context|  child_context.constraints_for(variable) }.reduce(&:+)
@@ -152,7 +165,11 @@ module TypedRb
         end
 
         def apply_type(parent, type_variable_mapping)
-          register = TypeVariableRegister.new(parent)
+          register = TypeVariableRegister.new(parent, :local)
+          apply_type_to_register(register, type_variable_mapping)
+        end
+
+        def apply_type_to_register(register, type_variable_mapping)
           register.type_variables_register = type_variables_register.each_with_object({}) do |((k, i, v), var), acc|
             acc[[k, i, v]] = type_variable_mapping[var.variable] || var
           end

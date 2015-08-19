@@ -31,10 +31,12 @@ module TypedRb
         def compatible?(type, relation = :lt)
           if @bound
             @bound.compatible?(type,relation)
+          elsif incompatible_vars?(type)
+            false
           else
             add_constraint(relation, type)
+            true
           end
-          true
         end
 
         def constraints(register = TypingContext)
@@ -49,12 +51,35 @@ module TypedRb
           @bound = type
         end
 
+        def apply_bindings(bindings_map)
+          bound_var = bindings_map[variable]
+          if bound_var
+            self.bound = bound_var.bound
+            self.upper_bound = bound_var.upper_bound
+            self.lower_bound = bound_var.lower_bound
+          end
+          self
+        end
+
         def unbind
           @bound = nil
         end
 
         def to_s
           "#{@variable}::#{@bound || '?'}"
+        end
+
+        private
+
+        def incompatible_vars?(type)
+          if type.is_a?(TypeVariable)
+            left_var = bound || self
+            right_var = type.bound || type
+
+            left_var.variable != right_var.variable &&
+            (TypingContext.bound_generic_type_var?(left_var) &&
+             TypingContext.bound_generic_type_var?(right_var))
+          end
         end
       end
     end

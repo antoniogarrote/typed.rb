@@ -29,7 +29,9 @@ module TypedRb
       end
 
       def to_s
-        "(#{@from.map(&:to_s).join(',')} -> #{@to})"
+        args = @from.map(&:to_s).join(', ')
+        args = "#{args}, &#{block_type.to_s}" if block_type
+        "(#{args} -> #{@to})"
       end
 
       def name
@@ -77,6 +79,27 @@ module TypedRb
 
         return true
       end
+
+      def apply_bindings(bindings_map)
+        from.each_with_index do |from_type, i|
+          if from_type.is_a?(Polymorphism::TypeVariable)
+            from_type.apply_bindings(bindings_map)
+            from[i] = from_type.bound if from_type.bound
+          elsif from_type.is_a?(TyGenericSingletonObject) || from_type.is_a?(TyGenericObject)
+            from_type.apply_bindings(bindings_map)
+          end
+        end
+
+        if to.is_a?(Polymorphism::TypeVariable)
+          @to = to.apply_bindings(bindings_map)
+          @to = to.bound if to.bound
+        elsif to.is_a?(TyGenericSingletonObject) || to.is_a?(TyGenericObject)
+          @to = to.apply_bindings(bindings_map)
+        end
+
+        block_type.apply_bindings(bindings_map) if block_type && block_type.generic?
+        self
+      end
     end
 
     class TyGenericFunction < TyFunction
@@ -84,7 +107,6 @@ module TypedRb
 
       def initialize(from, to, parameters_info = nil, node = nil)
         super(from, to, parameters_info, node)
-        @local_typing_context = local_typing_context
         @application_count = 0
       end
 
@@ -92,17 +114,29 @@ module TypedRb
         true
       end
 
+      # Creates a new instance of a generic function with fresh type variables.
+      # Yields the function so new contraints can be added.
+      # Finally, it runs unification on the function typing context and returns
+      # the materialized function with the bound variables.
       def materialize
+        TypedRb.log binding, :debug, "Materialising function '#{self}'"
+
+        # TODO: replace all this logic by a single invocation to .dup
         if @local_typing_context.nil?
-          fail TypeCheckError.new("Type error checking function '#{name}': Cannot materialize function because of \
-missing local typing context")
+          fail TypeCheckError.new("Type error checking function '#{name}': Cannot materialize function because of  missing local typing context")
         end
+        local_parent_typing_context = @local_typing_context.parent
+        @local_typing_context.parent = nil
+        @local_typing_context = Marshal::load(Marshal.dump(@local_typing_context))
+        @local_typing_context.parent = local_parent_typing_context
         materialized_from_args = []
         materialized_to_arg = nil
 
         @application_count += 1
         substitutions = @local_typing_context.local_var_types.each_with_object({}) do |var_type, acc|
-          acc[var_type.variable] = Polymorphism::TypeVariable.new("#{var_type}_#{@application_count}", :node => node)
+          #acc[var_type.variable] = Polymorphism::TypeVariable.new("#{var_type}_#{@application_count}", :node => node)
+          acc[var_type.variable] = Polymorphism::TypeVariable.new(var_type.variable, :node => node, :gen_name => false)
+          # new fro/to args for the materialized function
           maybe_from_arg = from.detect do |from_var|
             from_var.is_a?(Polymorphism::TypeVariable) && from_var.variable == var_type.variable
           end
@@ -114,17 +148,35 @@ missing local typing context")
           end
         end
 
-        if materialized_from_args.size != from.size
-          error_msg = "Type error checking function '#{name}': Cannot find all the type variables for function \
-application in the local typing context, expected #{from.size} got #{materialized_from_args.size}."
-          fail TypeCheckError.new(error_msg, node)
+        # var types coming from a generic method, not a generic type
+        from.each_with_index do |from_var, i|
+          materialized_from_arg = materialized_from_args[i]
+          if materialized_from_arg.nil?
+            materialized_from_args[i] = if from_var.is_a?(Polymorphism::TypeVariable)
+                                          Polymorphism::TypeVariable.new(from_var.name,
+                                                                         :upper_bound => from_var.upper_bound,
+                                                                         :lower_bound => from_var.lower_bound,
+                                                                         :bound => from_var.bound,
+                                                                         :gen_name => false)
+                                        else
+                                          from_var
+                                        end
+          end
         end
 
         if materialized_to_arg.nil?
-          error_msg = "Type error checking function '#{name}': Cannot find the return type variable for function \
-application in the local typing context."
-          fail TypeCheckError.new(error_msg)
+          materialized_to_arg = if to.is_a?(Polymorphism::TypeVariable)
+                                  Polymorphism::TypeVariable.new(to.name,
+                                                                 :upper_bound => to.upper_bound,
+                                                                 :lower_bound => to.lower_bound,
+                                                                 :bound => to.bound,
+                                                                 :gen_name => false)
+                                else
+                                  to
+                                end
         end
+
+
         applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
         materialized_function = TyFunction.new(materialized_from_args, materialized_to_arg, parameters_info, node)
         materialized_function.name = name
@@ -151,16 +203,11 @@ application in the local typing context."
         TypingContext.with_context(applied_typing_context) do
           yield materialized_function
         end
-
         # got all the constraints here
         # do something with the context -> unification? merge context?
-        Polymorphism::Unification.new(applied_typing_context.all_constraints).run
-        bound_from_args = materialized_function.from.map  { |arg| arg.bound || arg }
-        bound_to_arg = materialized_function.to.bound || materialized_function.to
-        #
-        materialized_function = TyFunction.new(bound_from_args, bound_to_arg, parameters_info, node)
-        materialized_function.name = name
-        materialized_function
+        unification = Polymorphism::Unification.new(applied_typing_context.all_constraints).run
+
+        materialized_function.apply_bindings(unification.bindings_map)
       end
 
       def free_type_variables(klass)
@@ -175,7 +222,22 @@ application in the local typing context."
       end
 
       def type_variables
-        (from + [ to ]).select{ |arg| arg.is_a?(Polymorphism::TypeVariable) }
+        vars = (from + [ to ]).map do |arg|
+          if arg.is_a?(Polymorphism::TypeVariable)
+            arg
+          elsif arg.generic?
+            arg.type_vars
+          else
+            nil
+          end
+        end
+        vars = vars.flatten.compact
+
+        if block_type && block_type.generic?
+          vars += block_type.type_variables
+        end
+
+        vars.uniq
       end
 
       def check_args_application(actual_arguments, context)

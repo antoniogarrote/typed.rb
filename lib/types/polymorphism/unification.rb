@@ -131,6 +131,7 @@ module TypedRb
             end
             acc + vals.select{ |v| v.is_a?(TypeVariable) }
           end.uniq
+
           @groups = vars.each_with_object({}) do |var, groups|
             groups[var] = make_group(var => true)
           end
@@ -311,7 +312,17 @@ module TypedRb
         end
 
         def canonical_form(constraints)
+          disambiguation = {}
+
           constraints.map do |(l, t, r)|
+            if l.is_a?(TypeVariable)
+              l = disambiguation[l.variable] || l
+              disambiguation[l.variable] = l
+            end
+            if r.is_a?(TypeVariable)
+              r = disambiguation[r.variable] || r
+              disambiguation[r.variable] = r
+            end
             if(l.is_a?(TypeVariable) && r.is_a?(TypeVariable) && t == :lt)
               [r, :gt, l]
             else
@@ -338,9 +349,20 @@ module TypedRb
           graph.vars
         end
 
+        def bindings_map
+          graph.vars.each_with_object({}) do |var, acc|
+            acc[var.variable] = var
+          end
+        end
+
         def print_constraints
           text = StringIO.new
           text << "Running unification on #{constraints.size} constraints:\n"
+          # begin
+          #   fail StandardError
+          # rescue StandardError => e
+          #   puts e.backtrace.join("\n")
+          # end
           @gt_constraints.each do |(l, _t, r)|
             l = if l.is_a?(Hash)
                   l.keys.map(&:to_s).join(',')

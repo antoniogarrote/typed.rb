@@ -2,7 +2,7 @@ require_relative '../../spec_helper'
 
 describe TypedRb::Types::Polymorphism::Unification do
   it 'should be able to unify a simple constraint' do
-    type_var = tyvariable('@a')
+    type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@varx', [Object])
     integer = tyobject(Integer)
     type_var.compatible?(integer, :lt)
 
@@ -15,7 +15,7 @@ describe TypedRb::Types::Polymorphism::Unification do
 
   context 'with variable instance assignations' do
     it 'should be able to unify compatible types' do
-      type_var = tyvariable('@a')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@b', [Object])
       integer = tyobject(Integer)
       numeric = tyobject(Numeric)
       # @a = Integer
@@ -33,7 +33,7 @@ describe TypedRb::Types::Polymorphism::Unification do
     end
 
     it 'should find the join of the types' do
-      type_var = tyvariable('@a')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@c', [Object])
       integer = tyobject(Integer)
       string = tyobject(String)
       # @a = Integer
@@ -57,11 +57,11 @@ describe TypedRb::Types::Polymorphism::Unification do
     end
 
     it 'should be possible to unify multiple assignations' do
-      type_var = tyvariable('@a')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@d', [Object])
       integer = tyobject(Integer)
       string = tyobject(String)
-      type_var2 = tyvariable('@b')
-      type_var3 = tyvariable('@c')
+      type_var2 = TypedRb::Types::TypingContext.type_variable_for(:test, '@e', [Object])
+      type_var3 = TypedRb::Types::TypingContext.type_variable_for(:test, '@f', [Object])
 
       # @a = Integer
       type_var.compatible?(integer, :gt)
@@ -87,8 +87,8 @@ describe TypedRb::Types::Polymorphism::Unification do
     end
 
     it 'should be possible to unify multiple assignations' do
-      type_var = tyvariable('@a')
-      type_var2 = tyvariable('@b')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@g', [Object])
+      type_var2 = TypedRb::Types::TypingContext.type_variable_for(:test, '@h', [Object])
       integer = tyobject(Integer)
       numeric = tyobject(Numeric)
 
@@ -113,8 +113,8 @@ describe TypedRb::Types::Polymorphism::Unification do
     end
 
     it 'should be possible to unify multiple assignations' do
-      type_var = tyvariable('@a')
-      type_var2 = tyvariable('@b')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@i', [Object])
+      type_var2 = TypedRb::Types::TypingContext.type_variable_for(:test, '@j', [Object])
       integer = tyobject(Integer)
       numeric = tyobject(Numeric)
 
@@ -141,7 +141,7 @@ describe TypedRb::Types::Polymorphism::Unification do
 
   context 'with variable instance application' do
     it 'should be able to unify same type' do
-      type_var = tyvariable('@a')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@k', [Object])
       integer = tyobject(Integer)
       # @a = Integer
       type_var.compatible?(integer, :gt)
@@ -158,7 +158,7 @@ describe TypedRb::Types::Polymorphism::Unification do
     end
 
     it 'should be able to unify matching types' do
-      type_var = tyvariable('@a')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@l', [Object])
       integer = tyobject(Integer)
       numeric = tyobject(Numeric)
       # @a = Integer
@@ -176,7 +176,7 @@ describe TypedRb::Types::Polymorphism::Unification do
     end
 
     it 'should raise a unification exception for incompatible types' do
-      type_var = tyvariable('@a')
+      type_var = TypedRb::Types::TypingContext.type_variable_for(:test, '@m', [Object])
       string = tyobject(String)
       numeric = tyobject(Numeric)
       # @a = String
@@ -226,19 +226,19 @@ __CODE
       classv = tyobject(ClassV1)
 
       # @iv1 = String
-      iv1 = tyvariable('@iv1')
+      iv1 = TypedRb::Types::TypingContext.type_variable_for(:test, '@iv1', [Object])
       iv1.compatible?(string, :gt)
       # @iv2 = ClassV
-      iv2 = tyvariable('@iv2')
+      iv2 = TypedRb::Types::TypingContext.type_variable_for(:test, '@iv2', [Object])
       iv2.compatible?(classv, :gt)
       # @iv2 :: go![Integer -> rt1]
-      rt1 = tyvariable('rt1')
+      rt1 = TypedRb::Types::TypingContext.type_variable_for(:test, 'rt1', [Object])
       iv2.add_constraint(:send,
                          args: [integer],
                          return: rt1,
                          message: :go!)
       # rt1 :: reached?[unit -> rt2]
-      rt2 = tyvariable('rt2')
+      rt2 = TypedRb::Types::TypingContext.type_variable_for(:test, 'rt2', [Object])
       rt1.add_constraint(:send,
                          args: [],
                          return: rt2,
@@ -293,19 +293,19 @@ __CODE
       classp = tyobject(ClassP)
 
       # @iv1 = String
-      iv1 = tyvariable('@iv1')
+      iv1 = TypedRb::Types::TypingContext.type_variable_for(:test, '@iv1b', [Object])
       iv1.compatible?(string, :gt)
       # @iv2 = ClassV
-      iv2 = tyvariable('@iv2')
+      iv2 = TypedRb::Types::TypingContext.type_variable_for(:test, '@iv2b', [Object])
       iv2.compatible?(classv, :gt)
       # @iv2 :: go![Integer -> rt1]
-      rt1 = tyvariable('rt1_go!')
+      rt1 = TypedRb::Types::TypingContext.type_variable_for(:test, 'rt1_go!', [Object])
       iv2.add_constraint(:send,
                          args: [integer],
                          return: rt1,
                          message: :go!)
       # rt1 :: reached?[unit -> rt2]
-      rt2 = tyvariable('rt2_reached?')
+      rt2 = TypedRb::Types::TypingContext.type_variable_for(:test, 'rt2_reached?', [Object])
       rt1.add_constraint(:send,
                          args: [],
                          return: rt2,

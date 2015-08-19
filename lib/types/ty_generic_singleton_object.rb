@@ -16,33 +16,57 @@ module TypedRb
         @application_count = 0
       end
 
+      def materialize_with_type_vars(type_vars, bound_type)
+        TypedRb.log binding, :debug, "Materialising generic singleton object with type vars '#{self}' <= #{type_vars.map(&:to_s).join(',')} :: #{bound_type}"
+        bound_type_vars = @type_vars.map do |type_var|
+          maybe_class_bound = type_vars.detect do |bound_type_var|
+            type_var.variable == bound_type_var.variable
+          end
+          if maybe_class_bound.nil?
+            # it has to be method generic variable
+            type_var
+          else
+            maybe_class_bound
+          end
+        end
+        materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) })
+      end
+
+      def self_materialize
+        TypedRb.log binding, :debug, "Materialising self for generic singleton object '#{self}'"
+        BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
+      end
+
       # ts 'MyClass[X][Y]'
       # class MyClass
       #  ...
       # end
       # MyClass.(TypeArg1, TypeArg2)  -> make X<TypeArg1, Y<TypeArg2, X>TypeArg1, X>TypeArg2
       # @see comment below
-      # TODO: what if we want to materialize with a type variable? => def x:T; Array.(T).new; end
       def materialize(actual_arguments)
+        TypedRb.log binding, :debug, "Materialising generic singleton object '#{self}'"
+
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
             if argument.is_a?(Polymorphism::TypeVariable)
-              # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
-              if argument.upper_bound
-                upper_bound = if argument.upper_bound.is_a?(TyGenericSingletonObject)
-                                argument.upper_bound.self_materialize
-                              else
-                                argument.upper_bound
-                              end
-                fresh_vars_generic_type.type_vars[i].compatible?(upper_bound, :lt)
-              end
-              if argument.lower_bound
-                lower_bound = if argument.lower_bound.is_a?(TyGenericSingletonObject)
-                                argument.lower_bound.self_materialize
-                              else
-                                argument.lower_bound
-                              end
-                fresh_vars_generic_type.type_vars[i].compatible?(lower_bound, :gt)
+              if argument.name == ':?'
+                # Wild card type
+                # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
+                { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
+                  if argument.send(bound)
+                    value = if argument.send(bound).is_a?(TyGenericSingletonObject)
+                              argument.send(bound).self_materialize
+                            else
+                              argument.send(bound)
+                            end
+                    fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
+                  end
+                end
+              else
+                # Type variable
+                fresh_vars_generic_type.type_vars[i].bound = argument
+                fresh_vars_generic_type.type_vars[i].lower_bound = argument
+                fresh_vars_generic_type.type_vars[i].upper_bound = argument
               end
             else
               if argument.is_a?(TyGenericSingletonObject)
@@ -54,19 +78,6 @@ module TypedRb
             end
           end
         end
-      end
-
-      def materialize_with_type_vars(type_vars, bound_type)
-        bound_type_vars = @type_vars.map do |type_var|
-          type_vars.detect do |bound_type_var|
-            type_var.variable == bound_type_var.variable
-          end
-        end
-        materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) })
-      end
-
-      def self_materialize
-        BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
       end
 
       # materialize will be invoked by the logic handling invocations like:
@@ -82,48 +93,20 @@ module TypedRb
         # We need to provide a default local_type_context based on the upper bounds provided in the
         # type annotation.
         if @local_typing_context.nil?
-          @local_typing_context = minimal_typing_context
-          #fail StandardError, 'Cannot generate fresh var types for generic class because of missing local typing context'
+          compute_minimal_typing_context
         end
+        fresh_vars_generic_type = TypingContext.duplicate(self)
+        applied_typing_context = fresh_vars_generic_type.local_typing_context
 
-        @application_count += 1
-        substitutions = @local_typing_context.generic_type_local_var_types.each_with_object({}) do |type_var, acc|
-          cloned_type_var = Polymorphism::TypeVariable.new("#{type_var.variable}_#{@application_count}", :node => node)
-          cloned_type_var.upper_bound = type_var.upper_bound
-          cloned_type_var.lower_bound = type_var.lower_bound
-          acc[type_var.variable] = cloned_type_var
-        end
-        applied_typing_context = @local_typing_context.apply_type(@local_typing_context.parent, substitutions)
-        fresh_type_vars = type_vars.map do |type_var|
-          applied_typing_context.type_variables_register[[:generic, false, type_var.variable]]
-        end
-
-        fresh_vars_generic_type = TyGenericSingletonObject.new(ruby_type, fresh_type_vars)
-        fresh_vars_generic_type.local_typing_context = applied_typing_context
         TypingContext.with_context(applied_typing_context) do
           # Appy constraints for application of Type args
           yield fresh_vars_generic_type
         end
-
         # got all the constraints here
         # do something with the context -> unification? merge context?
         # applied_typing_context.all_constraints.each{|(l,t,r)| puts "#{l} #{t} #{r}" }
-        Polymorphism::Unification.new(applied_typing_context.all_constraints).run
+        unification = Polymorphism::Unification.new(applied_typing_context.all_constraints).run
         # - Create a new ty_generic_object for the  unified types
-
-        # Better not the type of the bound var type var but the var type itself,
-        # it can be used to look for the var in applications
-        fresh_type_vars = fresh_type_vars.map do |type_var|
-          # TODO: nested type vars?
-          # class X[T]; def test; Array.(T).new; end; end
-          orig_name = applied_typing_context.type_variables_register.invert[type_var].last
-          type_var.variable= orig_name
-          if type_var.bound.nil?
-            fail TypedRb::TypeCheckError, "Found unbound var #{orig_name} for generic type #{self} after unification in materialization."
-          end
-          type_var
-        end
-
         # - Apply the unified types to all the methods in the class/instance
         #   - this can be dynamically done with the right implementation of find_function_type
         # - Make the class available for the type checking system, so it can be found when
@@ -134,8 +117,7 @@ module TypedRb
         #   - this can be accomplished with the overloading version of as_object_type, that will return
         #     an instance of a new class ty_generic_object with overloaded versions of find_function_type /find_var_type
         ########################
-
-        TyGenericSingletonObject.new(ruby_type, fresh_type_vars)
+        fresh_vars_generic_type.apply_bindings(unification.bindings_map)
       end
 
       # TODO: We do need this for cases like Array.(Int).class_method
@@ -165,19 +147,34 @@ module TypedRb
         TyGenericObject.new(ruby_type, type_vars)
       end
 
-      def minimal_typing_context
+      def compute_minimal_typing_context
         Model::TmClass.with_fresh_bindings(self, nil, node)
-        self.local_typing_context
       end
 
       def generic?
         true
       end
 
+      def apply_bindings(bindings_map)
+        type_vars.each_with_index do |var, i|
+          if var.is_a?(Polymorphism::TypeVariable)
+            var.apply_bindings(bindings_map)
+            #type_vars[i] = var.bound if var.bound
+          elsif var.is_a?(TyGenericSingletonObject) || var.is_a?(TyGenericObject)
+            var.apply_bindings(bindings_map)
+          end
+        end
+        self
+      end
+
       def to_s
         base_string = super
         var_types_strings = @type_vars.map do |var_type|
-          "[#{var_type.bound || var_type.variable}]"
+          if var_type.bound && var_type.bound.is_a?(Polymorphism::TypeVariable)
+            "[#{var_type.variable} <= #{var_type.bound.bound || var_type.bound.variable}]"
+          else
+            "[#{var_type.bound || var_type.variable}]"
+          end
         end
         "#{base_string}#{var_types_strings.join}"
       end

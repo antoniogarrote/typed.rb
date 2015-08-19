@@ -162,9 +162,7 @@ module TypedRb
       def with_fresh_bindings(klass, function_type, context, node)
         if function_type.generic?
           Types::TypingContext.push_context(:method)
-          # TODO implement this function
           function_type.free_type_variables(klass).each do |type_var|
-            # TODO implement this function
             # This will add the variable to the context
             Types::TypingContext.type_variable_for_function_type(type_var)
           end

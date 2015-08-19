@@ -69,6 +69,19 @@ __END
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].to_s).to eq("(NilClass -> Boolean)")
   end
 
+  it 'normalizes types with generic methods' do
+    code = <<__END
+     class A
+       ts '#m[E][Y]/ [E] -> Integer -> [Y]'
+       def m(x,i); end
+     end
+__END
+
+    eval(code)
+
+    ::BasicObject::TypeRegistry.normalize_types!
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].to_s).to eq("(A:m:E::?, Integer -> A:m:Y::?)")
+  end
   it 'parses field type signatures and store the result in the registry' do
     $TYPECHECK = true
     code = <<__END
@@ -127,7 +140,7 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer,Integer,Integer -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer, Integer, Integer -> Integer)')
   end
 
 
@@ -146,7 +159,7 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer,(Integer,Integer -> Integer) -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer, (Integer, Integer -> Integer) -> Integer)')
   end
 
   it 'parses type functions with no arguments' do
@@ -182,7 +195,7 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer,( -> Integer) -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer, ( -> Integer) -> Integer)')
   end
 
   it 'parses generic types' do

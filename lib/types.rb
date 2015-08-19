@@ -83,6 +83,18 @@ module TypedRb
           type_variables_register.constraints[variable] || []
         end
 
+        def duplicate(within_context)
+          current_parent = type_variables_register.parent
+          type_variables_register.parent = nil
+          duplicated = Marshal::load(Marshal.dump(within_context))
+          type_variables_register.parent = current_parent
+          duplicated
+        end
+
+        def bound_generic_type_var?(type_variable)
+          type_variables_register.bound_generic_type_var?(type_variable)
+        end
+
         def push_context(type)
           new_register = Polymorphism::TypeVariableRegister.new(self.type_variables_register, type)
           @type_variables_register.children << new_register
@@ -108,6 +120,26 @@ module TypedRb
 
         def clear(type)
           @type_variables_register = Polymorphism::TypeVariableRegister.new(type)
+        end
+
+        def vars_info(level)
+          method_registry = type_variables_register
+          while !method_registry.nil? && method_registry.kind != level
+            method_registry = method_registry.parent
+          end
+
+          if method_registry
+            method_registry.type_variables_register.map do |(key, type_var)|
+              if key.first == :generic
+                type_var
+              end
+            end.compact.each_with_object({}) do |type_var, acc|
+              var_name = type_var.variable.split(':').last
+              acc["[#{var_name}]"] = type_var
+            end
+          else
+            {}
+          end
         end
       end
 
@@ -171,7 +203,7 @@ module TypedRb
           TyBoolean.new
         elsif type.is_a?(Array)
           parse_function_type(type, klass)
-        elsif type.is_a?(Hash) && type[:kind]  == :type_var
+        elsif type.is_a?(Hash) && (type[:kind]  == :type_var || type[:kind] == :method_type_var)
           type[:type] = "#{klass}:#{type[:type]}"
           parse_type_var(type)
         elsif type.is_a?(Hash) && type[:kind]  == :generic_type
@@ -262,7 +294,13 @@ module TypedRb
                                 # TODO: add some reference to the method if the variable is method specific?
                                 param[:type] = "#{type_var.name}:#{param[:type] == '?' ? type_application_counter : param[:type]}"
                                 parse(param, klass)
+                              elsif param[:sub_kind] == :method_type_var
+                                # A type parameter that is not bound in the generic type declaration.
+                                # It has to be local to the method
+                                is_generic = true
+                                Types::Polymorphism::TypeVariable.new("#{klass}:#{param[:type]}", :gen_name => false)
                               else
+                                begin
                                 # The Generic type is bound to a concrete type: bound == upper_bound == lower_bound
                                 bound = TySingletonObject.new(Object.const_get(param[:type]))
                                 concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
@@ -271,6 +309,11 @@ module TypedRb
                                                                                        :gen_name => false)
                                 concrete_param.bind(bound)
                                 concrete_param
+                                rescue NameError => e
+                                  # TODO: transform this into the method_type_var shown before
+                                  is_generic = true
+                                  Types::Polymorphism::TypeVariable.new(param[:type], :gen_name => false)
+                                end
                               end
                             end
           concrete_type_vars << parsed_type_var
@@ -334,6 +377,8 @@ module TypedRb
         arg_types = arg_types.map{ |arg| parse(arg, klass) }
         is_generic = (arg_types + [return_type]).any? { |var| var.is_a?(Types::TyGenericSingletonObject) ||
                                                               var.is_a?(Types::Polymorphism::TypeVariable) }
+
+        is_generic = is_generic || block_type.generic? if block_type
 
         function_class = is_generic ? TyGenericFunction : TyFunction
         function_type = function_class.new(arg_types, return_type)

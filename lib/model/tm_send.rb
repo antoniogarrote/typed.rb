@@ -162,19 +162,22 @@ module TypedRb
       def parse_type_application_arguments(arguments, context)
         arguments.map do |argument|
           if argument.is_a?(Model::TmString)
-            type = TypeSignature::Parser.parse(argument.node.children.first)
-            # TODO: do this recursively in the case of nested generic type
-            # TODO: do we need it at all?
-            if type.is_a?(Hash) && type[:kind] == :type_var
-              type[:type] = "type_app_#{type_application_counter}"
+            type_var_signature = argument.node.children.first
+            maybe_generic_method_var = Types::TypingContext.vars_info(:method)[type_var_signature]
+            maybe_generic_class_var = Types::TypingContext.vars_info(:class)[type_var_signature]
+            if maybe_generic_method_var || maybe_generic_class_var
+              maybe_generic_method_var || maybe_generic_class_var
+            else
+              type = TypeSignature::Parser.parse(type_var_signature)
+              # TODO: do this recursively in the case of nested generic type
+              # TODO: do we need it at all?
+              klass = if type.is_a?(Hash) && type[:kind] == :generic_type
+                        Object.const_get(type[:type])
+                      else
+                        nil
+                      end
+              Types::Type.parse(type, klass)
             end
-
-            klass = if type.is_a?(Hash) && type[:kind] == :generic_type
-                      Object.const_get(type[:type])
-                    else
-                      nil
-                    end
-            Types::Type.parse(type, klass)
           else
             argument.check_type(context)
           end
@@ -195,6 +198,7 @@ module TypedRb
           function_type.to
         else
           if function_type.generic?
+            function_type.local_typing_context.parent = Marshal::load(Marshal.dump(Types::TypingContext.type_variables_register))
             function_type.materialize do |materialized_function|
               check_application(receiver_type, materialized_function, context)
             end.to
@@ -258,8 +262,8 @@ module TypedRb
                 actual_argument_type = actual_argument.check_type(context)
                 fail TypeCheckError.new("Error type checking message sent '#{message}': Missing type information for argument '#{arg_name}'", node) if formal_parameter_type.nil?
                 begin
-                  error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                   unless actual_argument_type.compatible?(formal_parameter_type, :lt)
+                    error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                     fail TypeCheckError.new(error_message, node)
                   end
                 rescue Types::UncomparableTypes, ArgumentError
