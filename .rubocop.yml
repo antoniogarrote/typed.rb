@@ -2,6 +2,15 @@ AllCops:
   Exclude:
     - 'spec/**/*'
 
+Documentation:
+  Enabled: false
+
 Metrics/MethodLength:
   CountComments: false  # count full line comments?
   Max: 20
+
+Metrics/LineLength:
+  Enabled: false
+
+Style/HashSyntax:
+  Enabled: false
