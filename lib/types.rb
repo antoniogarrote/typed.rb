@@ -256,6 +256,7 @@ module TypedRb
       def self.parse_concrete_type(type, klass)
         # parameter_names -> container class type vars
         TypedRb.log(binding, :debug, "Parsing concrete type #{type} within #{klass}")
+
         parameter_names = BasicObject::TypeRegistry.type_vars_for(klass).each_with_object({}) do |variable, acc|
           acc[variable.name.split(':').last] = variable
         end
@@ -292,7 +293,11 @@ module TypedRb
                                 # or a wildcard '?'
                                 is_generic = true
                                 # TODO: add some reference to the method if the variable is method specific?
-                                param[:type] = "#{type_var.name}:#{param[:type] == '?' ? type_application_counter : param[:type]}"
+                                if param[:type] == '?'
+                                  param[:type] = "#{type_var.name}:#{type_application_counter}:#{param[:type]}"
+                                else
+                                  param[:type] = "#{type_var.name}:#{param[:type]}:#{type_application_counter}"
+                                end
                                 parse(param, klass)
                               elsif param[:sub_kind] == :method_type_var
                                 # A type parameter that is not bound in the generic type declaration.
@@ -330,7 +335,6 @@ module TypedRb
         @type_application_counter ||= 0
         @type_application_counter += 1
       end
-
 
       def self.parse_object_type(type)
         if type == :unit

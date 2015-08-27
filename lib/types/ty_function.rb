@@ -211,6 +211,7 @@ module TypedRb
       end
 
       def free_type_variables(klass)
+        return [] if klass == :main
         class_type = Type.parse_singleton_object_type(klass.name)
         if class_type.generic?
           type_variables.reject do |type_var|

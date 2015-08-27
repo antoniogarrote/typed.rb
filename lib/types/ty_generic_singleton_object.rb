@@ -44,12 +44,12 @@ module TypedRb
       # MyClass.(TypeArg1, TypeArg2)  -> make X<TypeArg1, Y<TypeArg2, X>TypeArg1, X>TypeArg2
       # @see comment below
       def materialize(actual_arguments)
-        TypedRb.log binding, :debug, "Materialising generic singleton object '#{self}'"
+        TypedRb.log binding, :debug, "Materialising generic singleton object '#{self}' with args [#{actual_arguments.map(&:to_s).join(',')}]"
 
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
             if argument.is_a?(Polymorphism::TypeVariable)
-              if argument.name == ':?'
+              if argument.name.index(':?')
                 # Wild card type
                 # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
                 { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|

@@ -57,7 +57,7 @@ module TypedRb
             type_var.variable == arg.variable ||
               (type_var.bound && type_var.bound.respond_to?(:variable) && type_var.bound.variable == arg.variable)
           end
-          if matching_var && matching_var.variable == ':?' && matching_var.lower_bound
+          if matching_var && matching_var.variable.index(':?') && matching_var.lower_bound
             matching_var.lower_bound
           elsif matching_var
               # Type variables and generic methods => function will still be generic
