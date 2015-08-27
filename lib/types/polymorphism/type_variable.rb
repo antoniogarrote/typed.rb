@@ -76,6 +76,8 @@ module TypedRb
             left_var = bound || self
             right_var = type.bound || type
 
+            left_var.is_a?(TypeVariable) &&
+            right_var.is_a?(TypeVariable) &&
             left_var.variable != right_var.variable &&
             (TypingContext.bound_generic_type_var?(left_var) &&
              TypingContext.bound_generic_type_var?(right_var))

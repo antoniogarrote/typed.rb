@@ -42,6 +42,7 @@ __END
         0
       end
 
+      TestGM2Array.(Integer).new(1).map(1, nil) { |v| v + 1 }
       TestGM2Array.(String).new('value').map('other', nil) { |v| c(v) }
 __END
     result = language.check(code)
@@ -61,10 +62,10 @@ __END
         end
       end
 
+      TestGM3.new.test(2)
       TestGM3.new.test('value')
 __END
     result = language.check(code)
-    puts result.to_s
     expect(result.ruby_type).to eq(Array)
     expect(result.type_vars[0].bound.ruby_type).to eq(String)
   end
