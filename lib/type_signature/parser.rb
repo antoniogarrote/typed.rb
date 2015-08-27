@@ -60,19 +60,23 @@ module TypedRb
 
       def parse_end_of_function
         new_type = parse_new_type
-
         @current_function << new_type unless @current_type.empty?
-
         parent_function = @stack.pop
         next_function_elem = transform_function_tokens(@current_function)
         parent_function << next_function_elem
-        if parent_function[-2] == '&'
-          block = { :block => parent_function.pop, :kind => :block_arg }
-          parent_function.pop
-          parent_function << block
-        end
+        parse_block_arg(parent_function) if block_arg?(parent_function)
         @current_function = parent_function
         @current_type = []
+      end
+
+      def block_arg?(function_tokens)
+        function_tokens[-2] == '&'
+      end
+
+      def parse_block_arg(function_tokens)
+        block = { :block => function_tokens.pop, :kind => :block_arg }
+        function_tokens.pop
+        function_tokens << block
       end
 
       def parse_binding

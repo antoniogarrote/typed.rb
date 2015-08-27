@@ -2,8 +2,7 @@ require_relative 'type_signature/parser'
 require_relative './types'
 
 class BasicObject
-
-  def ts signature
+  def ts(signature)
     ::TypedRb.log(binding, :debug,  "Parsing signature: #{signature}")
     if $TYPECHECK
       parametric_type_prefix = /\s*(module|class|type)\s*/
@@ -12,7 +11,7 @@ class BasicObject
         generic_type = ::TypedRb::TypeSignature::Parser.parse(type_signature)
         TypeRegistry.register_generic_type_information(generic_type)
       else
-        method, signature = signature.split(/\s*\/\s*/)
+        method, signature = signature.split(%r{\s*/\s*})
         if method.index('#')
           kind = :instance
           receiver, message =  method.split('#')
@@ -20,19 +19,18 @@ class BasicObject
           kind = :class
           receiver, message = method.split('.')
         else
-          fail ::TypedRb::Types::TypeParsingError,
-          "Error parsing receiver, method signature: #{signature}"
+          fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method signature: #{signature}"
         end
 
         if receiver == ''
-          if self.object_id == ::TOPLEVEL_BINDING.receiver.object_id
+          if object_id == ::TOPLEVEL_BINDING.receiver.object_id
             receiver = 'main'
           elsif self.instance_of?(::Class) || self.instance_of?(::Module)
             receiver = if name.nil?
                          # singleton classes
-                         self.to_s.match(/Class:(.*)>/)[1]
+                         to_s.match(/Class:(.*)>/)[1]
                        else
-                         self.name
+                         name
                        end
           else
             receiver = self.class.name
@@ -45,7 +43,7 @@ class BasicObject
         end
 
         message = message.split(/\[[\w]+/).first
-        method_var_info = method_variables.each_with_object(::Hash.(::String,'Hash[Symbol][String]').new) do |variable, acc|
+        method_var_info = method_variables.each_with_object(::Hash.(::String, 'Hash[Symbol][String]').new) do |variable, acc|
           var_name = variable[:type]
           variable[:type] = "#{message}:#{var_name}"
           acc[var_name] = variable
@@ -66,7 +64,6 @@ class BasicObject
 
   class TypeRegistry
     class << self
-
       ts '.clear / -> unit'
       def clear
         generic_types_registry.clear
@@ -84,7 +81,7 @@ class BasicObject
       def register_generic_type_information(generic_type_information)
         if generic_types_parser_registry[generic_type_information[:type]]
           fail ::TypedRb::Types::TypeParsingError,
-          "Duplicated generic type definition for #{generic_type_information[:type]}"
+               "Duplicated generic type definition for #{generic_type_information[:type]}"
         else
           generic_types_parser_registry[generic_type_information[:type]] = generic_type_information
         end
@@ -142,16 +139,16 @@ class BasicObject
           # Dynamic invocation or error?
           # Maybe an additional @dynamic annotation can be added to distinguish the desired outcome.
           # Preferred outcome right now is nil to catch errors in unification, safer assumption.
-          #class_data[message.to_s] || nil # ::TypedRb::Types::TyDynamicFunction.new(klass, message)
+          # class_data[message.to_s] || nil # ::TypedRb::Types::TyDynamicFunction.new(klass, message)
           class_data[message.to_s] || ::TypedRb::Types::TyDynamicFunction.new(klass, message)
         elsif kind == :instance_variable || kind == :class_variable
           nil
         else
-          #if registered?(klass)
-          #  nil
-          #else
-            ::TypedRb::Types::TyDynamicFunction.new(klass, message)
-          #end
+          # if registered?(klass)
+          #   nil
+          # else
+          ::TypedRb::Types::TyDynamicFunction.new(klass, message)
+          # end
         end
       end
 
@@ -206,7 +203,7 @@ class BasicObject
       ts '.normalize_generic_types! / -> unit'
       def normalize_generic_types!
         initial_value = Hash.(Class, TypedRb::Types::TyGenericSingletonObject).new
-        @generic_types_registry = generic_types_parser_registry.inject(initial_value) do |acc, type_info|
+        @generic_types_registry = generic_types_parser_registry.each_with_object(initial_value) do |type_info, acc|
           _, info = type_info
           info[:type] = Object.const_get(info[:type])
           TypedRb.log(binding, :debug,  "Normalising generic type: #{info[:type]}")
@@ -215,7 +212,6 @@ class BasicObject
             ::TypedRb::Types::Type.parse(parameter, info[:type])
           end
           acc[info[:type]] = ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
-          acc
         end
       end
 
@@ -240,29 +236,28 @@ class BasicObject
             all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
           end
 
-          method_signatures = method_signatures.inject({}) do |signatures_acc, method_info|
+          method_signatures = method_signatures.each_with_object({}) do |method_info, signatures_acc|
             method, signature = method_info
             TypedRb.log(binding, :debug, "Normalizing method #{type}[#{klass}] :: #{method} / #{signature}")
 
             if type == :instance
               unless (all_instance_methods).include?(method.to_sym)
                 fail ::TypedRb::Types::TypeParsingError,
-                "Declared typed instance method '#{method}' not found for class '#{klass}'"
+                     "Declared typed instance method '#{method}' not found for class '#{klass}'"
               end
             elsif type == :class
               unless all_methods.include?(method.to_sym)
                 fail ::TypedRb::Types::TypeParsingError,
-                "Declared typed class method '#{method}' not found for class '#{klass}'"
+                     "Declared typed class method '#{method}' not found for class '#{klass}'"
               end
             end
             signatures_acc[method] = normalize_signature!(klass, signature)
             if (type != :class_variable && type != :instance_variable) && !signatures_acc[method].is_a?(TypedRb::Types::TyFunction)
               fail ::TypedRb::Types::TypeParsingError,
-              "Error parsing receiver, method signature: #{type}[#{klass}] :: '#{method}', function expected, got '#{signatures_acc[method]}'"
+                   "Error parsing receiver, method signature: #{type}[#{klass}] :: '#{method}', function expected, got '#{signatures_acc[method]}'"
             end
-            signatures_acc
           end
-          @registry[[type,klass]] = method_signatures
+          @registry[[type, klass]] = method_signatures
         end
       end
 
