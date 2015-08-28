@@ -46,7 +46,6 @@ end
 
 ts 'type Array[T]'
 class Array
-
   ts '.[] / [T]... -> Array[T]'
   ts '#initialize / BasicObject... -> Array[T]'
   ts '#& / Array[T] -> Array[T]'
@@ -59,15 +58,17 @@ class Array
   ts '#at / Integer -> [T]'
   ts '#[] / Integer... -> Object'
   ts '#push / [T]... -> Array[T]'
+#  ts '#map[E] / &([T] -> [E]) -> Array[E]'
 end
 
 class Module
   ts '#include / Module... -> Class'
 end
 
-ts 'type Hash[T][U]'
+ts 'type Hash[S][T]'
 class Hash
-  ts '#initialize / [U]... -> Hash[T][U]'
+  ts '#initialize / [S]... -> Hash[S][T]'
+#  ts '#map[E] / &(Pair[S][T] -> [E]) -> Array[E]'
 end
 
 ts 'type Range[T]'
@@ -82,3 +83,13 @@ class Integer
   # TODO
   # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
 end
+
+# ts 'type Pair[S][T] < Array[Object]'
+# class Pair
+#   ts '#first / -> [S]'
+#
+#   ts '#second / -> [T]'
+#   def second
+#     cast(at(1), '[T]')
+#   end
+# end
