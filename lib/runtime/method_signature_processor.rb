@@ -1,46 +1,69 @@
 module TypedRb
   module Runtime
     class MethodSignatureProcessor
-      def self.process(signature, base_object)
-        method, signature = signature.split(%r{\s*/\s*})
-        if method.index('#')
-          kind = :instance
-          receiver, message =  method.split('#')
-        elsif method.index('.')
-          kind = :class
-          receiver, message = method.split('.')
-        else
-          fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method signature: #{signature}"
+      class << self
+        def process(signature, base_object)
+          kind, receiver, message, signature = destruct_signature(signature)
+          receiver = parse_implicit_receiver(base_object) if receiver.empty?
+          message, method_type_variables = parse_method_type_variable(message)
+
+          type_ast = ::TypedRb::TypeSignature::Parser.parse(signature, method_type_variables)
+          BasicObject::TypeRegistry.register_type_information(kind, receiver, message, type_ast)
         end
 
-        if receiver == ''
-          if object_id == ::TOPLEVEL_BINDING.receiver.object_id
-            receiver = 'main'
-          elsif base_object.instance_of?(::Class) || base_object.instance_of?(::Module)
-            receiver = if base_object.name.nil?
-                         # singleton classes
-                         base_object.to_s.match(/Class:(.*)>/)[1]
-                       else
-                         base_object.name
-                       end
+        private
+
+        def destruct_signature(signature)
+          receier_and_message, signature = signature.split(%r{\s*/\s*})
+          if receier_and_message.index('#')
+            kind = :instance
+            receiver, message =  receier_and_message.split('#')
+          elsif receier_and_message.index('.')
+            kind = :class
+            receiver, message = receier_and_message.split('.')
           else
-            receiver = base_object.class.name
+            fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method signature: #{signature}"
+          end
+          kind = :"#{kind}_variable" if message.index('@')
+          [kind, receiver, message, signature]
+        end
+
+        def parse_implicit_receiver(base_object)
+          return 'main' if top_level?(base_object)
+          return parse_class_implicit_receiver(base_object) if class_or_module?(base_object)
+          base_object.class.name # instance object
+        end
+
+        def top_level?(base_object)
+          base_object.object_id == ::TOPLEVEL_BINDING.receiver.object_id
+        end
+
+        def class_or_module?(base_object)
+          base_object.instance_of?(::Class) || base_object.instance_of?(::Module)
+        end
+
+        def parse_class_implicit_receiver(base_object)
+          if base_object.name.nil?
+            # singleton classes
+            base_object.to_s.match(/Class:(.*)>/)[1]
+          else
+            base_object.name
           end
         end
 
-        kind = :"#{kind}_variable" if message.index('@')
-        method_variables = message.scan(/(\[\w+\])/).flatten.map do |var|
-          ::TypedRb::TypeSignature::Parser.parse(var)
-        end
+        def parse_method_type_variable(message)
+          type_variables = message.scan(/(\[\w+\])/).flatten.map do |var|
+            ::TypedRb::TypeSignature::Parser.parse(var)
+          end
+          message = message.split(/\[[\w]+/).first
 
-        message = message.split(/\[[\w]+/).first
-        method_var_info = method_variables.each_with_object(::Hash.(::String, 'Hash[Symbol][String]').new) do |variable, acc|
-          var_name = variable[:type]
-          variable[:type] = "#{message}:#{var_name}"
-          acc[var_name] = variable
+          method_type_var_info = type_variables.each_with_object(::Hash.(::String, 'Hash[Symbol][String]').new) do |variable, acc|
+            var_name = variable[:type]
+            variable[:type] = "#{message}:#{var_name}"
+            acc[var_name] = variable
+          end
+          [message, method_type_var_info]
         end
-        type_ast = ::TypedRb::TypeSignature::Parser.parse(signature, method_var_info)
-        BasicObject::TypeRegistry.register_type_information(kind, receiver, message, type_ast)
       end
     end
   end

@@ -170,13 +170,7 @@ class BasicObject
                           TOPLEVEL_BINDING.receiver.class.protected_methods +
                           TOPLEVEL_BINDING.receiver.class.private_methods
           else
-            begin
-              klass = Object.const_get(klass_name)
-            rescue StandardError => e
-              puts "ERROR #{klass_name}"
-              puts e.backtrace.join("\n")
-              raise e
-            end
+            klass = Object.const_get(klass_name)
             all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods
             all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
           end

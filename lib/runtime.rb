@@ -9,7 +9,7 @@ class BasicObject
       end
     end
   rescue ::StandardError => ex
-    raise ::StandardError, "Error parsing type signature '#{type_signature}': #{ex.message}"
+    raise ::StandardError, "Error parsing type signature '#{signature}': #{ex.message}"
   end
 
   def cast(from, _to)
