@@ -2,11 +2,11 @@ require 'parser/current'
 require_relative 'model'
 require_relative 'types'
 
-
 module TypedRb
-
   class TermParsingError < TypeCheckError; end
 
+  # Helper class used to keep an stack of type signatures
+  # being parsed.
   class ParsingContext
     def initialize
       @types_stack = []
@@ -32,7 +32,7 @@ module TypedRb
     end
 
     def path_name
-      @types_stack.map{ |key| key[1] }.join("::")
+      @types_stack.map { |key| key[1] }.join('::')
     end
 
     def singleton_class?
@@ -40,6 +40,9 @@ module TypedRb
     end
   end
 
+  # Custom parser for type signatures.
+  # It will transform the signature string into a hash
+  # with the type information.
   class AstParser
     include Model
 
@@ -48,7 +51,7 @@ module TypedRb
     end
 
     def parse(expr)
-      map(ast(expr),ParsingContext.new)
+      map(ast(expr), ParsingContext.new)
     end
 
     private
@@ -75,7 +78,7 @@ module TypedRb
       when :ivasgn
         parse_instance_var_assign(node, context)
       when :lvar
-        TmVar.new(node.children.first,node)
+        TmVar.new(node.children.first, node)
       when :lvasgn
         parse_lvasgn(node, context)
       when :gvar
@@ -96,7 +99,7 @@ module TypedRb
         parse_array_literal(node, context)
       when :hash
         parse_hash_literal(node, context)
-      when :true,:false
+      when :true, :false
         TmBoolean.new(node)
       when :str
         TmString.new(node)
@@ -109,7 +112,7 @@ module TypedRb
       when :if
         parse_if_then_else(node, context)
       when :block
-        parse_block(node,context)
+        parse_block(node, context)
       when :send
         parse_send(node, context)
       when :yield
@@ -158,12 +161,12 @@ module TypedRb
     end
 
     def parse_string_interpolation(node, context)
-      units = node.children.map{ |child| map(child, context) }
+      units = node.children.map { |child| map(child, context) }
       TmStringInterpolation.new(units, node)
     end
 
     def parse_symbol_interpolation(node, context)
-      units = node.children.map{ |child| map(child, context) }
+      units = node.children.map { |child| map(child, context) }
       TmSymbolInterpolation.new(units, node)
     end
 
@@ -200,14 +203,14 @@ module TypedRb
     end
 
     def parse_lambda(node, context)
-      args,body  = node.children[1],node.children[2]
+      args, body  = node.children[1], node.children[2]
       if args.type != :args
         fail Types::TypeParsingError.new("Error parsing function args [#{args}]", node)
       end
       args = parse_args(args.children, context, node)
       body = map(body, context)
 
-      # TODO deal with abs with a provided type, like block passed to typed functions.
+      # TODO: deal with abs with a provided type, like block passed to typed functions.
       TmAbs.new(args,
                 body,
                 :lambda, # no type for the lambda so far.
@@ -215,14 +218,15 @@ module TypedRb
     end
 
     def parse_proc(node, context)
-      args,body  = node.children[1],node.children[2]
+      args = node.children[1]
+      body = node.children[2]
       if args.type != :args
         fail Types::TypeParsingError.new("Error parsing function args [#{args}]", node)
       end
       args = parse_args(args.children, context, node)
       body = map(body, context)
 
-      # TODO deal with abs with a provided type, like block passed to typed functions.
+      # TODO: deal with abs with a provided type, like block passed to typed functions.
       TmAbs.new(args,
                 body,
                 :proc, # no type for the lambda so far.
@@ -231,7 +235,7 @@ module TypedRb
 
     def parse_lvasgn(node, context)
       lhs, rhs = node.children
-      TmLocalVarAsgn.new(lhs.to_s, map(rhs,context), node)
+      TmLocalVarAsgn.new(lhs.to_s, map(rhs, context), node)
     end
 
     def parse_mass_assign(node, context)
@@ -263,7 +267,7 @@ module TypedRb
       receiver_node = children[0]
       receiver = receiver_node.nil? ? receiver_node : map(receiver_node, context)
       message = children[1]
-      args = (children.drop(2) || []).map { |arg| map(arg,context) }
+      args = (children.drop(2) || []).map { |arg| map(arg, context) }
       build_send_message(receiver, message, args, node, context)
     end
 

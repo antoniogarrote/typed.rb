@@ -9,7 +9,7 @@ group :development do
 end
 
 group :test do
-  gem 'rubocop', :require =>  false
+  gem 'rubocop', require: false
   gem 'rspec'
-  gem 'simplecov', :require => false
+  gem 'simplecov', require: false
 end
