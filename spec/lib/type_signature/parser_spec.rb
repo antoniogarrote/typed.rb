@@ -1,5 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/type_signature/parser'
 
 describe TypedRb::TypeSignature::Parser do
 
@@ -163,12 +162,12 @@ describe TypedRb::TypeSignature::Parser do
 
   it 'parses type variables with lower binding' do
     result = described_class.parse('[X < Numeric]')
-    expect(result).to eq({:type => 'X', :kind => :type_var, :bound => 'Numeric', :binding => '<', :kind => :type_var })
+    expect(result).to eq({:type => 'X', :kind => :type_var, :bound => 'Numeric', :binding => '<' })
   end
 
   it 'parses type variables with lower binding' do
     result = described_class.parse('[X > Numeric]')
-    expect(result).to eq({:type => 'X', :kind => :type_var, :bound => 'Numeric', :binding => '>', :kind => :type_var })
+    expect(result).to eq({:type => 'X', :kind => :type_var, :bound => 'Numeric', :binding => '>' })
   end
 
   it 'parses return type variables' do

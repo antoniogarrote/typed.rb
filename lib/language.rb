@@ -1,5 +1,5 @@
 #require_relative 'init'
-require_relative './ast_parser'
+require_relative './runtime/ast_parser'
 
 module TypedRb
   class Language
