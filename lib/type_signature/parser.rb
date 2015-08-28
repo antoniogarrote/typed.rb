@@ -34,7 +34,8 @@ module TypedRb
       def variable_group?(token_group)
         token_group.drop(1).all? do |token|
           token.is_a?(Hash) &&
-            (token[:kind] == :type_var || token[:kind] == :generic_type)
+            (token[:kind] == :type_var ||
+             token[:kind] == :generic_type)
         end
       end
 
@@ -42,7 +43,9 @@ module TypedRb
         if token_group.size > 1 &&
            variable_group?(token_group) &&
            token_group[0].is_a?(String)
-          { :type => token_group.first, :parameters => token_group.drop(1), :kind => :generic_type }
+          { :type       => token_group.first,
+            :parameters => token_group.drop(1),
+            :kind       => :generic_type }
         else
           token_group.first
         end
@@ -74,7 +77,8 @@ module TypedRb
       end
 
       def parse_block_arg(function_tokens)
-        block = { :block => function_tokens.pop, :kind => :block_arg }
+        block = { :block => function_tokens.pop,
+                  :kind  => :block_arg }
         function_tokens.pop
         function_tokens << block
       end
@@ -103,13 +107,19 @@ module TypedRb
         new_type = parse_new_type
         @current_function << new_type unless @current_type.empty?
         if @current_function.size == 1
-          { :type => @current_function.first, :kind => :type_var }
+          { :type => @current_function.first,
+            :kind => :type_var }
         else
           if @binding.nil?
             # This is the case for nested generic types
-            { :type => @current_function.first, :parameters => @current_function.drop(1), :kind => :generic_type }
+            { :type       => @current_function.first,
+              :parameters => @current_function.drop(1),
+              :kind       => :generic_type }
           else
-            { :type => @current_function.first, :bound => @current_function.last, :binding => @binding, :kind => :type_var }
+            { :type    => @current_function.first,
+              :bound   => @current_function.last,
+              :binding => @binding,
+              :kind    => :type_var }
           end
         end
       end
@@ -129,7 +139,9 @@ module TypedRb
         if new_type.to_s.end_with?('...')
           new_type = new_type.split('...').first
           new_type = @current_function.pop if new_type.nil?
-          new_type =  { :type => 'Array', :kind => :rest, :parameters => [new_type] }
+          new_type =  { :type       => 'Array',
+                        :kind       => :rest,
+                        :parameters => [new_type] }
         end
         new_type
       end
@@ -201,7 +213,8 @@ module TypedRb
 
         # Distinguis between function without arguments:
         #   -> unit => [:<, 'unit']
-        # and generic type without function (e.g. in the  type parameter of a class Array.('Array[Integer]'))
+        # and generic type without function (e.g. in the
+        # type parameter of a class Array.('Array[Integer]'))
         #   Array[Integer] => ['Array', {:type ... }]
         if @current_function.at(0) != :< && final_function.size == 1
           final_function.last
