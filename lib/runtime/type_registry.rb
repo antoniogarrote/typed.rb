@@ -3,6 +3,8 @@ require_relative '../runtime'
 class BasicObject
   class TypeRegistry
     class << self
+      include TypedRb::Runtime::Normalization
+
       ts '.clear / -> unit'
       def clear
         generic_types_registry.clear
@@ -21,7 +23,7 @@ class BasicObject
         generic_type_information[:super_type] = generic_super_type_information
         if generic_types_parser_registry[generic_type_information[:type]]
           fail ::TypedRb::Types::TypeParsingError,
-          "Duplicated generic type definition for #{generic_type_information[:type]}"
+               "Duplicated generic type definition for #{generic_type_information[:type]}"
         else
           generic_types_parser_registry[generic_type_information[:type]] = generic_type_information
         end
@@ -138,77 +140,6 @@ class BasicObject
         method_registry = parser_registry[object_key(kind, receiver)] || {}
         parser_registry[object_key(kind, receiver)] = method_registry
         method_registry
-      end
-
-      ts '.normalize_generic_types! / -> unit'
-      def normalize_generic_types!
-        initial_value = Hash.(Class, TypedRb::Types::TyGenericSingletonObject).new
-        @generic_types_registry = generic_types_parser_registry.each_with_object(initial_value) do |type_info, acc|
-          _, info = type_info
-          info[:type] = Object.const_get(info[:type])
-          TypedRb.log(binding, :debug,  "Normalising generic type: #{info[:type]}")
-
-          info[:parameters] = info[:parameters].map do |parameter|
-            ::TypedRb::Types::Type.parse(parameter, info[:type])
-          end
-          acc[info[:type]] = ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
-        end
-      end
-
-      ts '.normalize_methods! / -> unit'
-      def normalize_methods!
-        @registry = {}
-        parser_registry.each_pair do |kind_receiver, method_signatures|
-          parts = kind_receiver.split('|')
-          type = parts.take(1).first.to_sym
-          klass_name = parts.drop(1).join('_')
-          if klass_name == 'main'
-            klass = :main
-            all_instance_methods = TOPLEVEL_BINDING.public_methods +
-                                   TOPLEVEL_BINDING.protected_methods +
-                                   TOPLEVEL_BINDING.private_methods
-            all_methods = TOPLEVEL_BINDING.receiver.class.public_methods +
-                          TOPLEVEL_BINDING.receiver.class.protected_methods +
-                          TOPLEVEL_BINDING.receiver.class.private_methods
-          else
-            klass = Object.const_get(klass_name)
-            all_instance_methods = klass.public_instance_methods + klass.protected_instance_methods + klass.private_instance_methods
-            all_methods = klass.public_methods + klass.protected_methods + klass.private_methods
-          end
-
-          method_signatures = method_signatures.each_with_object({}) do |method_info, signatures_acc|
-            method, signature = method_info
-            TypedRb.log(binding, :debug, "Normalizing method #{type}[#{klass}] :: #{method} / #{signature}")
-
-            if type == :instance
-              unless (all_instance_methods).include?(method.to_sym)
-                fail ::TypedRb::Types::TypeParsingError,
-                "Declared typed instance method '#{method}' not found for class '#{klass}'"
-              end
-            elsif type == :class
-              unless all_methods.include?(method.to_sym)
-                fail ::TypedRb::Types::TypeParsingError,
-                "Declared typed class method '#{method}' not found for class '#{klass}'"
-              end
-            end
-            signatures_acc[method] = normalize_signature!(klass, signature)
-            if (type != :class_variable && type != :instance_variable) && !signatures_acc[method].is_a?(TypedRb::Types::TyFunction)
-              fail ::TypedRb::Types::TypeParsingError,
-              "Error parsing receiver, method signature: #{type}[#{klass}] :: '#{method}', function expected, got '#{signatures_acc[method]}'"
-            end
-          end
-          @registry[[type, klass]] = method_signatures
-        end
-      end
-
-      ts '.normalize_signature! / Class -> String -> TypedRb::Types::TyFunction'
-      def normalize_signature!(klass, type)
-        ::TypedRb::Types::Type.parse(type, klass)
-      end
-
-      ts '.object_key / String -> String -> String'
-      def object_key(kind, receiver)
-        "#{kind}|#{receiver}"
       end
     end
   end

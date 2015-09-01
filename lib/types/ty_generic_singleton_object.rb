@@ -7,11 +7,12 @@ module TypedRb
 
       include Polymorphism::GenericComparisons
 
-      attr_reader :type_vars
+      attr_reader :type_vars, :super_type
       attr_accessor :local_typing_context
 
-      def initialize(ruby_type, type_vars, node = nil)
+      def initialize(ruby_type, type_vars, super_type = nil, node = nil)
         super(ruby_type, node)
+        @super_type = super_type
         @type_vars = type_vars
         @application_count = 0
       end
