@@ -84,7 +84,7 @@ class Integer
   # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
 end
 
-# ts 'type Pair[S][T] < Array[Object]'
+# ts 'type Pair[S][T] super Array[Object]'
 # class Pair
 #   ts '#first / -> [S]'
 #

@@ -16,8 +16,9 @@ class BasicObject
         methods_for(kind, receiver)[method] = type_ast
       end
 
-      ts '.register_generic_type_information / Hash[Object][Object] -> unit'
-      def register_generic_type_information(generic_type_information)
+      ts '.register_generic_type_information / Hash[Object][Object] -> Hash[Object][Object] -> unit'
+      def register_generic_type_information(generic_type_information, generic_super_type_information)
+        generic_type_information[:super_type] = generic_super_type_information
         if generic_types_parser_registry[generic_type_information[:type]]
           fail ::TypedRb::Types::TypeParsingError,
           "Duplicated generic type definition for #{generic_type_information[:type]}"

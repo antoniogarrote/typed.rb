@@ -166,6 +166,7 @@ module TypedRb
       end
 
       def parse(expr)
+        @input_expression = expr
         expr = sanitize_input(expr)
         expr.each_char { |elem| parse_next_char(elem) }
         build_final_signature
@@ -203,7 +204,7 @@ module TypedRb
       end
 
       def build_final_signature
-        fail ParsingError.new(expr, 'Unbalanced parentheses.') unless @stack.empty?
+        fail ParsingError.new(@input_expression, 'Unbalanced parentheses.') unless @stack.empty?
 
         new_type = parse_new_type
 

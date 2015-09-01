@@ -2,19 +2,19 @@ module TypedRb
   module Runtime
     class MethodSignatureProcessor
       class << self
-        def process(signature, base_object)
-          kind, receiver, message, signature = destruct_signature(signature)
+        def process(full_signature, base_object)
+          kind, receiver, message, type_signature = destruct_signature(full_signature)
           receiver = parse_implicit_receiver(base_object) if receiver.empty?
           message, method_type_variables = parse_method_type_variable(message)
 
-          type_ast = ::TypedRb::TypeSignature::Parser.parse(signature, method_type_variables)
+          type_ast = ::TypedRb::TypeSignature::Parser.parse(type_signature, method_type_variables)
           BasicObject::TypeRegistry.register_type_information(kind, receiver, message, type_ast)
         end
 
         private
 
-        def destruct_signature(signature)
-          receier_and_message, signature = signature.split(%r{\s*/\s*})
+        def destruct_signature(full_signature)
+          receier_and_message, type_signature = full_signature.split(%r{\s*/\s*})
           if receier_and_message.index('#')
             kind = :instance
             receiver, message =  receier_and_message.split('#')
@@ -22,10 +22,10 @@ module TypedRb
             kind = :class
             receiver, message = receier_and_message.split('.')
           else
-            fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method signature: #{signature}"
+            fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method type_signature: #{type_signature}"
           end
           kind = :"#{kind}_variable" if message.index('@')
-          [kind, receiver, message, signature]
+          [kind, receiver, message, type_signature]
         end
 
         def parse_implicit_receiver(base_object)
