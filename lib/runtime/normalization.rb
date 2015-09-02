@@ -27,11 +27,24 @@ module TypedRb
         type_class, info = type_info
         TypedRb.log(binding, :debug,  "Normalising generic type: #{type_class}")
         info[:type] = Object.const_get(type_class)
-        super_type = build_generic_singleton_object(info[:super_type]) if info[:super_type]
+        super_type = build_generic_super_type(info)
         info[:parameters] = info[:parameters].map do |parameter|
           ::TypedRb::Types::Type.parse(parameter, info[:type])
         end
         ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters], super_type)
+      end
+
+      def build_generic_super_type(info)
+        with_super_type = valid_super_type?(info[:type], info[:super_type])
+        build_generic_singleton_object([info[:super_type][:type], info[:super_type]]) if with_super_type
+      end
+
+      def valid_super_type?(base_class, super_type_info)
+        return false if super_type_info.nil?
+        valid = base_class.ancestors.map(&:name).detect { |klass_name| klass_name == super_type_info[:type].to_s }
+        return true if valid
+        fail ::TypedRb::Types::TypeParsingError,
+             "Super type annotation '#{super_type_info[:type]}' not a super class of '#{base_class}'"
       end
 
       def parse_class(class_name)

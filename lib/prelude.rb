@@ -85,7 +85,7 @@ class Integer
 end
 
 # ts 'type Pair[S][T] super Array[Object]'
-# class Pair
+# class Pair < Array
 #   ts '#first / -> [S]'
 #
 #   ts '#second / -> [T]'

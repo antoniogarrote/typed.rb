@@ -204,7 +204,12 @@ module TypedRb
         elsif type.is_a?(Array)
           parse_function_type(type, klass)
         elsif type.is_a?(Hash) && (type[:kind]  == :type_var || type[:kind] == :method_type_var)
-          type[:type] = "#{klass}:#{type[:type]}"
+          maybe_class = Object.const_get(type[:type]) rescue false
+          if maybe_class
+            type[:type] = maybe_class
+          else
+            type[:type] = "#{klass}:#{type[:type]}"
+          end
           parse_type_var(type)
         elsif type.is_a?(Hash) && type[:kind]  == :generic_type
           parse_concrete_type(type, klass)
@@ -234,6 +239,13 @@ module TypedRb
           Polymorphism::TypeVariable.new(type[:type],
                                          :lower_bound => TySingletonObject.new(Object.const_get(type[:bound])),
                                          :gen_name    => false)
+        elsif type[:type].is_a?(Class)
+          type_var = Polymorphism::TypeVariable.new(nil,
+                                                    :gen_name => false,
+                                                    :upper_bound => type[:type],
+                                                    :lower_bound => type[:type])
+          type_var.bind(type[:type])
+          type_var
         else
           Polymorphism::TypeVariable.new(type[:type], :gen_name => false)
         end
