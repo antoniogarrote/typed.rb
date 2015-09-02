@@ -29,7 +29,7 @@ module TypedRb
         info[:type] = Object.const_get(type_class)
         super_type = build_generic_super_type(info)
         info[:parameters] = info[:parameters].map do |parameter|
-          ::TypedRb::Types::Type.parse(parameter, info[:type])
+          ::TypedRb::Runtime::TypeParser.parse(parameter, info[:type])
         end
         ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters], super_type)
       end
@@ -90,7 +90,7 @@ module TypedRb
 
       ts '.normalize_signature! / Class -> String -> TypedRb::Types::TyFunction'
       def normalize_signature!(klass, type)
-        ::TypedRb::Types::Type.parse(type, klass)
+        ::TypedRb::Runtime::TypeParser.parse(type, klass)
       end
 
       def normalize_method_signatures(method_signatures, klass, method_type)

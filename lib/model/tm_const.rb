@@ -18,12 +18,12 @@ module TypedRb
       def check_type(_context)
         value = Object.const_get(@val)
         type = if value.instance_of?(Class)
-                 Types::Type.parse_singleton_object_type(value.name)
+                 Runtime::TypeParser.parse_singleton_object_type(value.name)
                elsif value.instance_of?(Module)
-                 Types::Type.parse_existential_object_type(value.name)
+                 Runtime::TypeParser.parse_existential_object_type(value.name)
                else
                  # Must be a user defined constant
-                 Types::Type.parse_object_type(value.receiver.class.name)
+                 Runtime::TypeParser.parse_object_type(value.receiver.class.name)
                end
         type.node = node
         type

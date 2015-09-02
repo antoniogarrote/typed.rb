@@ -125,15 +125,15 @@ __END
         eval(code)
         ::BasicObject::TypeRegistry.normalize_types!
 
-        result = TypedRb::Types::Type.parse({:type       => 'Array',
-                                             :parameters =>  [{:type=>"T", :bound=>"BasicObject", :kind=>:type_var}],
-                                             :kind       => :rest}, A2)
+        result = TypedRb::Runtime::TypeParser.parse({:type       => 'Array',
+                                                     :parameters =>  [{:type=>"T", :bound=>"BasicObject", :kind=>:type_var}],
+                                                     :kind       => :rest}, A2)
         expect(result).to be_instance_of(TypedRb::Types::TyGenericSingletonObject)
         expect(result.type_vars[0].bound).to be_nil
 
-        result = TypedRb::Types::Type.parse({:type       => 'Array',
-                                             :parameters =>  ['Integer'],
-                                             :kind       => :rest}, A2)
+        result = TypedRb::Runtime::TypeParser.parse({:type       => 'Array',
+                                                     :parameters =>  ['Integer'],
+                                                     :kind       => :rest}, A2)
         expect(result).to be_instance_of(TypedRb::Types::TyGenericObject)
         expect(result.type_vars[0].bound.ruby_type).to eq(Integer)
       end

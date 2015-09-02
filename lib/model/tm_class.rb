@@ -15,7 +15,7 @@ module TypedRb
       end
 
       def check_type(context)
-        class_type = Types::Type.parse_singleton_object_type(class_name)
+        class_type = Runtime::TypeParser.parse_singleton_object_type(class_name)
         context = context.add_binding(:self, class_type)
         if class_type.is_a?(Types::TyGenericSingletonObject)
           # If the type is generic, we will collect all the restrictions

@@ -14,7 +14,7 @@ module TypedRb
       end
 
       def check_type(context)
-        module_type = Types::Type.parse_existential_object_type(module_name)
+        module_type = Runtime::TypeParser.parse_existential_object_type(module_name)
         module_type.node = node
         module_typing_context = TmModule.with_local_context(module_type, node) do |module_self_variable|
           context = context.add_binding(:self, module_type)

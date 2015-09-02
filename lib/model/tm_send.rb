@@ -176,7 +176,7 @@ module TypedRb
                       else
                         nil
                       end
-              Types::Type.parse(type, klass)
+              Runtime::TypeParser.parse(type, klass)
             end
           else
             argument.check_type(context)
