@@ -19,10 +19,14 @@ module TypedRb
       # If it is generic we apply the bound parameters and we obtain a concrete function type
       def find_function_type(message)
         function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message)
-        TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}"
-        materialised_function = materialise_found_function(function_type)
-        TypedRb.log binding, :debug, "Found message '#{message}', materialised generic function: #{materialised_function}"
-        [function_klass_type, materialised_function]
+        if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
+          materialise_super_type_found_function(message)
+        else
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}"
+          materialised_function = materialise_found_function(function_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', materialised generic function: #{materialised_function}"
+          [function_klass_type, materialised_function]
+        end
       end
 
       def generic?
@@ -51,6 +55,16 @@ module TypedRb
         materialised_function.with_block_type(materialised_block_type)
       end
 
+      def materialise_super_type_found_function(message)
+        tmp = generic_singleton_object.super_type.self_materialize.as_object_type
+        tmp.find_function_type(message)
+      end
+
+      def ancestor_of_super_type?(super_type_klass, function_klass_type)
+        # TODO: finish implementation
+        !super_type_klass.nil?
+      end
+
       def materialise_found_function_arg(arg)
         if arg.is_a?(Polymorphism::TypeVariable)
           matching_var = type_vars.detect do |type_var|
@@ -60,12 +74,12 @@ module TypedRb
           if matching_var && matching_var.variable.index(':?') && matching_var.lower_bound
             matching_var.lower_bound
           elsif matching_var
-              # Type variables and generic methods => function will still be generic
+            # Type variables and generic methods => function will still be generic
             matching_var.bound || matching_var
           else
-            #generic_function = true
-            #TyUnboundType.new(matching_var.variable, :lower_bound)
-            #fail TypeCheckError, "Cannot find matching type var for #{arg.variable} instantiating #{self}", arg.node
+            # generic_function = true
+            # TyUnboundType.new(matching_var.variable, :lower_bound)
+            # fail TypeCheckError, "Cannot find matching type var for #{arg.variable} instantiating #{self}", arg.node
             # method generic var?
             arg
           end
@@ -100,6 +114,10 @@ module TypedRb
           end
         end
         self
+      end
+
+      def generic_singleton_object
+        @generic_singleton_object ||= BasicObject::TypeRegistry.find_generic_type(ruby_type)
       end
     end
   end

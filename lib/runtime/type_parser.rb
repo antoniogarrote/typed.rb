@@ -39,11 +39,12 @@ module TypedRb
                                                   :lower_bound => Types::TySingletonObject.new(Object.const_get(type[:bound])),
                                                   :gen_name    => false)
           elsif type[:type].is_a?(Class)
+            type_object = Types::TyObject.new(type[:type])
             type_var = Types::Polymorphism::TypeVariable.new(nil,
                                                              :gen_name => false,
-                                                             :upper_bound => type[:type],
-                                                             :lower_bound => type[:type])
-            type_var.bind(type[:type])
+                                                             :upper_bound => type_object,
+                                                             :lower_bound => type_object)
+            type_var.bind(type_object)
             type_var
           else
             Types::Polymorphism::TypeVariable.new(type[:type], :gen_name => false)

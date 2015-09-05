@@ -50,7 +50,7 @@ module TypedRb
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
             if argument.is_a?(Polymorphism::TypeVariable)
-              if argument.name.index(':?')
+              if argument.name && argument.name.index(':?')
                 # Wild card type
                 # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
                 { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
@@ -63,6 +63,14 @@ module TypedRb
                     fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
                   end
                 end
+              elsif argument.name.nil? && argument.bound # super type with a partivular value
+                argument = argument.bound
+                if argument.is_a?(TyGenericSingletonObject)
+                  argument = argument.self_materialize
+                end
+                # This is only for matches T =:= Type1 -> T < Type1, T > Type1
+                fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
+                fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
               else
                 # Type variable
                 fresh_vars_generic_type.type_vars[i].bound = argument

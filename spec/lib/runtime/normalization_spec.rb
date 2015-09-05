@@ -13,7 +13,7 @@ __END
     result = language.check(code)
     expect(result.ruby_type).to eq(TestPair)
     expect(result.super_type.ruby_type).to eq(Array)
-    expect(result.super_type.type_vars.first.bound).to eq(Object)
+    expect(result.super_type.type_vars.first.bound.ruby_type).to eq(Object)
   end
 
   it 'raises an exception if the super type is not a super class of the current type' do

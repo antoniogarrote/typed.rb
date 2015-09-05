@@ -115,7 +115,7 @@ module TypedRb
       end
 
       # Creates a new instance of a generic function with fresh type variables.
-      # Yields the function so new contraints can be added.
+      # Yields the function so new constraints can be added.
       # Finally, it runs unification on the function typing context and returns
       # the materialized function with the bound variables.
       def materialize

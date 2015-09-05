@@ -111,4 +111,22 @@ __END
     end.to raise_error(TypedRb::TypeCheckError,
                        /TestGen2\:T\:\:\? expected, TestGen2\:U\:\:\? found/)
   end
+
+  it 'type-checks correctly super type generics' do
+    code = <<__END
+    class Array
+      ts '#last / Integer... -> [T]'
+    end
+
+    ts 'type MyContainerG1[T] super Array[Object]'
+    class MyContainerG1 < Array
+      ts '#first / -> [T]'
+    end
+
+    MyContainerG1.(String).new.last
+__END
+
+    result = language.check(code)
+    expect(result.ruby_type).to eq(Object)
+  end
 end
