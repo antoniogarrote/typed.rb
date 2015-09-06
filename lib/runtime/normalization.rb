@@ -102,11 +102,15 @@ module TypedRb
 
       def normalize_method_signatures(method_signatures, klass, method_type)
         method_signatures.each_with_object({}) do |method_info, signatures_acc|
-          method, signature = method_info
-          TypedRb.log(binding, :debug, "Normalizing method #{method_type}[#{klass}] :: #{method} / #{signature}")
+          method, signatures = method_info
           validate_method(find_methods(klass), klass, method, method_type)
-          signatures_acc[method] = normalize_signature!(klass, signature)
-          validate_signature(method_type, signatures_acc[method])
+          normalized_signatures = signatures.map do |signature|
+            normalized_method = normalize_signature!(klass, signature)
+            validate_signature(method_type, normalized_method)
+            normalized_method
+          end
+          validate_signatures(normalized_signatures, klass, method)
+          signatures_acc[method] = normalized_signatures
         end
       end
 

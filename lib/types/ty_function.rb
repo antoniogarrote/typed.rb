@@ -1,7 +1,7 @@
 module TypedRb
   module Types
     class TyFunction < Type
-      attr_accessor :from, :to, :parameters_info, :block_type
+      attr_accessor :from, :to, :parameters_info, :block_type, :arity
       attr_writer :name
 
       def initialize(from, to, parameters_info = nil, node = nil)
@@ -9,15 +9,20 @@ module TypedRb
         @from            = from.is_a?(Array) ? from : [from]
         @to              = to
         @parameters_info = parameters_info
-        @block_type      = nil
         if @parameters_info.nil?
           @parameters_info = @from.map { |type| [:req, type] }
         end
+        @arity           = parse_function_arity
+        @block_type      = nil
       end
 
       def with_block_type(type)
         @block_type = type
         self
+      end
+
+      def arg_compatible?(num_args)
+        from.size == num_args
       end
 
       def generic?
@@ -26,6 +31,11 @@ module TypedRb
 
       def dynamic?
         false
+      end
+
+      def parse_function_arity
+        return Float::INFINITY if parameters_info.detect{ |arg| arg.is_a?(Hash) && arg[:kind] == :rest }
+        parameters_info.reject { |arg| arg.is_a?(Hash) && arg[:kind] == :block_arg }.count
       end
 
       def to_s

@@ -9,6 +9,13 @@ module TypedRb
                "Error parsing receiver, method signature: #{type}[#{klass}] :: '#{method}', function expected, got '#{signatures_acc[method]}'"
         end
 
+        def validate_signatures(normalized_signatures, klass, method)
+          arities = normalized_signatures.map(&:arity)
+          duplicated_arity = arities.detect { |arity| arities.count(arity) > 1 }
+          error_message = "Duplicated arity '#{duplicated_arity}' for method '#{klass}' / '#{method}'"
+          fail ::TypedRb::Types::TypeParsingError, error_message if duplicated_arity
+        end
+
         def validate_method(class_methods_info, klass, method, method_type)
           if method_type == :instance
             unless (class_methods_info[:instance_methods]).include?(method.to_sym)

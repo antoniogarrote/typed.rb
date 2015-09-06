@@ -15,7 +15,9 @@ class BasicObject
 
       ts '.register_type_information / Symbol -> String -> String -> Object -> unit'
       def register_type_information(kind, receiver, method, type_ast)
-        methods_for(kind, receiver)[method] = type_ast
+        methods = methods_for(kind, receiver)[method] || []
+        methods << type_ast
+        methods_for(kind, receiver)[method] = methods
       end
 
       ts '.register_generic_type_information / Hash[Object][Object] -> Hash[Object][Object] -> unit'

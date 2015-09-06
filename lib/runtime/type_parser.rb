@@ -197,7 +197,7 @@ module TypedRb
           is_generic = is_generic || block_type.generic? if block_type
 
           function_class = is_generic ? Types::TyGenericFunction : Types::TyFunction
-          function_type = function_class.new(arg_types, return_type)
+          function_type = function_class.new(arg_types, return_type, arg_types)
           function_type.local_typing_context = Types::TypingContext.empty_typing_context if function_type.generic?
           function_type.with_block_type(block_type) if block_type
           function_type

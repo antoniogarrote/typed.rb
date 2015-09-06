@@ -84,12 +84,12 @@ class Integer
   # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
 end
 
-# ts 'type Pair[S][T] super Array[Object]'
-# class Pair < Array
-#   ts '#first / -> [S]'
-#
-#   ts '#second / -> [T]'
-#   def second
-#     cast(at(1), '[T]')
-#   end
-# end
+ts 'type Pair[S][T] super Array[Object]'
+class Pair < Array
+  ts '#first / -> [S]'
+
+  ts '#second / -> [T]'
+  def second
+    cast(at(1), '[T]')
+  end
+end

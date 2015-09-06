@@ -76,7 +76,7 @@ module TypedRb
       end
 
       # Non generic type, the function is alwasy going to be concrete
-      def find_function_type(message)
+      def find_function_type(message, num_args)
         find_function_type_in_hierarchy(:instance, message)
       end
 
@@ -93,11 +93,16 @@ module TypedRb
         end
       end
 
-      def find_function_type_in_hierarchy(kind, message)
+      def find_function_type_in_hierarchy(kind, message, num_args)
         initial_value = BasicObject::TypeRegistry.find(kind, @hierarchy.first, message)
         @hierarchy.drop(1).inject([@hierarchy.first, initial_value]) do |(klass, acc), type|
           if acc.nil? || acc.is_a?(TyDynamicFunction)
-            [type, BasicObject::TypeRegistry.find(kind, type, message)]
+            maybe_function = BasicObject::TypeRegistry.find(kind, type, message)
+            if maybe_function && maybe_function.arg_compatible?(num_args)
+              [type, maybe_function]
+            else
+              [type, nil]
+            end
           else
             [klass, acc]
           end
