@@ -56,13 +56,39 @@ module TypedRb
       end
 
       def materialise_super_type_found_function(message)
-        tmp = generic_singleton_object.super_type.self_materialize.as_object_type
-        tmp.find_function_type(message)
+        super_type_object = BasicObject::TypeRegistry.find_generic_type(generic_singleton_object.super_type.ruby_type)
+        super_type_vars = generic_singleton_object.super_type.type_vars
+        super_type_materialization_args = parse_super_type_materialization_args(super_type_vars)
+        materialized_super_type = super_type_object.materialize(super_type_materialization_args)
+        materialized_super_type.as_object_type.find_function_type(message)
+      end
+
+      def parse_super_type_materialization_args(super_type_vars)
+        super_type_vars.map do |super_type_var|
+          parse_super_type_materialization_arg(super_type_var)
+        end
+      end
+
+      def parse_super_type_materialization_arg(super_type_var)
+        return super_type_var if super_type_var.bound
+        found_matching_var = type_vars.detect do |var|
+          var_name = var.name.split(':').last
+          super_type_var.name.index(var_name)
+        end
+        if found_matching_var
+          base_matching_var = found_matching_var.dup
+          base_matching_var.name = super_type_var.name
+          base_matching_var.variable = super_type_var.variable
+          base_matching_var
+        else
+          fail TypedRb::TypeCheckError,
+               "Error materializing super type annotation for variable #{generic_singleton_object.ruby_type} '#{super_type_var.split(':').last}' not found in base class #{ruby_type}"
+        end
       end
 
       def ancestor_of_super_type?(super_type_klass, function_klass_type)
-        # TODO: finish implementation
-        !super_type_klass.nil?
+        return false if super_type_klass.nil?
+        super_type_klass.ruby_type.ancestors.include?(function_klass_type)
       end
 
       def materialise_found_function_arg(arg)

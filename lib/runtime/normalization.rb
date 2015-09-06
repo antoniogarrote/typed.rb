@@ -23,6 +23,13 @@ module TypedRb
         end
       end
 
+      ts '.check_super_type_annotations / -> unit'
+      def check_super_type_annotations
+        @generic_types_registry.values.each do |type|
+          type.super_type.self_materialize if type.super_type
+        end
+      end
+
       def build_generic_singleton_object(type_info)
         type_class, info = type_info
         TypedRb.log(binding, :debug,  "Normalising generic type: #{type_class}")

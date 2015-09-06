@@ -129,4 +129,63 @@ __END
     result = language.check(code)
     expect(result.ruby_type).to eq(Object)
   end
+
+  it 'type-checks correctly super type generics detecting type errors based on the super-type parameter' do
+    code = <<__END
+    ts 'type BaseGen1[T]'
+    class BaseGen1
+      ts '#getString / -> String'
+      def getString
+       'a string'
+      end
+
+      ts '#in_subclass / -> [T]'
+      def in_subclass
+        getString
+      end
+    end
+
+    ts 'type MyContainerG2[T] super BaseGen1[String]'
+    class MyContainerG2 < BaseGen1
+    end
+
+    ts 'type MyContainerG3[T] super BaseGen1[Integer]'
+    class MyContainerG3 < BaseGen1
+    end
+__END
+
+    expect do
+      language.check(code)
+    end.to raise_error(TypedRb::Types::UncomparableTypes,
+                       /Cannot compare types Object with.*Integer/)
+  end
+
+  it 'type-checks correctly super type generics detecting type errors based on the super-type parameter on type instantiation' do
+    code = <<__END
+    ts 'type BaseGen2[T]'
+    class BaseGen2
+      ts '#getString / -> String'
+      def getString
+       'a string'
+      end
+
+      ts '#in_subclass / -> [T]'
+      def in_subclass
+        getString
+      end
+    end
+
+    ts 'type MyContainerG4[T] super BaseGen2[T]'
+    class MyContainerG4 < BaseGen2
+    end
+    BaseGen2.(String).new
+    MyContainerG4.(Integer).new
+__END
+
+    expect do
+      language.check(code)
+    end.to raise_error(TypedRb::Types::UncomparableTypes,
+                       /Cannot compare types Object with.*Integer/)
+  end
+
 end

@@ -18,6 +18,7 @@ module TypedRb
       ::BasicObject::TypeRegistry.normalize_types!
       TypingContext.clear(:top_level)
       check_result = check_type(parse(expr))
+      ::BasicObject::TypeRegistry.check_super_type_annotations
       @unification_result = run_unification
       check_result
     end

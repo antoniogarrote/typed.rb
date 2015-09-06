@@ -46,7 +46,6 @@ module TypedRb
       # @see comment below
       def materialize(actual_arguments)
         TypedRb.log binding, :debug, "Materialising generic singleton object '#{self}' with args [#{actual_arguments.map(&:to_s).join(',')}]"
-
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
             if argument.is_a?(Polymorphism::TypeVariable)
@@ -63,7 +62,7 @@ module TypedRb
                     fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
                   end
                 end
-              elsif argument.name.nil? && argument.bound # super type with a partivular value
+              elsif argument.bound # var type with a particular value
                 argument = argument.bound
                 if argument.is_a?(TyGenericSingletonObject)
                   argument = argument.self_materialize

@@ -1,5 +1,8 @@
 class BasicObject
   def ts(signature)
+    # TODO: Add information about the script and line for the invocation here
+    # caller_infos = caller.first.split(":")
+    # puts "#{caller_infos[0]} : #{caller_infos[1]} : #{str}"
     ::TypedRb.log(binding, :debug, "Parsing signature: #{signature}")
     if $TYPECHECK
       if ::TypedRb::Runtime::TypeSignatureProcessor.type_signature?(signature)
