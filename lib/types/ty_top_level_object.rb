@@ -14,12 +14,13 @@ module TypedRb
         self
       end
 
-      def find_function_type(message)
-        found_type = BasicObject::TypeRegistry.find(:instance, :main, message)
+      def find_function_type(message, num_args)
+        functions = BasicObject::TypeRegistry.find(:instance, :main, message)
+        found_type = functions.detect { |fn| fn.arg_compatible?(num_args) }
         if found_type && !found_type.is_a?(TyDynamicFunction)
           [:main, found_type]
         else
-          TyObject.new(ruby_type, node).find_function_type(message)
+          TyObject.new(ruby_type, node).find_function_type(message, num_args)
         end
       end
 

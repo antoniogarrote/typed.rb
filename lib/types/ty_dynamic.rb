@@ -18,10 +18,15 @@ module TypedRb
         super([], TyDynamic.new(Object, node), nil, node)
         @klass = klass
         @message = message
+        @arity = Float::INFINITY
         @block_type = TyDynamicFunction.new(Proc, :cal, false) if with_block
       end
 
       def dynamic?
+        true
+      end
+
+      def arg_compatible?(_)
         true
       end
 

@@ -74,7 +74,7 @@ class BasicObject
 
       # TODO: Generic types are retrieved without enforcing type constraints
       # because they haven't been materialised.
-      ts '.find / Symbol -> Class -> String -> TypedRb::Types::TyFunction'
+      ts '.find / Symbol -> Class -> String -> Array[TypedRb::Types::TyFunction]'
       def find(kind, klass, message)
         class_data = registry[[kind, klass]]
         if class_data
@@ -91,7 +91,7 @@ class BasicObject
           # if registered?(klass)
           #   nil
           # else
-          ::TypedRb::Types::TyDynamicFunction.new(klass, message)
+          [::TypedRb::Types::TyDynamicFunction.new(klass, message)]
           # end
         end
       end

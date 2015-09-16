@@ -110,7 +110,7 @@ module TypedRb
             normalized_method
           end
           validate_signatures(normalized_signatures, klass, method)
-          signatures_acc[method] = normalized_signatures
+          signatures_acc[method] = normalized_signatures.sort { |fa,fb| fa.arity <=> fb.arity }
         end
       end
 

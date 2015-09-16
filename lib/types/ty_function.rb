@@ -22,7 +22,11 @@ module TypedRb
       end
 
       def arg_compatible?(num_args)
-        from.size == num_args
+        if arity == Float::INFINITY
+          true
+        else
+          arity == num_args
+        end
       end
 
       def generic?

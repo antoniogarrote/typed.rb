@@ -17,8 +17,8 @@ module TypedRb
       # This object has concrete type parameters
       # The generic Function we retrieve from the registry might be generic
       # If it is generic we apply the bound parameters and we obtain a concrete function type
-      def find_function_type(message)
-        function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message)
+      def find_function_type(message, num_args)
+        function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message, num_args)
         if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
           materialise_super_type_found_function(message)
         else
