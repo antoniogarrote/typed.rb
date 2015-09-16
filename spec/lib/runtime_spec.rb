@@ -28,12 +28,12 @@ __END
 
     eval(code)
 
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|A']['test']).to eq(['String', :unit])
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['class|A']['class_method']).to eq(['Int', 'Int'])
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|B']['other_test']).to eq(['Int', :unit])
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|A']['other_test']).to eq(['Int', :unit])
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|A']['abbrev']).to eq(['String', 'String'])
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['class|A']['abbrev']).to eq(['String', 'String'])
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|A']['test']).to eq([['String', :unit]])
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['class|A']['class_method']).to eq([['Int', 'Int']])
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|B']['other_test']).to eq([['Int', :unit]])
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|A']['other_test']).to eq([['Int', :unit]])
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance|A']['abbrev']).to eq([['String', 'String']])
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['class|A']['abbrev']).to eq([['String', 'String']])
   end
 
   it 'normalizes the parsed types with information about the defined classes' do
@@ -64,9 +64,12 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["inc"].to_s).to eq("(Integer -> Integer)")
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_a"].to_s).to eq("(A -> Integer)")
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].to_s).to eq("(NilClass -> Boolean)")
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["inc"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["inc"].first.to_s).to eq("(Integer -> Integer)")
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_a"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_a"].first.to_s).to eq("(A -> Integer)")
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].first.to_s).to eq("(NilClass -> Boolean)")
   end
 
   it 'normalizes types with generic methods' do
@@ -80,7 +83,8 @@ __END
     eval(code)
 
     ::BasicObject::TypeRegistry.normalize_types!
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].to_s).to eq("(A:m:E::?, Integer -> A:m:Y::?)")
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].first.to_s).to eq("(A:m:E::?, Integer -> A:m:Y::?)")
   end
   it 'parses field type signatures and store the result in the registry' do
     $TYPECHECK = true
@@ -100,7 +104,7 @@ __END
     eval(code)
 
 
-    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance_variable|A']['@a']).to eq('Integer')
+    expect(::BasicObject::TypeRegistry.send(:parser_registry)['instance_variable|A']['@a']).to eq(['Integer'])
   end
 
   it 'normalizes types signatures for fields and store the result in the registry' do
@@ -140,7 +144,8 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer, Integer, Integer -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('(Integer, Integer, Integer -> Integer)')
   end
 
 
@@ -159,7 +164,8 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer, (Integer, Integer -> Integer) -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('(Integer, (Integer, Integer -> Integer) -> Integer)')
   end
 
   it 'parses type functions with no arguments' do
@@ -177,7 +183,8 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('( -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('( -> Integer)')
   end
 
   it 'parses type functions with functions with no arguments as argument' do
@@ -195,7 +202,8 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].to_s).to eq('(Integer, ( -> Integer) -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('(Integer, ( -> Integer) -> Integer)')
   end
 
   it 'parses generic types' do
@@ -235,17 +243,21 @@ __END
     expect(::BasicObject::TypeRegistry.send(:generic_types_registry)[Container].type_vars[0].variable).to eq('Container:X')
     expect(::BasicObject::TypeRegistry.send(:generic_types_registry)[Container].type_vars[0].upper_bound.ruby_type).to eq(Numeric)
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push']).to be_instance_of(TypedRb::Types::TyGenericFunction)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].from[0].variable).to eq('Container:X')
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].from[0].upper_bound.ruby_type).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].first).to be_instance_of(TypedRb::Types::TyGenericFunction)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].first.from[0].variable).to eq('Container:X')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['push'].first.from[0].upper_bound.ruby_type).to eq(Numeric)
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].to.variable).to eq('Container:X')
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].to.upper_bound.ruby_type).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].first.to.variable).to eq('Container:X')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['pop'].first.to.upper_bound.ruby_type).to eq(Numeric)
 
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test1']).to be_instance_of(TypedRb::Types::TyGenericFunction)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0']).to be_instance_of(TypedRb::Types::TyGenericFunction)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].to).to be_instance_of(TypedRb::Types::Polymorphism::TypeVariable)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].to.lower_bound.ruby_type).to eq(Numeric)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test1'].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test1'].first).to be_instance_of(TypedRb::Types::TyGenericFunction)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].size).to eq(1)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].first).to be_instance_of(TypedRb::Types::TyGenericFunction)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].first.to).to be_instance_of(TypedRb::Types::Polymorphism::TypeVariable)
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,Container]]['test0'].first.to.lower_bound.ruby_type).to eq(Numeric)
   end
 
   it 'parses concrete generic types' do
@@ -271,9 +283,9 @@ __END
     eval(code)
     ::BasicObject::TypeRegistry.normalize_types!
 
-    f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f1']
-    f2_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f2']
-    f3_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f3']
+    f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f1'].first
+    f2_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f2'].first
+    f3_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt1]]['f3'].first
     expect(f1_type).to be_instance_of(TypedRb::Types::TyFunction)
     expect(f1_type.from.first).to be_instance_of(TypedRb::Types::TyGenericObject)
     expect(f1_type.from.first.type_vars.first.bound.ruby_type).to eq(Integer)
@@ -308,7 +320,7 @@ __END
     eval(code)
     ::BasicObject::TypeRegistry.normalize_types!
 
-    f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt2]]['f1']
+    f1_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt2]]['f1'].first
     expect(f1_type.from[1]).to be_instance_of(TypedRb::Types::TyGenericObject)
     expect(f1_type.from[1].type_vars.first.bound.ruby_type).to eq(Integer)
     expect(f1_type.from[1].type_vars.first.variable).to eq('Array:T')
@@ -328,7 +340,7 @@ __END
     eval(code)
     ::BasicObject::TypeRegistry.normalize_types!
 
-    wblock_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt3]]['wblock']
+    wblock_type = ::BasicObject::TypeRegistry.send(:registry)[[:instance,Cnt3]]['wblock'].first
     expect(wblock_type.block_type.from.size).to eq(1)
     expect(wblock_type.block_type.from.first.ruby_type).to eq(Integer)
     expect(wblock_type.block_type.to.ruby_type).to eq(Integer)
@@ -359,7 +371,7 @@ __END
       ::BasicObject::TypeRegistry.normalize_types!
 
 
-      function_type = ::BasicObject::TypeRegistry.find(:instance, Container, :push)
+      function_type = ::BasicObject::TypeRegistry.find(:instance, Container, :push).first
       expect(function_type).to be_is_a(TypedRb::Types::TyFunction)
       expect(function_type.from.size).to eq(1)
       type_var = function_type.from.first

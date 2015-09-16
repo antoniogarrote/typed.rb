@@ -32,7 +32,7 @@ module TypedRb
             maybe_function = functions.detect do |fn|
               fn.arg_compatible?(num_args)
             end
-            [type, maybe_function]
+            [type, (maybe_function || TyDynamicFunction.new(klass, message))]
           else
             [klass, acc]
           end

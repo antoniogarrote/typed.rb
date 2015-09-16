@@ -73,11 +73,11 @@ __END
 
       ty_b = described_class.new(B1)
 
-      klass, method = ty_b.find_function_type(:a)
+      klass, method = ty_b.find_function_type(:a, 1)
       expect(method.to_s).to eq('(String -> NilClass)')
       expect(klass).to eq(A1)
 
-      klass, method = ty_b.find_function_type(:b)
+      klass, method = ty_b.find_function_type(:b, 1)
       expect(method.to_s).to eq('(Numeric -> NilClass)')
       expect(klass).to eq(B1)
     end
@@ -97,7 +97,7 @@ __END
 
       ty_b = described_class.new(B1)
 
-      klass, method = ty_b.find_function_type(:a)
+      klass, method = ty_b.find_function_type(:a, 2)
       function = method.from[1]
       expect(function).to be_instance_of(TypedRb::Types::TyFunction)
       expect(function.from.size).to eq(1)

@@ -12,11 +12,17 @@ module TypedRb
 
     def build_message_error(msg, nodes)
       if nodes && nodes.is_a?(Array)
+        num_columns = (nodes.last.loc.column - 2)
+        num_columns = num_columns < 0 ? 0 : num_columns
+
         "\n  #{msg}\n...\n#NO FILE:#{nodes.first.loc.line}\n#{'=' * (nodes.first.loc.column - 2)}> #{nodes.first.loc.expression.source}\n\
-#NO FILE:#{nodes.last.loc.line}\n#{'=' * (nodes.last.loc.column - 2)}> #{nodes.last.loc.expression.source}\n...\n"
+#NO FILE:#{nodes.last.loc.line}\n#{'=' * num_columns}> #{nodes.last.loc.expression.source}\n...\n"
       elsif nodes
         line = nodes.loc.line
-        "\n#NO FILE:#{line}\n  #{msg}\n...\n#{'=' * (nodes.loc.column - 2)}> #{nodes.loc.expression.source}\n...\n"
+        num_columns = (nodes.loc.column - 2)
+        num_columns = num_columns < 0 ? 0 : num_columns
+
+        "\n#NO FILE:#{line}\n  #{msg}\n...\n#{'=' * num_columns}> #{nodes.loc.expression.source}\n...\n"
       else
         msg
       end

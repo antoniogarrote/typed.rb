@@ -145,6 +145,22 @@ __CODE
       expect(result.ruby_type).to eq(String)
     end
 
+    it 'type-checks yielded blocks' do
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> String'
+        def f(&b)
+          yield 1
+        end
+
+        f { |arg| 'string' }
+__CODE
+
+      result = language.check(expr)
+
+      expect(result.ruby_type).to eq(String)
+    end
+
     it 'captures errors in yielded type-checking block-passing args' do
 
       expr = <<__CODE
@@ -157,6 +173,24 @@ __CODE
         p = Proc.new { |arg| 0 }
 
         f(&p)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+
+    end
+
+    it 'captures errors in yielded type-checking blocks' do
+
+      expr = <<__CODE
+
+        ts '#f / &(Integer -> String) -> String'
+        def f(&b)
+          yield 1
+        end
+
+        f { |arg| 0 }
 __CODE
 
       expect {

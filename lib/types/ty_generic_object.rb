@@ -20,7 +20,7 @@ module TypedRb
       def find_function_type(message, num_args)
         function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message, num_args)
         if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
-          materialise_super_type_found_function(message)
+          materialise_super_type_found_function(message, num_args)
         else
           TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}"
           materialised_function = materialise_found_function(function_type)
@@ -55,12 +55,12 @@ module TypedRb
         materialised_function.with_block_type(materialised_block_type)
       end
 
-      def materialise_super_type_found_function(message)
+      def materialise_super_type_found_function(message, num_args)
         super_type_object = BasicObject::TypeRegistry.find_generic_type(generic_singleton_object.super_type.ruby_type)
         super_type_vars = generic_singleton_object.super_type.type_vars
         super_type_materialization_args = parse_super_type_materialization_args(super_type_vars)
         materialized_super_type = super_type_object.materialize(super_type_materialization_args)
-        materialized_super_type.as_object_type.find_function_type(message)
+        materialized_super_type.as_object_type.find_function_type(message, num_args)
       end
 
       def parse_super_type_materialization_args(super_type_vars)

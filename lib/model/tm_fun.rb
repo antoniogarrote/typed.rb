@@ -64,13 +64,13 @@ module TypedRb
         if owner_type.nil?
           fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find owner type for #{owner}", node)
         end
-
-        function_klass_type, function_type = owner_type.find_function_type(name)
-        if function_type.nil?
-          fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
-        elsif function_type.is_a?(Types::TyDynamicFunction)
-        # Missing type information stops the type checking process
-        # TODO: raise a warning here about the previous fact
+        arg_count = args.count { |arg| arg.first != :blockarg }
+        function_klass_type, function_type = owner_type.find_function_type(name, arg_count)
+        if function_type.nil? || function_type.is_a?(Types::TyDynamicFunction)
+          # fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
+          # Missing type information stops the type checking process
+          # TODO: raise a warning here about the previous fact
+          # fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
         else
           # check matching args
           if function_type.from.size < args.select { |(arg_type, _)| arg_type == :arg }.size
