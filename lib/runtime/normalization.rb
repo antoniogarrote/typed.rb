@@ -107,6 +107,7 @@ module TypedRb
           normalized_signatures = signatures.map do |signature|
             normalized_method = normalize_signature!(klass, signature)
             validate_signature(method_type, normalized_method)
+            compute_parameters_info(method_type, klass, method, normalized_method, signature)
             normalized_method
           end
           if method_type == :instance_variable || method_type == :class_variable
@@ -124,6 +125,55 @@ module TypedRb
             signatures_acc[method] = normalized_signatures.sort { |fa,fb| fa.arity <=> fb.arity }
           end
         end
+      end
+
+      def compute_parameters_info(method_type, klass, method, normalized_method, signature)
+        return if method_type == :instance_variable || method_type == :class_variable
+        ruby_params = if method_type == :instance
+                        if klass == :main
+                          TOPLEVEL_BINDING.receiver.method(method).parameters
+                        else
+                          klass.instance_method(method).parameters
+                        end
+                      else
+                        if klass == :main
+                          TOPLEVEL_BINDING.receiver.class.method(method).parameters
+                        else
+                          klass.method(method).parameters
+                        end
+                      end
+        ruby_params_clean = ruby_params.reject { |(kind,_)| kind == :block }
+        min, max = ruby_params_clean.each_with_object([0,0]) do |(kind,_), acc|
+          acc[1] += 1
+          acc[1] = Float::INFINITY if kind == :rest
+          acc[0] += 1 if kind == :req
+        end
+
+        signature_clean = signature.reject { |acc| acc.is_a?(Hash) && acc[:kind] == :block_arg }
+        if signature_clean.count < min || signature_clean.count > max
+          fail ::TypedRb::Types::TypeParsingError,
+          "Type signature declaration for method #{method}: '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
+        end
+
+        count = 0
+        parameters_info = signature_clean.map do |signature_value|
+          type, name = if count > ruby_params_clean.count
+                         ruby_params_clean.last
+                       else
+                         ruby_params_clean[count]
+                       end
+          count += 1
+
+          if signature_value.is_a?(Hash) && signature_value[:kind] == :rest
+            [:rest, name]
+          elsif type == :rest
+            [:opt, name]
+          else
+            [type, name]
+          end
+        end
+
+        normalized_method.parameters_info = parameters_info
       end
 
       ts '.object_key / String -> String -> String'

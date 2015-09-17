@@ -53,7 +53,7 @@ __END
          0
        end
 
-       ts '#consume_b / unit -> Boolean'
+       ts '#consume_b / -> Boolean'
        def consume_b
          1
        end
@@ -69,7 +69,7 @@ __END
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_a"].size).to eq(1)
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_a"].first.to_s).to eq("(A -> Integer)")
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].size).to eq(1)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].first.to_s).to eq("(NilClass -> Boolean)")
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,B]]["consume_b"].first.to_s).to eq("( -> Boolean)")
   end
 
   it 'normalizes types with generic methods' do
@@ -153,7 +153,7 @@ __END
     $TYPECHECK = true
     code = <<__END
      class A
-       ts '#func / Integer -> (Integer -> Integer -> Integer) -> Integer'
+       ts '#func / Integer -> &(Integer -> Integer -> Integer) -> Integer'
        def func(i)
          yield i, i
        end
@@ -165,14 +165,14 @@ __END
     ::BasicObject::TypeRegistry.normalize_types!
 
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].size).to eq(1)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('(Integer, (Integer, Integer -> Integer) -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('(Integer, &(Integer, Integer -> Integer) -> Integer)')
   end
 
   it 'parses type functions with no arguments' do
     $TYPECHECK = true
     code = <<__END
      class A
-       ts '#func / -> Integer'
+       ts '#func / Integer -> Integer'
        def func(i)
          1
        end
@@ -184,7 +184,7 @@ __END
     ::BasicObject::TypeRegistry.normalize_types!
 
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].size).to eq(1)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('( -> Integer)')
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["func"].first.to_s).to eq('(Integer -> Integer)')
   end
 
   it 'parses type functions with functions with no arguments as argument' do

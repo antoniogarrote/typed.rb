@@ -80,6 +80,10 @@ def tyregexp
   TypedRb::Types::TyRegexp.new
 end
 
+def tydynamic
+  TypedRb::Types::TyDynamic.new(Object)
+end
+
 def tyvariable(name)
   TypedRb::Types::Polymorphism::TypeVariable.new(name, :gen_name => false)
 end

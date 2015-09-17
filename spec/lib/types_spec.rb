@@ -59,12 +59,12 @@ describe TypedRb::Types::TyObject do
 
          class A1
             ts 'A1#a / String -> unit'
-            def a; puts 'a'; end
+            def a(s); puts 'a'; end
          end
 
          class B1 < A1
             ts 'B1#b / Numeric -> unit'
-            def b; puts 'a'; end
+            def b(n); puts 'a'; end
          end
 __END
 
@@ -108,6 +108,9 @@ __END
   end
 
   describe('#parse') do
+    before :each do
+      ::BasicObject::TypeRegistry.clear
+    end
 
     context 'with a generic type' do
 

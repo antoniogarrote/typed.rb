@@ -204,9 +204,8 @@ module TypedRb
             end.to
           else
             formal_parameters = function_type.from
-            method = receiver_type.resolve_ruby_method(message)
-            parameters_info = method.parameters
-            TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{method.name}( #{parameters_info} )")
+            parameters_info = function_type.parameters_info
+            TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{message}( #{parameters_info} )")
             check_args_application(parameters_info, formal_parameters, args, context)
             if @block
               block_type = @block.check_type(context)

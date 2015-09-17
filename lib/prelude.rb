@@ -39,7 +39,7 @@ module Kernel
   ts '#autoload? / Symbol -> String'
   ts '#binding / -> Binding'
   ts '#block_given? / -> Boolean'
-  ts '#callcc / (Continuation -> BasicObject) -> BasicObject'
+  ts '#callcc / &(Continuation -> BasicObject) -> BasicObject'
   ts '#caller / Integer -> Integer -> Array[String]'
   ts '#caller / Range -> Array[String]'
 end
