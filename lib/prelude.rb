@@ -17,6 +17,9 @@ class BasicObject
   ts '#cast / BasicObject -> BasicObject -> BasicObject'
 end
 
+class Object
+  ts '#to_s / -> String'
+end
 
 module Kernel
   ts '#send / BasicObject -> BasicObject... -> BasicObject'
@@ -47,7 +50,8 @@ end
 ts 'type Array[T]'
 class Array
   ts '.[] / [T]... -> Array[T]'
-  ts '#initialize / BasicObject... -> Array[T]'
+  ts '#initialize / Integer -> Array[T]'
+  ts '#initialize / Integer -> [T] -> Array[T]'
   ts '#& / Array[T] -> Array[T]'
   ts '#* / Integer -> Array[T]'
   ts '#+ / Array[T] -> Array[T]'
@@ -56,8 +60,20 @@ class Array
   ts '#<=> / Array[T] -> Integer'
   ts '#== / Array[T] -> Array[T]'
   ts '#at / Integer -> [T]'
-  ts '#[] / Integer... -> Object'
+  ts '#[] / Object -> Object'
+  ts '#[] / Integer -> Integer -> Array[T]'
+  ts '#slice / Object -> Object'
+  ts '#slice / Integer -> Integer -> Array[T]'
   ts '#push / [T]... -> Array[T]'
+  ts '#any? / &([T] -> Boolean) -> Boolean'
+  ts '#assoc / Object -> Array[T]'
+  ts '#bsearch / &([T] -> Boolean) -> [T]'
+  ts '#clear / -> Array[T]'
+  ts '#collect[E] / &([T] -> [E]) -> Array[E]'
+  ts '#collect![E] / &([T] -> [E]) -> Array[E]'
+  ts '#combination / Integer -> Array[Array[T]]'
+  ts '#compact / -> Array[T]'
+  ts '#compact! / -> Array[T]'
 #  ts '#map[E] / &([T] -> [E]) -> Array[E]'
 end
 
