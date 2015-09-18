@@ -47,4 +47,49 @@ describe Array do
       expect(result.type_vars.first.bound.ruby_type).to eq(String)
     end
   end
+
+  context '#concat' do
+    it 'type checks / Array[T] -> Array[T]' do
+      result = language.check('Array.(Integer).new(10,0).concat(Array.(Integer).new(10,0))')
+      expect(result.ruby_type).to eq(Array)
+      expect(result.type_vars.first.bound.ruby_type).to eq(Integer)
+
+      expect {
+        language.check('Array.(Integer).new(10,0).concat(Array.(String).new(10,"blah"))')
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
+
+  context '#count' do
+    it 'type checks / &([T] -> Boolean) -> Integer' do
+      result = language.check('Array.(Integer).new(10,0).count(0)')
+      expect(result.ruby_type).to eq(Integer)
+
+      result = language.check('Array.(Integer).new(10,0).count{ |x| x == 0 }')
+      expect(result.ruby_type).to eq(Integer)
+
+      expect {
+        code = <<__CODE
+          ts '#testarrs / String -> Boolean'
+          def testarrs(s); true; end
+
+          Array.(Integer).new(10,0).count{ |x| testarrs(x) }
+__CODE
+        language.check(code)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
+
+  context '#eql?' do
+    it 'type checks / Array[?] -> Boolean' do
+      code = <<__CODE
+        as = Array.(Integer).new(10,0)
+        bs = Array.(String).new(10,'')
+
+        as.eql?(bs)
+__CODE
+      result = language.check(code)
+      expect(result.ruby_type).to eq(TrueClass)
+    end
+  end
 end
