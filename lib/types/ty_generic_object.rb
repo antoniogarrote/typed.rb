@@ -36,6 +36,7 @@ module TypedRb
       def materialise_found_function(function_type)
         from_args = function_type.from.map { |arg| materialise_found_function_arg(arg) }
         to_arg = materialise_found_function_arg(function_type.to)
+        return function_type unless function_type.generic?
         if function_type.block_type
           materialised_block_type = materialise_found_function(function_type.block_type)
         end

@@ -62,9 +62,6 @@ class Array
   ts '#at / Integer -> [T]'
   ts '#[] / Object -> Object'
   ts '#[] / Integer -> Integer -> Array[T]'
-  ts '#slice / Object -> Object'
-  ts '#slice / Integer -> Integer -> Array[T]'
-  ts '#push / [T]... -> Array[T]'
   ts '#any? / &([T] -> Boolean) -> Boolean'
   ts '#assoc / Object -> Array[T]'
   ts '#bsearch / &([T] -> Boolean) -> [T]'
@@ -89,68 +86,89 @@ class Array
   ts '#each_index / &([Integer] -> unit) -> Array[T]'
   ts '#empty? / -> Boolean'
   ts '#eql? / Array[?] -> Boolean'
-  # ts '#fetch
-  # ts '#fill
-  # ts '#find_index
-  # ts '#first
-  # ts '#flatten
-  # ts '#flatten!
-  # ts '#frozen?
-  # ts '#hash
-  # ts '#include?
-  # ts '#index
-  # ts '#initialize_copy
-  # ts '#insert
-  # ts '#inspect
-  # ts '#join
-  # ts '#keep_if
-  # ts '#last
-  # ts '#length
-  # ts '#map
-  # ts '#map!
-  # ts '#pack
-  # ts '#permutation
-  # ts '#pop
-  # ts '#product
-  # ts '#push
-  # ts '#rassoc
-  # ts '#reject
-  # ts '#reject!
-  # ts '#repeated_combination
-  # ts '#repeated_permutation
-  # ts '#replace
-  # ts '#reverse
-  # ts '#reverse!
-  # ts '#reverse_each
-  # ts '#rindex
-  # ts '#rotate
-  # ts '#rotate!
-  # ts '#sample
-  # ts '#select
-  # ts '#select!
-  # ts '#shift
-  # ts '#shuffle
-  # ts '#shuffle!
-  # ts '#size
-  # ts '#slice
-  # ts '#slice!
-  # ts '#sort
-  # ts '#sort!
-  # ts '#sort_by!
-  # ts '#take
-  # ts '#take_while
-  # ts '#to_a
-  # ts '#to_ary
-  # ts '#to_h
-  # ts '#to_s
-  # ts '#transpose
-  # ts '#uniq
-  # ts '#uniq!
-  # ts '#unshift
-  # ts '#values_at
-  # ts '#zip
-  # ts '#|
-#  ts '#map[E] / &([T] -> [E]) -> Array[E]'
+  ts '#fetch / Integer -> &(Integer ->[T]) -> [T]'
+  ts '#fetch / Integer -> [T] -> [T]'
+  # diff no block vs block
+  ts '#fill / [T] -> Array[T]'
+  ts '#fill / [T] -> Integer -> Array[T]'
+  ts '#fill / [T] -> Integer -> Integer -> Array[T]'
+  ts '#find_index / &([T] -> Boolean) -> Integer'
+  ts '#find_index / [T] -> Integer'
+  ts '#first / -> Array[T]'
+  ts '#first / Integer-> Array[T]'
+  ts '#flatten / -> Array[Object]'
+  ts '#flatten / Integer -> Array[Object]'
+  ts '#flatten! / -> Array[Object]'
+  ts '#flatten! / Integer -> Array[Object]'
+  ts '#frozen? / -> Boolean'
+  ts '#hash / -> Integer'
+  ts '#include? / [T] -> Boolean'
+  # diff no block vs block
+  ts '#index / &([T] -> Boolean) -> Integer'
+  ts '#index / [T] -> Integer'
+  ts '#initialize_copy / Array[T] -> Array[T]'
+  ts '#insert / Integer -> [T] -> [T]... -> Array[T]'
+  ts '#inspect / -> String'
+  ts '#join / -> String'
+  ts '#join / String -> String'
+  ts '#keep_if / &([T] -> Boolean) -> Array[T]'
+  ts '#last / -> [T]'
+  ts '#last / Integer -> Array[T]'
+  ts '#length / -> Integer'
+  ts '#map[E] / &([T] -> [E]) -> Array[E]'
+  ts '#map![E] / &([T] -> [E]) -> Array[E]'
+  ts '#pack / String -> String'
+  # diff no block vs block
+  ts '#permutation / -> Array[Array[T]]'
+  ts '#permutation / Integer -> Array[Array[T]]'
+  ts '#pop / -> [T]'
+  ts '#pop / Integer -> Array[T]'
+  ts '#product / Array[T]... -> Array[Array[T]]'
+  ts '#push / [T]... -> Array[T]'
+  # ts '#rassoc / '
+  ts '#reject / &([T] -> Boolean) -> Array[T]'
+  ts '#reject! / &([T] -> Boolean) -> Array[T]'
+  ts '#repeated_combination / Integer -> Array[Array[T]]'
+  ts '#repeated_permutation / Integer -> Array[Array[T]]'
+  ts '#replace / Array[T] -> Array[T]'
+  ts '#reverse / -> Array[T]'
+  ts '#reverse! / -> Array[T]'
+  ts '#reverse_each / &([T] -> unit) -> Array[T]'
+  ts '#rindex / &([T] -> Boolean) -> Integer'
+  ts '#rindex / [T] -> Integer'
+  ts '#rotate / -> Array[T]'
+  ts '#rotate / Integer -> Array[T]'
+  ts '#rotate! / -> Array[T]'
+  ts '#rotate! / Integer -> Array[T]'
+  ts '#sample / -> Array[T]'
+  ts '#sample / Integer -> Array[T]'
+  ts '#select / &([T] -> Boolean) -> Array[T]'
+  ts '#select! / &([T] -> Boolean) -> Array[T]'
+  ts '#shift / -> [T]'
+  ts '#shift / Integer -> Array[T]'
+  ts '#shuffle / -> Array[T]'
+  ts '#shuffle! / -> Array[T]'
+  ts '#size / -> Integer'
+  ts '#slice / Object -> Object'
+  ts '#slice / Integer -> Integer -> Array[T]'
+  ts '#slice! / Object -> Object'
+  ts '#slice! / Integer -> Integer -> Array[T]'
+  ts '#sort / &([T] -> [T] -> Integer) -> Array[T]'
+  ts '#sort! / &([T] -> [T] -> Integer) -> Array[T]'
+  ts '#sort_by! / &([T] -> Object) -> Array[T]'
+  ts '#take / Integer -> Array[T]'
+  ts '#take_while / &([T] -> Boolean) -> Array[T]'
+  ts '#to_a / -> Array[T]'
+  ts '#to_ary / -> Array[T]'
+  ts '#to_h / -> Hash[T][T]'
+  ts '#to_s / -> String'
+  # ts '#transpose'
+  ts '#uniq / &([T] -> Object) -> Array[T]'
+  ts '#uniq! / &([T] -> Object) -> Array[T]'
+  ts '#unshift / [T]... -> Array[T]'
+  ts '#values_at / Integer... -> Array[T]'
+  ts '#zip / Array[T]... -> Array[Array[T]]'
+  ts '#| / Array[T] -> Array[T]'
 end
 
 class Module
