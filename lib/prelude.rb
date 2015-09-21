@@ -47,6 +47,12 @@ module Kernel
   ts '#caller / Range -> Array[String]'
 end
 
+ts 'type Class[T]'
+class Class
+  ts '#initialize / -> Class[? < Object]'
+  ts '#initialize[E] / Class[E] -> Class[? < E]'
+end
+
 ts 'type Array[T]'
 class Array
   ts '.[] / [T]... -> Array[T]'

@@ -262,6 +262,7 @@ module TypedRb
                 actual_argument_type = actual_argument.check_type(context)
                 fail TypeCheckError.new("Error type checking message sent '#{message}': Missing type information for argument '#{arg_name}'", node) if formal_parameter_type.nil?
                 begin
+                  binding.pry
                   unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                     error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                     fail TypeCheckError.new(error_message, node)

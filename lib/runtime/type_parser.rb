@@ -31,12 +31,24 @@ module TypedRb
 
         def parse_type_var(type)
           if type[:binding] == '<'
+            upper_bound = Object.const_get(type[:bound]) rescue type[:bound]
+            upper_bound = if upper_bound.is_a?(Class)
+                            Types::TySingletonObject.new(upper_bound)
+                          else
+                            Types::Polymorphism::TypeVariable.new(upper_bound, :gen_name => false)
+                          end
             Types::Polymorphism::TypeVariable.new(type[:type],
-                                                  :upper_bound => Types::TySingletonObject.new(Object.const_get(type[:bound])),
+                                                  :upper_bound => upper_bound,
                                                   :gen_name    => false)
           elsif type[:binding] == '>'
+            lower_bound = Object.const_get(type[:bound])
+            lower_bound = if lower_bound.is_a?(Class)
+                            Types::TySingletonObject.new(lower_bound)
+                          else
+                            Types::Polymorphism::TypeVariable.new(lower_bound, :gen_name => false)
+                          end
             Types::Polymorphism::TypeVariable.new(type[:type],
-                                                  :lower_bound => Types::TySingletonObject.new(Object.const_get(type[:bound])),
+                                                  :lower_bound => lower_bound,
                                                   :gen_name    => false)
           elsif type[:type].is_a?(Class)
             type_object = Types::TyObject.new(type[:type])
