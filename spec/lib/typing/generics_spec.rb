@@ -87,7 +87,7 @@ __END
 __END
 
     result = language.check(code)
-    expect(result.to_s).to eq('Array[Class[String]]')
+    expect(result.to_s).to eq('Array[String]')
   end
 
   it 'detects errors materializing generic types using type variables' do

@@ -50,6 +50,22 @@ module TypedRb
         end
       end
 
+      def compatible?(other_type, relation = :lt)
+        if other_type.is_a?(TySingletonObject)
+          if ruby_type == Class || other_type.ruby_type == Class
+            if relation == :gt
+              ruby_type == Class
+            elsif relation == :lt
+              other_type.ruby_type == Class
+            end
+          else
+            super(other_type, relation)
+          end
+        else
+          super(other_type, relation)
+        end
+      end
+
       def resolve_ruby_method(message)
         @ruby_type.singleton_method(message)
       end
@@ -59,7 +75,7 @@ module TypedRb
       end
 
       def to_s
-        "Class[#{@ruby_type.name}]"
+        @ruby_type.name
       end
     end
   end

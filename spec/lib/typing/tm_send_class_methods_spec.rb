@@ -32,7 +32,7 @@ describe TypedRb::Model::TmSend do
          end
        end
 
-       TypeCM1.a + TypeCM1.b + TypeCM1.c
+       TypeCM1.a + TypeCM1.c  + TypeCM1.c
 __END
 
       result = language.check(expr)

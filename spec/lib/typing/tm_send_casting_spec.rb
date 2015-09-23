@@ -21,6 +21,6 @@ describe TypedRb::Model::TmSend do
     expr = 'cast(\'string\', \'Array[Integer]\')'
 
     result = language.check(expr)
-    expect(result.to_s).to eq('Array[Class[Integer]]')
+    expect(result.to_s).to eq('Array[Integer]')
   end
 end

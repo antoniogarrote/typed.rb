@@ -199,9 +199,11 @@ module TypedRb
         else
           if function_type.generic?
             function_type.local_typing_context.parent = Marshal::load(Marshal.dump(Types::TypingContext.type_variables_register))
-            function_type.materialize do |materialized_function|
+            #binding.pry
+            return_type = function_type.materialize do |materialized_function|
               check_application(receiver_type, materialized_function, context)
             end.to
+            return_type.respond_to?(:as_object_type) ? return_type.as_object_type : return_type
           else
             formal_parameters = function_type.from
             parameters_info = function_type.parameters_info
@@ -221,7 +223,8 @@ module TypedRb
               # E = [String, ?]
               block_type.compatible?(function_type.block_type, :lt) if function_type.block_type
             end
-            function_type.to
+            return_type = function_type.to
+            return_type.respond_to?(:as_object_type) ? return_type.as_object_type : return_type
           end
         end
       end
@@ -262,7 +265,7 @@ module TypedRb
                 actual_argument_type = actual_argument.check_type(context)
                 fail TypeCheckError.new("Error type checking message sent '#{message}': Missing type information for argument '#{arg_name}'", node) if formal_parameter_type.nil?
                 begin
-                  binding.pry
+                  #binding.pry
                   unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                     error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                     fail TypeCheckError.new(error_message, node)

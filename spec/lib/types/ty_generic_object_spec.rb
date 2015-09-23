@@ -31,7 +31,7 @@ __CODE
     expect {
       language.check(expr)
     }.to raise_error(TypedRb::Types::UncomparableTypes,
-                     /Cannot compare types Class\[Integer\] <=> String/)
+                     /Cannot compare types Integer <=> String/)
   end
 
   it 'detects errors for the instantiated concrete type' do
@@ -43,7 +43,7 @@ __CODE
 
     expect {
       language.check(expr)
-    }.to raise_error(TypedRb::Types::UncomparableTypes,/Cannot compare types String <=> Class\[Integer\]/)
+    }.to raise_error(TypedRb::Types::UncomparableTypes,/Cannot compare types String <=> Integer/)
   end
 
   it 'correctly types nested generic types' do
@@ -72,7 +72,7 @@ __CODE
     expect {
       language.check(expr)
     }.to raise_error(TypedRb::Types::UncomparableTypes,
-                     /Cannot compare types Array\[Class\[String\]\] <=> Array\[Class\[Integer\]\]/)
+                     /Cannot compare types Array\[String\] <=> Array\[Integer\]/)
 
   end
 end

@@ -24,8 +24,10 @@ module TypedRb
             parse_concrete_type(type, klass)
           elsif type.is_a?(Hash) && type[:kind] == :rest
             parse_rest_args(type, klass)
+          elsif type == :unit
+            Types::TyUnit.new
           else
-            parse_object_type(type)
+            parse_singleton_object_type(type)
           end
         end
 
@@ -158,18 +160,6 @@ module TypedRb
         def type_application_counter
           @type_application_counter ||= 0
           @type_application_counter += 1
-        end
-
-        def parse_object_type(type)
-          if type == :unit
-            Types::TyUnit.new
-          else
-            ruby_type = Object.const_get(type)
-            Types::TyObject.new(ruby_type)
-          end
-        rescue StandardError => e
-          TypedRb.log(binding, :error, "Error parsing object from type #{type}, #{e.message}")
-          fail TypeParsingError, "Unknown Ruby type #{type}"
         end
 
         def parse_existential_object_type(type)

@@ -236,7 +236,7 @@ __CODE
       expect {
         language.check(expr)
       }.to raise_error(TypedRb::Types::Polymorphism::UnificationError,
-                       /Numeric is not a subtype of Class\[Integer\]/)
+                       /Numeric is not a subtype of Integer/)
     end
 
     it 'materializes generic types when found in arguments sent with a message' do
@@ -266,7 +266,7 @@ __CODE
       expect {
         language.check(expr)
       }.to raise_error(TypedRb::Types::Polymorphism::UnificationError,
-                       /Numeric is not a subtype of Class\[Integer\]/)
+                       /Numeric is not a subtype of Integer/)
     end
 
     it 'supports nested type parameters' do

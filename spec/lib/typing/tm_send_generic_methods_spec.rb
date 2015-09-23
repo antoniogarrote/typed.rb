@@ -5,6 +5,9 @@ describe TypedRb::Model::TmSend do
 
   it 'applies arguments to generic methods' do
     code = <<__END
+      ts '#trs / Boolean -> String -> Integer'
+      def trs(a,b); 2; end
+
       class TestGM1
         ts '#gm[T][E] / [T] -> &([T] -> [E]) -> [E]'
         def gm(t)
@@ -12,11 +15,13 @@ describe TypedRb::Model::TmSend do
         end
       end
 
-      TestGM1.new.gm(true) { |t| false }
-      TestGM1.new.gm(1) { |t| 'string' }
+      a = TestGM1.new.gm(true) { |t| false }
+      b = TestGM1.new.gm(1) { |t| 'string' }
+
+      trs(a,b)
 __END
     result = language.check(code)
-    expect(result.ruby_type).to eq(String)
+    expect(result.ruby_type).to eq(Integer)
   end
 
   it 'applies arguments to generic methods mixing class and method type variables' do
