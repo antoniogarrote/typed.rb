@@ -1,5 +1,15 @@
 require 'continuation'
 
+module Showable; end
+
+class String
+  include Showable
+end
+
+class Symbol
+  include Showable
+end
+
 class BasicObject
   ts '#initialize / -> unit'
   ts '#! / -> Boolean'
@@ -18,13 +28,139 @@ class BasicObject
 end
 
 class Object
+  ts '#!~ / Object -> Boolean'
+  ts '#<=> / Object -> Integer'
+  ts '#=== / Object -> Boolean'
+  ts '#=~ / Object -> unit'
+  ts '#class / -> Class'
+  ts '#clone / -> Object'
+  #ts '#define_singleton_method / '
+  ts '#display / -> unit'
+  ts '#display / IO -> unit'
+  ts '#dup / -> Object'
+  # diff no block vs block
+  ts '#enum_for / -> Enumerator'
+  ts '#enum_for / Symbol -> Enumerator'
+  ts '#enum_for / Symbol -> Object... -> Enumerator'
+  ts '#eql? / Object -> Boolean'
+  ts '#extend / Module -> Object'
+  ts '#freeze / -> Object'
+  ts '#frozen? / -> Boolean'
+  ts '#hash / -> Integer'
+  ts '#inspect / -> String'
+  ts '#instance_of? / Class -> Boolean'
+  ts '#instance_variable_defined? / Showable -> Boolean'
+  ts '#instance_variable_get / Showable -> Boolean'
+  ts '#instance_variable_set / Showable -> Object -> Boolean'
+  ts '#instance_variables / -> Array[Symbol]'
+  ts '#is_a? / Class -> Boolean'
+  ts '#itself / -> Object'
+  ts '#kind_of? / Class -> Boolean'
+  ts '#method / Symbol -> Method'
+  ts '#methods / -> Array[Symbol]'
+  ts '#methods / Boolean -> Array[Symbol]'
+  ts '#nil? / -> Boolean'
+  ts '#object_id / -> Integer'
+  ts '#private_methods / -> Array[Symbol]'
+  ts '#private_methods / Boolean -> Array[Symbol]'
+  ts '#protected_methods / -> Array[Symbol]'
+  ts '#protected_methods / Boolean -> Array[Symbol]'
+  ts '#public_method / Symbol -> Method'
+  ts '#public_methods / -> Array[Symbol]'
+  ts '#public_methods / Boolean -> Array[Symbol]'
+  ts '#public_send / Showable -> Object... -> Object'
+  ts '#remove_instance_variable / Symbol -> Object'
+  ts '#respond_to? / Showable -> Boolean'
+  ts '#respond_to? / Showable -> Boolean -> Boolean'
+  ts '#respond_to_missing? / Showable -> Boolean -> Boolean'
+  ts '#send / Showable -> Object... -> Object'
+  ts '#singleton_class / -> Class'
+  ts '#singleton_method / Symbol -> Object'
+  ts '#singleton_methods / Boolean -> Array[Method]'
+  ts '#taint / -> Object'
+  ts '#tainted? / -> Boolean'
+  ts '#tap / &(Object -> unit) -> Object'
+  # diff no block vs block
+  ts '#to_enum / -> Enumerator'
+  ts '#to_enum / Symbol -> Enumerator'
+  ts '#to_enum / Symbol -> Object... -> Enumerator'
   ts '#to_s / -> String'
+  ts '#trust / -> Object'
+  ts '#untaint / -> Object'
+  ts '#untrust / -> Object'
+  ts '#untrusted? / -> Boolean'
 end
 
 module Kernel
-  ts '#send / BasicObject -> BasicObject... -> BasicObject'
+
+  ts '#Array[E] / Range[E] -> Array[E]'
+  #Complex
+  #Float
+  #Hash
+  #Integer
+  #Rational
+  #String
+  #__callee__
+  #__dir__
+  #__method__
+  #`
+  #abort
+  #at_exit
+  #autoload
+  #autoload?
+  #binding
+  #block_given?
+  #callcc
+  #caller
+  #caller_locations
+  #catch
+  #chomp
+  #chop
+  #eval
+  #exec
+  #exit
+  #exit!
+  #fail
+  #fork
+  #format
+  #gets
+  #global_variables
+  #gsub
+  #iterator?
+  #lambda
+  #load
+  #local_variables
+  #loop
+  #open
+  #p
+  #print
+  #printf
+  #proc
+  #putc
+  #puts
+  #raise
+  #rand
+  #readline
+  #readlines
+  #require
+  #require_relative
+  #select
+  #set_trace_func
+  #sleep
+  #spawn
+  #sprintf
+  #srand
+  #sub
+  #syscall
+  #system
+  #test
+  #throw
+  #trace_var
+  #trap
+  #untrace_var
+  #warn
+
   ts '#object_id / -> Integer'
-  ts '#Array / Range -> Array[Integer]'
   ts '#Complex / BasicObject -> Integer -> Complex'
   ts '#Float / BasicObject -> Float'
   ts '#Hash / BasicObject -> Hash[BasicObject][BasicObject]'
@@ -50,7 +186,7 @@ end
 class Class
   ts '#initialize / -> Class'
   ts '#initialize / Class -> Class'
-  ts '#allocate / BasicObject'
+  ts '#allocate / -> BasicObject'
 end
 
 ts 'type Array[T]'
@@ -188,7 +324,10 @@ class Hash
 end
 
 ts 'type Range[T]'
-class Range; end
+class Range
+  ts '#initialize / [T] -> [T] -> Range[T]'
+  ts '#initialize / [T] -> [T] -> Boolean -> Range[T]'
+end
 
 class Integer
   ts '#+ / Integer -> Integer'

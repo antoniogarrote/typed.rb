@@ -58,20 +58,24 @@ module TypedRb
         end
 
         def check_type_var_inclusion(type_var, other_type_var, relation)
-          superset, subset = relation == :lt ? [other_type_var, type_var] : [type_var, other_type_var]
+          if [type_var.bound, other_type_var.bound].compact.count == 1
+            add_type_var_constraint(type_var, other_type_var, relation)
+          else
+            superset, subset = relation == :lt ? [other_type_var, type_var] : [type_var, other_type_var]
 
-          super_min, super_max, sub_min, sub_max = [superset.lower_bound, superset.upper_bound, subset.lower_bound, subset.upper_bound]. map do |bound|
-            if bound.nil? || bound.is_a?(TyUnboundType)
-              nil
-            else
-              bound
+            super_min, super_max, sub_min, sub_max = [superset.lower_bound, superset.upper_bound, subset.lower_bound, subset.upper_bound]. map do |bound|
+              if bound.nil? || bound.is_a?(TyUnboundType)
+                nil
+              else
+                bound
+              end
             end
-          end
-          super_max ||= TyObject.new(Object)
-          sub_max ||= TyObject.new(Object)
+            super_max ||= TyObject.new(Object)
+            sub_max ||= TyObject.new(Object)
 
-          check_inferior_or_equal_binding(super_min, sub_min) &&
-            check_inferior_or_equal_binding(sub_max, super_max)
+            check_inferior_or_equal_binding(super_min, sub_min) &&
+              check_inferior_or_equal_binding(sub_max, super_max)
+          end
         end
 
         # nil < Type_i < Object
@@ -85,6 +89,15 @@ module TypedRb
           else
             binding_a <= binding_b
           end
+        end
+
+        def add_type_var_constraint(type_var, other_type_var, relation)
+          if type_var.bound
+            type_var, other_type_var = other_type_var, type_var
+            relation = relation == :lt ? :gt : :lt
+          end
+          type_var.add_constraint(relation, other_type_var.bound)
+          true
         end
       end
     end

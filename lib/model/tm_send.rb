@@ -111,6 +111,7 @@ module TypedRb
                 check_module_inclusions(self_type, context)
               else
                 # function application
+                binding.pry if message.to_s == "Array"
                 check_application(self_type, function_type, context)
               end
             rescue TypeCheckError => error
@@ -208,6 +209,7 @@ module TypedRb
             formal_parameters = function_type.from
             parameters_info = function_type.parameters_info
             TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{message}( #{parameters_info} )")
+            binding.pry if message == :Array || message == :test
             check_args_application(parameters_info, formal_parameters, args, context)
             if @block
               block_type = @block.check_type(context)
