@@ -84,7 +84,7 @@ __END
 
     ::BasicObject::TypeRegistry.normalize_types!
     expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].size).to eq(1)
-    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].first.to_s).to eq("(A:m:E::?, Integer -> A:m:Y::?)")
+    expect(::BasicObject::TypeRegistry.send(:registry)[[:instance,A]]["m"].first.to_s).to eq("(A:m:E::[?,?], Integer -> A:m:Y::[?,?])")
   end
   it 'parses field type signatures and store the result in the registry' do
     $TYPECHECK = true

@@ -305,7 +305,7 @@ __CODE
                          return: rt1,
                          message: :go!)
       # rt1 :: reached?[unit -> rt2]
-      rt2 = TypedRb::Types::TypingContext.type_variable_for(:test, 'rt2_reached?', [Object])
+      rt2 = TypedRb::Types::TypingContext.type_variable_for(:test, 'rt2_reached', [Object])
       rt1.add_constraint(:send,
                          args: [],
                          return: rt2,

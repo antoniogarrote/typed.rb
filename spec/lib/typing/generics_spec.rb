@@ -109,7 +109,7 @@ __END
     expect do
       language.check(code)
     end.to raise_error(TypedRb::TypeCheckError,
-                       /TestGen2\:T\:\:\? expected, TestGen2\:U\:\:\? found/)
+                       /TestGen2\:T\:\:\[\?,\?\] expected, TestGen2\:U\:\:\[\?,\?\]/)
   end
 
   it 'type-checks correctly super type generics' do

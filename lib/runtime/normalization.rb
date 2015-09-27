@@ -97,7 +97,8 @@ module TypedRb
 
       ts '.normalize_signature! / Class -> String -> TypedRb::Types::TyFunction'
       def normalize_signature!(klass, type)
-        ::TypedRb::Runtime::TypeParser.parse(type, klass)
+        normalized_signature = ::TypedRb::Runtime::TypeParser.parse(type, klass)
+        ::TypedRb::Model::TmFun.with_fresh_bindings(klass, normalized_signature)
       end
 
       def normalize_method_signatures(method_signatures, klass, method_type)

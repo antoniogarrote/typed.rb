@@ -54,7 +54,7 @@ module TypedRb
                                                   :gen_name    => false)
           elsif type[:type].is_a?(Class)
             type_object = Types::TyObject.new(type[:type])
-            type_var = Types::Polymorphism::TypeVariable.new(nil,
+            type_var = Types::Polymorphism::TypeVariable.new("#{type[:type]}:T",
                                                              :gen_name => false,
                                                              :upper_bound => type_object,
                                                              :lower_bound => type_object)
@@ -115,22 +115,24 @@ module TypedRb
                                   concrete_param
                                 elsif param[:bound]
                                   # A type parameter that is not bound in the generic type declaration.
-                                  # It has to be local to the method (TODO: not implemented yet)
-                                  # or a wildcard '?'
+                                  # It has to be local to the method or a wildcard '?'
                                   is_generic = true
                                   # TODO: add some reference to the method if the variable is method specific?
-                                  if param[:type] == '?'
+                                  if param[:type] == '?' # [? < Type]
                                     param[:type] = "#{type_var.name}:#{type_application_counter}:#{param[:type]}"
-                                  else
+                                  else # [E < Type]
                                     param[:type] = "#{type_var.name}:#{param[:type]}:#{type_application_counter}"
                                   end
                                   parse(param, klass)
-                                elsif param[:sub_kind] == :method_type_var
+                                elsif param[:type] == '?' # [?]
+                                  is_generic = true
+                                  Types::Polymorphism::TypeVariable.new(param[:type], :gen_name => false)
+                                elsif param[:sub_kind] == :method_type_var # method[E] / [E]
                                   # A type parameter that is not bound in the generic type declaration.
                                   # It has to be local to the method
                                   is_generic = true
                                   Types::Polymorphism::TypeVariable.new("#{klass}:#{param[:type]}", :gen_name => false)
-                                else
+                                else  # [Type]
                                   begin
                                     # The Generic type is bound to a concrete type: bound == upper_bound == lower_bound
                                     bound = Types::TySingletonObject.new(Object.const_get(param[:type]))
@@ -140,7 +142,7 @@ module TypedRb
                                                                                            :gen_name => false)
                                     concrete_param.bind(bound)
                                     concrete_param
-                                  rescue NameError => e
+                                  rescue NameError => e # [E] / E != ruby type
                                     # TODO: transform this into the method_type_var shown before
                                     is_generic = true
                                     Types::Polymorphism::TypeVariable.new(param[:type], :gen_name => false)

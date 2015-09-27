@@ -30,7 +30,7 @@ module TypedRb
             maybe_class_bound
           end
         end
-        materialize(bound_type_vars.map{ |type_var| type_var.send(bound_type) })
+        materialize(bound_type_vars.map { |type_var| type_var.send(bound_type) })
       end
 
       def self_materialize
@@ -49,7 +49,7 @@ module TypedRb
         with_fresh_var_types do |fresh_vars_generic_type|
           actual_arguments.each_with_index do |argument, i|
             if argument.is_a?(Polymorphism::TypeVariable)
-              if argument.name && argument.name.index(':?')
+              if argument.wildcard?
                 # Wild card type
                 # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
                 { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
@@ -62,6 +62,7 @@ module TypedRb
                     fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
                   end
                 end
+                fresh_vars_generic_type.type_vars[i].to_wildcard! # WILD CARD
               elsif argument.bound # var type with a particular value
                 argument = argument.bound
                 if argument.is_a?(TyGenericSingletonObject)
@@ -110,6 +111,7 @@ module TypedRb
           # Appy constraints for application of Type args
           yield fresh_vars_generic_type
         end
+
         # got all the constraints here
         # do something with the context -> unification? merge context?
         # applied_typing_context.all_constraints.each{|(l,t,r)| puts "#{l} #{t} #{r}" }

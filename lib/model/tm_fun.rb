@@ -124,13 +124,13 @@ module TypedRb
 
           if is_constructor
             # constructor
-            with_fresh_bindings(function_klass_type, function_type, context, node) do
+            TmFun.with_fresh_bindings(function_klass_type, function_type) do
               body.check_type(context)
               function_type
             end
           else
             # check the body with the new bindings for the args
-            with_fresh_bindings(function_klass_type, function_type, context, node) do
+            TmFun.with_fresh_bindings(function_klass_type, function_type) do
               body_return_type = body.check_type(context)
               if body_return_type.is_a?(TmReturn)
                 body_return_type = body_return_type.check_type(context)
@@ -159,7 +159,7 @@ module TypedRb
       # 1 Find free type variables for the generic function.
       # 2 Create a new local typing context for the generic function
       # 3 Add free type variables to the typing context
-      def with_fresh_bindings(klass, function_type, context, node)
+      def TmFun.with_fresh_bindings(klass, function_type)
         if function_type.generic?
           Types::TypingContext.push_context(:method)
           function_type.free_type_variables(klass).each do |type_var|
@@ -167,7 +167,7 @@ module TypedRb
             Types::TypingContext.type_variable_for_function_type(type_var)
           end
 
-          yield
+          yield if block_given?
 
           # # Since every single time we find the generic type the same instance
           # # will be returned, the local_typing_context will still be associated.
@@ -175,7 +175,7 @@ module TypedRb
           # # one while type materialization.
           function_type.local_typing_context = Types::TypingContext.pop_context
         else
-          yield
+          yield if block_given?
         end
         function_type
       end

@@ -32,10 +32,11 @@ module TypedRb
       end
 
       def check_type(context)
+        @context = context
         TypedRb.log(binding, :debug,  "Type checking message sent: #{message} at line #{node.loc.line}")
         if receiver.nil? && message == :ts
           # ignore, => type annotation
-        elsif message == :new && !singleton_object_type(receiver, context).nil?
+        elsif message == :new && !singleton_object_type(receiver, context).nil? # clean this!
           check_instantiation(context)
         elsif receiver == :self || receiver.nil?
           # self.m(args), m(args), m
@@ -47,13 +48,13 @@ module TypedRb
       end
 
       def singleton_object_type(receiver,context)
-        receiver_type = if (receiver.nil? || receiver == :self)
-                          context.get_type_for(:self)
-                        else
-                          receiver.check_type(context)
-                        end
-        if receiver_type.is_a?(Types::TySingletonObject)
-          receiver_type
+        parsed_receiver_type = if (receiver.nil? || receiver == :self)
+                                 context.get_type_for(:self)
+                               else
+                                 receiver_type
+                               end
+        if parsed_receiver_type.is_a?(Types::TySingletonObject)
+          parsed_receiver_type
         else
           nil
         end
@@ -111,7 +112,6 @@ module TypedRb
                 check_module_inclusions(self_type, context)
               else
                 # function application
-                binding.pry if message.to_s == "Array"
                 check_application(self_type, function_type, context)
               end
             rescue TypeCheckError => error
@@ -128,7 +128,6 @@ module TypedRb
       end
 
       def check_type_explicit_receiver(context)
-        receiver_type = receiver.check_type(context)
         if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
           arg_types = args.map { |arg| arg.check_type(context) }
           receiver_type.add_message_constraint(message, arg_types)
@@ -200,7 +199,6 @@ module TypedRb
         else
           if function_type.generic?
             function_type.local_typing_context.parent = Marshal::load(Marshal.dump(Types::TypingContext.type_variables_register))
-            #binding.pry
             return_type = function_type.materialize do |materialized_function|
               check_application(receiver_type, materialized_function, context)
             end.to
@@ -209,7 +207,6 @@ module TypedRb
             formal_parameters = function_type.from
             parameters_info = function_type.parameters_info
             TypedRb.log(binding, :debug, "Checking function application #{receiver_type}::#{message}( #{parameters_info} )")
-            binding.pry if message == :Array || message == :test
             check_args_application(parameters_info, formal_parameters, args, context)
             if @block
               block_type = @block.check_type(context)
@@ -267,7 +264,6 @@ module TypedRb
                 actual_argument_type = actual_argument.check_type(context)
                 fail TypeCheckError.new("Error type checking message sent '#{message}': Missing type information for argument '#{arg_name}'", node) if formal_parameter_type.nil?
                 begin
-                  #binding.pry
                   unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                     error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                     fail TypeCheckError.new(error_message, node)
@@ -308,6 +304,10 @@ module TypedRb
           end
         end
         self_type
+      end
+
+      def receiver_type
+        @receiver_type ||= receiver.check_type(@context)
       end
     end
   end

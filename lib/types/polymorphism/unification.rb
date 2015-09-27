@@ -179,21 +179,41 @@ module TypedRb
               var.upper_bound = final_lower_type
               final_upper_type = find_type(group[:upper_type], :upper_type)
               var.lower_bound = final_upper_type
-              final_binding_type = if final_lower_type == final_upper_type
-                                     final_upper_type
-                                   elsif final_lower_type && final_upper_type.nil?
-                                     final_lower_type
-                                   else
-                                     final_upper_type
-                                   end
-              binding_string = "[#{var.lower_bound ? var.lower_bound : '?'},#{var.upper_bound ? var.upper_bound : '?'}]"
-              if final_binding_type
-                num_bindings += 1
-                text << "Final binding:  #{var.variable} -> #{binding_string} : #{final_binding_type}\n"
-                var.bind(final_binding_type)
-              else
-                text << "Final binding:  #{var.variable} -> #{binding_string} : UNKNOWN\n"
-              end
+              #if var.wildcard?
+              #  final_binding_type = if final_lower_type == final_upper_type
+              #                         final_upper_type
+              #                       elsif final_lower_type && final_upper_type
+              #                         final_lower_type
+              #                     #elsif final_lower_type && final_upper_type.nil?
+              #                     #  final_lower_type
+              #                     #else
+              #                     #  final_upper_type
+              #                     end
+              #  binding_string = "[#{var.lower_bound ? var.lower_bound : '?'},#{var.upper_bound ? var.upper_bound : '?'}]"
+              #  if final_binding_type
+              #    num_bindings += 1
+              #    text << "Final binding:  #{var.variable} -> #{binding_string} : #{final_binding_type}\n"
+              #    var.bind(final_binding_type)
+              #  else
+              #    text << "Final binding:  #{var.variable} -> #{binding_string} : UNKNOWN\n"
+              #  end
+              #else
+                final_binding_type = if final_lower_type == final_upper_type
+                                       final_upper_type
+                                     elsif final_lower_type && final_upper_type.nil?
+                                         final_lower_type
+                                     else
+                                       final_upper_type
+                                     end
+                binding_string = "[#{var.lower_bound ? var.lower_bound : '?'},#{var.upper_bound ? var.upper_bound : '?'}]"
+                if final_binding_type
+                  num_bindings += 1
+                  text << "Final binding:  #{var.variable} -> #{binding_string} : #{final_binding_type}\n"
+                  var.bind(final_binding_type)
+                else
+                  text << "Final binding:  #{var.variable} -> #{binding_string} : UNKNOWN\n"
+                end
+              #end
             end
           end
           text << "Found #{num_bindings} bindings"
