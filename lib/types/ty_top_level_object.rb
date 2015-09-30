@@ -6,7 +6,7 @@ module TypedRb
         super(TOPLEVEL_BINDING.receiver.class)
       end
 
-      def compatible?(other_type)
+      def compatible?(_other_type)
         fail StandardError, 'invoking compatible? in the top level object'
       end
 
@@ -14,13 +14,12 @@ module TypedRb
         self
       end
 
-      def find_function_type(message, num_args)
-        functions = BasicObject::TypeRegistry.find(:instance, :main, message)
-        found_type = functions.detect { |fn| fn.arg_compatible?(num_args) }
+      def find_function_type(message, num_args, block)
+        found_type = select_matching_function_in_class(:main, :instance, message, num_args, block)
         if found_type && !found_type.is_a?(TyDynamicFunction)
           [:main, found_type]
         else
-          TyObject.new(ruby_type, node).find_function_type(message, num_args)
+          TyObject.new(ruby_type, node).find_function_type(message, num_args, block)
         end
       end
 

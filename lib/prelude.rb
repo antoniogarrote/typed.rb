@@ -218,7 +218,6 @@ class Array
   ts '#count / [T] -> Integer'
   ts '#cycle / &([T] -> unit) -> unit'
   ts '#cycle / Integer -> &([T] -> unit) -> unit'
-  # diff no block vs block
   ts '#delete / [T] -> &(-> [T]) -> [T]'
   ts '#delete_at / Integer -> [T]'
   ts '#delete_if / &([T] -> Boolean) -> Array[T]'

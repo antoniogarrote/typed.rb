@@ -60,7 +60,7 @@ module TypedRb
           message = send_args[:message]
           inferred_receiver = infer_receiver(receiver)
           if inferred_receiver
-            klass, function = inferred_receiver.find_function_type(message, arg_types.size)
+            klass, function = inferred_receiver.find_function_type(message, arg_types.size, false)
             return true if function.is_a?(Types::TyDynamicFunction)
             if function && can_apply?(function, arg_types)
               if return_type && graph[return_type][:upper_type]

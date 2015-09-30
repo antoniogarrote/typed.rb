@@ -9,29 +9,22 @@ module TypedRb
       end
 
       # No generic type, function will always be concrete
-      def find_function_type(message, num_args)
-        functions = BasicObject::TypeRegistry.find(:class, ruby_type, message)
-        maybe_function = functions.detect do |fn|
-          fn.arg_compatible?(num_args)
-        end
+      def find_function_type(message, num_args, block)
+        maybe_function = select_matching_function_in_class(ruby_type, :class, message, num_args, block)
         if maybe_function && !maybe_function.dynamic?
           [ruby_type, maybe_function]
         else
           # This object is a class, we need to look in the hierarhcy of the meta-class
-          find_function_type_in_metaclass_hierarchy(message, num_args)
+          find_function_type_in_metaclass_hierarchy(message, num_args, block)
         end
       end
 
-      def find_function_type_in_metaclass_hierarchy(message, num_args)
+      def find_function_type_in_metaclass_hierarchy(message, num_args, block)
         hierarchy = Class.ancestors
-        functions = BasicObject::TypeRegistry.find(:instance, hierarchy.first, message)
-        initial_value = functions.detect{ |fn| fn.arg_compatible?(num_args) }
+        initial_value = select_matching_function_in_class(hierarchy.first, :instance, message, num_args, block)
         hierarchy.drop(1).inject([hierarchy.first, initial_value]) do |(klass, acc), type|
           if acc.nil? || acc.is_a?(TyDynamicFunction)
-            functions = BasicObject::TypeRegistry.find(:instance, type, message)
-            maybe_function = functions.detect do |fn|
-              fn.arg_compatible?(num_args)
-            end
+            maybe_function = select_matching_function_in_class(type, :instance, message, num_args, block)
             [type, (maybe_function || TyDynamicFunction.new(klass, message))]
           else
             [klass, acc]

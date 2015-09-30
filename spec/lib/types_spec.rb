@@ -55,7 +55,7 @@ describe TypedRb::Types::TyObject do
 
     it 'it can find methods in the base and super classes' do
       $TYPECHECK = true
-      code = <<__END
+      code = <<__CODE
 
          class A1
             ts 'A1#a / String -> unit'
@@ -66,44 +66,73 @@ describe TypedRb::Types::TyObject do
             ts 'B1#b / Numeric -> unit'
             def b(n); puts 'a'; end
          end
-__END
+__CODE
 
       eval(code)
       ::BasicObject::TypeRegistry.normalize_types!
 
       ty_b = described_class.new(B1)
 
-      klass, method = ty_b.find_function_type(:a, 1)
+      klass, method = ty_b.find_function_type(:a, 1, false)
       expect(method.to_s).to eq('(String -> NilClass)')
       expect(klass).to eq(A1)
 
-      klass, method = ty_b.find_function_type(:b, 1)
+      klass, method = ty_b.find_function_type(:b, 1, false)
       expect(method.to_s).to eq('(Numeric -> NilClass)')
       expect(klass).to eq(B1)
     end
 
     it 'can find methods with functions as arguments' do
       $TYPECHECK = true
-      code = <<__END
+      code = <<__CODE
 
          class A1
             ts '#a / String -> (String -> String) -> unit'
             def a(s,f); f(s); end
          end
-__END
+__CODE
 
       eval(code)
       ::BasicObject::TypeRegistry.normalize_types!
 
       ty_b = described_class.new(B1)
 
-      klass, method = ty_b.find_function_type(:a, 2)
+      klass, method = ty_b.find_function_type(:a, 2, false)
       function = method.from[1]
       expect(function).to be_instance_of(TypedRb::Types::TyFunction)
       expect(function.from.size).to eq(1)
       expect(function.from[0]).to eq(ty_string)
       expect(function.to).to eq(ty_string)
       expect(klass).to eq(A1)
+    end
+
+    context 'with multiple signatures including block types' do
+      it 'find both versions with and without block type' do
+        $TYPECHECK = false
+        eval 'class A2; def t(x); end; end'
+        $TYPECHECK = true
+        code = <<__CODE
+        class A2
+           ts '#t / Integer -> Integer'
+           ts '#t / Integer -> &(Integer -> String) -> String'
+        end
+__CODE
+
+        eval(code)
+        ::BasicObject::TypeRegistry.normalize_types!
+
+        ty_b = described_class.new(A2)
+
+        _, method = ty_b.find_function_type(:t, 1, false)
+        expect(method.from.count).to eq(1)
+        expect(method.block_type).to be_nil
+        expect(method.to.ruby_type).to eq(Integer)
+
+        _, method = ty_b.find_function_type(:t, 1, true)
+        expect(method.from.count).to eq(1)
+        expect(method.block_type).to_not be_nil
+        expect(method.to.ruby_type).to eq(String)
+      end
     end
   end
 
@@ -116,14 +145,14 @@ __END
 
       it 'should parse a generic singleton class if it the var is not bound' do
         $TYPECHECK = true
-        code = <<__END
+        code = <<__CODE
 
          ts 'type A2[T]'
          class A2
             ts '#a / [T]... -> unit'
             def a(*xs); end
          end
-__END
+__CODE
 
         eval(code)
         ::BasicObject::TypeRegistry.normalize_types!

@@ -11,9 +11,14 @@ module TypedRb
 
         def validate_signatures(normalized_signatures, klass, method)
           arities = normalized_signatures.map(&:arity)
-          duplicated_arity = arities.detect { |arity| arities.count(arity) > 1 }
-          error_message = "Duplicated arity '#{duplicated_arity}' for method '#{klass}' / '#{method}'"
-          fail ::TypedRb::Types::TypeParsingError, error_message if duplicated_arity
+          duplicated_arities = arities.select { |arity| arities.count(arity) > 1 }
+          duplicated_arities.each do |arity|
+            duplicated = normalized_signatures.select { |signature| signature.arity == arity }
+            unless duplicated.count == 2 || duplicated.first.block_type.nil? != duplicated.first.block_type.nil?
+              error_message = "Duplicated arity '#{duplicated_arity}' for method '#{klass}' / '#{method}'"
+              fail ::TypedRb::Types::TypeParsingError, error_message if duplicated_arity
+            end
+          end
         end
 
         def validate_method(class_methods_info, klass, method, method_type)

@@ -76,8 +76,8 @@ module TypedRb
       end
 
       # Non generic type, the function is alwasy going to be concrete
-      def find_function_type(message, num_args)
-        find_function_type_in_hierarchy(:instance, message, num_args)
+      def find_function_type(message, num_args, block)
+        find_function_type_in_hierarchy(:instance, message, num_args, block)
       end
 
       def find_var_type(var)
@@ -93,15 +93,11 @@ module TypedRb
         end
       end
 
-      def find_function_type_in_hierarchy(kind, message, num_args)
-        functions = BasicObject::TypeRegistry.find(kind, @hierarchy.first, message)
-        initial_value = functions.detect { |fn| fn.arg_compatible?(num_args) }
+      def find_function_type_in_hierarchy(kind, message, num_args, block)
+        initial_value = select_matching_function_in_class(@hierarchy.first, kind, message, num_args, block)
         @hierarchy.drop(1).inject([@hierarchy.first, initial_value]) do |(klass, acc), type|
           if acc.nil? || acc.is_a?(TyDynamicFunction)
-            functions = BasicObject::TypeRegistry.find(kind, type, message)
-            maybe_function = functions.detect do |fn|
-              fn.arg_compatible?(num_args)
-            end
+            maybe_function = select_matching_function_in_class(type, kind, message, num_args, block)
             [type, (maybe_function || TyDynamicFunction.new(klass, message))]
           else
             [klass, acc]
@@ -187,6 +183,18 @@ module TypedRb
         else
           nil
           #fail UncomparableTypes.new(self, other)
+        end
+      end
+
+      def select_matching_function_in_class(klass, kind, message, num_args, block)
+        functions = BasicObject::TypeRegistry.find(kind, klass, message)
+        initial_values = functions.select { |fn| fn.arg_compatible?(num_args) }
+        if initial_values.count == 2 && block
+          initial_values.detect { |f| f.block_type }
+        elsif initial_values.count == 2 && !block
+          initial_values.detect { |f| f.block_type.nil? }
+        else
+          initial_values.first
         end
       end
     end

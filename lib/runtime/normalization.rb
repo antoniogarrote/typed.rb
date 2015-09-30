@@ -115,15 +115,8 @@ module TypedRb
             # TODO: print a warning if the declaration of the variable is duplicated
             signatures_acc[method] = normalized_signatures.first
           else
-            normalized_signatures = normalized_signatures.each_with_object({}) do |normalized_signature, acc|
-              arity = normalized_signature.arity
-              if acc[arity]
-                # TODO: print a warning if the arity is duplicated
-              end
-              acc[arity] = normalized_signature
-            end.values
             validate_signatures(normalized_signatures, klass, method)
-            signatures_acc[method] = normalized_signatures.sort { |fa,fb| fa.arity <=> fb.arity }
+            signatures_acc[method] = normalized_signatures.sort { |fa, fb| fa.arity <=> fb.arity }
           end
         end
       end

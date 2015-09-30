@@ -67,7 +67,7 @@ module TypedRb
       # for the constructor application (should be unit/nil).
       def check_instantiation(context)
         self_type = singleton_object_type(receiver,context).as_object_type
-        function_klass_type, function_type = self_type.find_function_type(:initialize, args.size)
+        function_klass_type, function_type = self_type.find_function_type(:initialize, args.size, @block)
         if function_type.nil?
           error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type} constructor not found"
           fail TypeCheckError.new(error_message, node)
@@ -101,7 +101,7 @@ module TypedRb
             arg_types = args.map { |arg| arg.check_type(context) }
             self_type.add_message_constraint(message, arg_types)
           else
-            function_klass_type, function_type = self_type.find_function_type(message, args.size)
+            function_klass_type, function_type = self_type.find_function_type(message, args.size, @block)
             begin
               if function_type.nil?
                 error_message = "Error type checking message sent '#{message}': Type information for #{self_type}:#{message} not found"
@@ -138,7 +138,7 @@ module TypedRb
         elsif receiver_type.is_a?(Types::TyFunction) && (message == :[] || message == :call)
           check_lambda_application(receiver_type, context)
         else
-          function_klass_type, function_type = receiver_type.find_function_type(message, args.size)
+          function_klass_type, function_type = receiver_type.find_function_type(message, args.size, @block)
           begin
             if function_type.nil?
               error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."

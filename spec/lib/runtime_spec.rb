@@ -346,6 +346,42 @@ __END
     expect(wblock_type.block_type.to.ruby_type).to eq(Integer)
   end
 
+  let(:language) { TypedRb::Language.new }
+
+  it 'handles function signatures with and without blocks' do
+    $TYPECHECK = false
+
+    code = <<__CODE
+       class MBT1
+         def test(x); end
+       end
+__CODE
+
+    eval(code)
+
+    $TYPECHECK = true
+
+    code = <<__CODE
+       class MBT1
+          ts '#test / Integer -> Integer'
+          ts '#test / Integer -> &(String -> String) -> String'
+       end
+
+       ts '#t_int_str / Integer -> String -> String'
+       def t_int_str(a,b); b; end
+
+       mbt1 = MBT1.new
+
+       a = mbt1.test(1)
+       b = mbt1.test(1) { |x| 'string' }
+
+       t_int_str(a,b)
+__CODE
+
+    result = language.check(code)
+    expect(result.ruby_type).to eq(String)
+  end
+
   describe '.find' do
 
     it 'finds registered function types' do
