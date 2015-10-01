@@ -190,6 +190,13 @@ __END
   end
 
   context '#permutation' do
+    # TODO:
+    # There's a bug with recursive type variables in generic singleton objects.
+    # T will be bound to Array[T] and whatever the bound of Array[T] is, say Integer
+    # for Array[Integer]. These bounds will never be satisfied.
+    # A possible fix is to create different variables, using the instantiation counter
+    # whenever a generic singleton object is materialised (check with_fresh_bindings)
+    # in singletong generic object.
     xit 'type checks / -> Array[Array[T]]' do
       result = language.check('Array.(Integer).new(10,0).permutation')
       expect(result.ruby_type).to eq(Array)
@@ -199,6 +206,7 @@ __END
   end
 
   context '#product' do
+    # TODO: Same as previous spec
     xit 'type checks / ...Array[T] -> Array[Array[T]]' do
       result = language.check('Array.(Integer).new(10,0).product(Array.(Integer).new(5,1), Array.(Integer).new(5,2))')
       expect(result.ruby_type).to eq(Array)

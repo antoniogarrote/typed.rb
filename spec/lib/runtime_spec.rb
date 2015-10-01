@@ -382,6 +382,87 @@ __CODE
     expect(result.ruby_type).to eq(String)
   end
 
+  context 'handles bounds in method paramters' do
+    it 'handles positive case' do
+      code = <<__CODE
+
+      class TMBSA
+        ts '#tmbs1[E < Numeric] / [E] -> [E]'
+        def tmbs1(x); x; end
+      end
+
+      TMBSA.new.tmbs1(1)
+__CODE
+
+      result = language.check(code)
+      expect(result.ruby_type).to eq(Integer)
+    end
+
+    xit 'handles negative case' do
+      code = <<__CODE
+
+      class TMBSA
+        ts '#tmbs2[E < Numeric] / [E] -> [E]'
+        def tmbs2(x); x; end
+      end
+
+      TMBSA.new.tmbs2('string')
+__CODE
+
+      expect {
+        language.check(code)
+      }.to raise_error(TypedRb::TypeCheckError)
+    end
+  end
+
+  xit 'handles method type variables in main object' do
+    code = <<__END
+
+      ts '#tmm[E] / [E] -> [E]'
+      def tmm(x); x; end
+
+      tmm(2)
+__END
+
+    result = language.check(code)
+
+    expect(result.ruby_type).to eq(Integer)
+  end
+
+  it 'handles combinations of optional parameters' do
+    $TYPECHECK = false
+    eval('class TMBSB; def tcmm1(x, y=2, *z); x; end; end')
+    $TYPECHECK = true
+    code = <<__END
+      class TMBSB
+        ts '#tcmm1 / Integer -> Integer'
+        ts '#tcmm1 / Integer -> Integer -> Integer'
+        ts '#tcmm1 / Integer -> Integer -> String... -> Integer'
+      end
+__END
+
+    case1 = "#{code}; TMBSB.new.tcmm1(1)"
+    result = language.check(case1)
+    expect(result.ruby_type).to eq(Integer)
+
+    case2 = "#{code}; TMBSB.new.tcmm1(1,1)"
+    result = language.check(case2)
+    expect(result.ruby_type).to eq(Integer)
+
+    case3 = "#{code}; TMBSB.new.tcmm1(1,1,'a')"
+    result = language.check(case3)
+    expect(result.ruby_type).to eq(Integer)
+
+    case4 = "#{code}; TMBSB.new.tcmm1(1,1,'a','a')"
+    result = language.check(case4)
+    expect(result.ruby_type).to eq(Integer)
+
+    expect {
+      case5 = "#{code}; TMBSB.new.tcmm1(1,1,'a','a',2)"
+      language.check(case5)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
+  end
+
   describe '.find' do
 
     it 'finds registered function types' do

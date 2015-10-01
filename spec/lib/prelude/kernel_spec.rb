@@ -10,4 +10,14 @@ describe Kernel do
       expect(result.type_vars.first.bound.ruby_type).to eq(Integer)
     end
   end
+
+  context '#rand' do
+    it 'type checks #rand[E < Numeric] / [E] -> [E]' do
+      result = language.check('rand(2.0)')
+      expect(result.ruby_type).to eq(Float)
+
+      result = language.check('rand(1)')
+      expect(result.ruby_type).to eq(Integer)
+    end
+  end
 end
