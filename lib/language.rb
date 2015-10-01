@@ -1,4 +1,3 @@
-#require_relative 'init'
 require_relative './runtime/ast_parser'
 
 module TypedRb
@@ -23,8 +22,33 @@ module TypedRb
       check_result
     end
 
+    def check_files(files)
+      ::BasicObject::TypeRegistry.clear
+      $TYPECHECK = true
+      prelude_path = File.join(File.dirname(__FILE__), 'prelude.rb')
+      load prelude_path
+      files.each { |file| load file if file != prelude_path }
+      $TYPECHECK = false
+      TypedRb.log(binding, :debug, 'Normalize top level')
+      ::BasicObject::TypeRegistry.normalize_types!
+      TypingContext.clear(:top_level)
+      check_result = nil
+      files.each do |file|
+        puts "*** FILE #{file}"
+        expr = File.open(file, 'r').read
+        begin
+          check_result = check_type(parse(expr))
+        rescue TypedRb::TypeCheckError => e
+          puts e.message
+        end
+      end
+      ::BasicObject::TypeRegistry.check_super_type_annotations
+      @unification_result = run_unification
+      check_result
+    end
+
     def check_file(path)
-      check(File.open(path,'r').read)
+      check_files([path])
     end
 
     def parse(expr)

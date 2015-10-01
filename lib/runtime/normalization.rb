@@ -4,7 +4,7 @@ module TypedRb
   module Runtime
     module Normalization
       include Validations
-      ts '.normalize_generic_types! / -> unit'
+      ts '#normalize_generic_types! / -> unit'
       def normalize_generic_types!
         initial_value = Hash.(Class, TypedRb::Types::TyGenericSingletonObject).new
         @generic_types_registry = generic_types_parser_registry.each_with_object(initial_value) do |type_info, acc|
@@ -13,7 +13,7 @@ module TypedRb
         end
       end
 
-      ts '.normalize_methods! / -> unit'
+      ts '#normalize_methods! / -> unit'
       def normalize_methods!
         @registry = {}
         parser_registry.each_pair do |object_key, method_signatures|
@@ -23,7 +23,7 @@ module TypedRb
         end
       end
 
-      ts '.check_super_type_annotations / -> unit'
+      ts '#check_super_type_annotations / -> unit'
       def check_super_type_annotations
         @generic_types_registry.values.each do |type|
           type.super_type.self_materialize if type.super_type
@@ -95,7 +95,7 @@ module TypedRb
         }
       end
 
-      ts '.normalize_signature! / Class -> String -> TypedRb::Types::TyFunction'
+      ts '#normalize_signature! / Class -> String -> TypedRb::Types::TyFunction'
       def normalize_signature!(klass, type)
         normalized_signature = ::TypedRb::Runtime::TypeParser.parse(type, klass)
         ::TypedRb::Model::TmFun.with_fresh_bindings(klass, normalized_signature)
@@ -146,7 +146,7 @@ module TypedRb
         signature_clean = signature.reject { |acc| acc.is_a?(Hash) && acc[:kind] == :block_arg }
         if signature_clean.count < min || signature_clean.count > max
           fail ::TypedRb::Types::TypeParsingError,
-          "Type signature declaration for method #{method}: '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
+          "Type signature declaration for method '#{method}': '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
         end
 
         count = 0
@@ -170,12 +170,12 @@ module TypedRb
         normalized_method.parameters_info = parameters_info
       end
 
-      ts '.object_key / String -> String -> String'
+      ts '#object_key / String -> String -> String'
       def object_key(kind, receiver)
         "#{kind}|#{receiver}"
       end
 
-      ts '.parse_object_key / String -> Symbol -> Symbol'
+      ts '#parse_object_key / String -> Symbol'
       def parse_object_key(object_key)
         object_key.split('|').map(&:to_sym)
       end
