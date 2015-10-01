@@ -22,7 +22,7 @@ module TypedRb
             kind = :class
             receiver, message = receier_and_message.split('.')
           else
-            fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method type_signature: #{type_signature}"
+            fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method type_signature: #{full_signature}"
           end
           kind = :"#{kind}_variable" if message.index('@')
           [kind, receiver, message, type_signature]

@@ -170,6 +170,10 @@ module TypedRb
         expr = sanitize_input(expr)
         expr.each_char { |elem| parse_next_char(elem) }
         build_final_signature
+      rescue TypedRb::TypeSignature::ParsingError => e
+        raise e
+      rescue StandardError => e
+        raise TypedRb::TypeSignature::ParsingError.new(expr, e.message)
       end
 
       private

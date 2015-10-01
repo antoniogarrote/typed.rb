@@ -94,93 +94,109 @@ end
 module Kernel
 
   ts '#Array[E] / Range[E] -> Array[E]'
-  #Complex
-  #Float
-  #Hash
-  #Integer
-  #Rational
-  #String
-  #__callee__
-  #__dir__
-  #__method__
-  #`
-  #abort
-  #at_exit
-  #autoload
-  #autoload?
-  #binding
-  #block_given?
-  #callcc
-  #caller
-  #caller_locations
-  #catch
-  #chomp
-  #chop
-  #eval
-  #exec
-  #exit
-  #exit!
-  #fail
-  #fork
-  #format
-  #gets
-  #global_variables
-  #gsub
-  #iterator?
-  #lambda
-  #load
-  #local_variables
-  #loop
-  #open
-  #p
-  #print
-  #printf
-  #proc
-  #putc
-  #puts
-  #raise
-  #rand
-  #readline
-  #readlines
-  #require
-  #require_relative
-  #select
-  #set_trace_func
-  #sleep
-  #spawn
-  #sprintf
-  #srand
-  #sub
-  #syscall
-  #system
-  #test
-  #throw
-  #trace_var
-  #trap
-  #untrace_var
-  #warn
-
-  ts '#object_id / -> Integer'
-  ts '#Complex / BasicObject -> Integer -> Complex'
+  ts '#Complex / BasicObject -> Complex'
+  ts '#Complex / Integer -> Integer -> Complex'
   ts '#Float / BasicObject -> Float'
-  ts '#Hash / BasicObject -> Hash[BasicObject][BasicObject]'
+  ts '#Hash / BasicObject -> Float'
+  ts '#Integer / BasicObject -> Integer'
   ts '#Integer / BasicObject -> Integer -> Integer'
-  ts '#Rational / BasicObject -> Rational'
+  ts '#Rational / Numeric -> Rational'
+  ts '#Rational / Numeric -> Numeric -> Rational'
   ts '#String / BasicObject -> String'
   ts '#__callee__ / -> Symbol'
   ts '#__dir__ / -> String'
   ts '#__method__ / -> Symbol'
   ts '#` / String -> BasicObject'
+  ts '#abort / -> unit'
   ts '#abort / String -> unit'
+  ts '.abort / -> unit'
   ts '.abort / String -> unit'
   ts '#at_exit / &(-> unit) -> Proc'
-  ts '#autoload / BasicObject -> String -> unit'
-  ts '#autoload? / Symbol -> String'
+  ts '#autoload / Showable -> String -> unit'
+  ts '#autoload? / Showable -> String'
   ts '#binding / -> Binding'
   ts '#block_given? / -> Boolean'
   ts '#callcc / &(Continuation -> BasicObject) -> BasicObject'
-  ts '#caller / Integer -> Integer -> Array[String]'
   ts '#caller / Range -> Array[String]'
+  ts '#caller / Integer -> Integer -> Array[String]'
+  ts '#caller_locations / Range[Integer] -> Array[String]'
+  ts '#caller_locations / Integer -> Integer -> Array[String]'
+  #ts '#catch / -> unit'
+  #ts '#chomp / String -> String'
+  #ts '#chop / String -> String'
+  ts '#eval / String -> BasicObject'
+  ts '#eval / String -> Binding -> BasicObject'
+  ts '#eval / String -> Binding -> String -> BasicObject'
+  ts '#eval / String -> Binding -> String -> Integer -> BasicObject'
+  ts '#exec / BasicObject... -> String'
+  ts '#exit / -> unit'
+  ts '#exit / Boolean -> unit'
+  ts '#exit! / -> unit'
+  ts '#exit! / Boolean -> unit'
+  ts '#fail / -> unit'
+  ts '#fail / Exception -> unit'
+  ts '#fail / Exception -> String -> unit'
+  ts '#fail / Exception -> String -> Array[Object] -> unit'
+  ts '#fork / &(-> unit)-> Integer'
+  ts '#format / String -> Array[Object] -> String'
+  ts '#gets / -> String'
+  ts '#gets / Object -> String'
+  ts '#gets / String -> Integer -> String'
+  ts '#global_variables / -> Array[Symbol]'
+  # ts '#gsub / Object -> String'
+  ts '#iterator? / -> Boolean'
+  # ts '#lambda / (BasicObject... -> unit) -> Proc'
+  ts '#load / String -> Boolean'
+  ts '#load / String -> Boolean -> Boolean'
+  ts '#local_variables / -> Array[Symbol]'
+  ts '#loop / -> Enumerator'
+  ts '#loop / &( -> unit) -> unit'
+  ts '#open / String -> IO'
+  ts '#open / String -> &(IO -> unit) -> unit'
+  ts '#open / String -> Object... -> IO'
+  ts '#open / String -> Object... -> &(IO -> unit) -> unit'
+  ts '#p / -> unit'
+  ts '#p / BasicObject -> BasicObject'
+  ts '#p / BasicObject... -> Array[BasicObject]'
+  ts '#print / BasicObject... -> unit'
+  ts '#printf / String -> BasicObject... -> unit'
+  ts '#printf / IO -> String -> BasicObject... -> unit'
+  #ts '#proc / '
+  ts '#putc / Integer -> Integer'
+  ts '#puts / BasicObject -> BasicObject... -> unit'
+  ts '#raise / -> unit'
+  ts '#raise / Exception -> unit'
+  ts '#raise / Exception -> String -> unit'
+  ts '#raise / Exception -> String -> Array[Object] -> unit'
+  ts '#rand / -> Float'
+  ts '#rand[E < Numeric] / [E] -> [E]'
+  ts '#readline / Object -> String'
+  ts '#readline / String -> Integer -> String'
+  ts '#readlines / Object -> String'
+  ts '#readlines / String -> Integer -> String'
+  ts '#require / String -> Boolean'
+  ts '#require_relative / String -> Boolean'
+  ts '#select / Array[IO] -> Array[IO]'
+  ts '#select / Array[IO] -> Array[IO] -> Array[IO]'
+  ts '#select / Array[IO] -> Array[IO] -> Array[IO] -> Array[IO]'
+  ts '#select / Array[IO] -> Array[IO] -> Array[IO] -> Integer -> Array[IO] '
+  #set_trace_func
+  ts '#sleep / -> Integer'
+  ts '#sleep / Integer -> Integer'
+  #spawn
+  ts '#sprintf / String -> BasicObject... -> String'
+  ts '#srand / -> Bignum'
+  ts '#srand / -> Bignum -> Bignum'
+  #sub
+  ts '#syscall / Integer -> BasicObject... -> Integer'
+  #system
+  ts '#test / String -> BasicObject... -> BasicObject'
+  #throw
+  #trace_var
+  #trap
+  #untrace_var
+  ts '#warn / String -> unit'
+  ts '#warn / String -> String... -> unit'
 end
 
 class Class
