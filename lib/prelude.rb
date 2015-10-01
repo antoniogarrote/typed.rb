@@ -334,8 +334,67 @@ end
 
 ts 'type Hash[S][T]'
 class Hash
-  ts '#initialize / [S]... -> Hash[S][T]'
-#  ts '#map[E] / &(Pair[S][T] -> [E]) -> Array[E]'
+  #  ts '#map[E] / &(Pair[S][T] -> [E]) -> Array[E]'
+
+  ts '.[] / BasicObject... -> Hash[S][T]'
+  ts '.try_convert / BasicObject -> Hash[S][T]'
+  ts '#initialize / -> Hash[S][T]'
+  ts '#initialize / &(Hash[S][T] -> [S] -> unit) -> Hash[S][T]'
+  ts '#initialize / [T] -> Hash[S][T]'
+  #==
+  #[]
+  ts '#[]= / [S] -> [T] -> [T]'
+  #any?
+  #assoc
+  #clear
+  #compare_by_identity
+  #compare_by_identity?
+  #default
+  #default=
+  #default_proc
+  #default_proc=
+  #delete
+  #delete_if
+  #each
+  #each_key
+  #each_pair
+  #each_value
+  #empty?
+  #eql?
+  #fetch
+  #flatten
+  #has_key?
+  #has_value?
+  #hash
+  #include?
+  #inspect
+  #invert
+  #keep_if
+  #key
+  #key?
+  #keys
+  #length
+  #member?
+  #merge
+  #merge!
+  #rassoc
+  #rehash
+  #reject
+  #reject!
+  #replace
+  #select
+  #select!
+  #shift
+  #size
+  #store
+  #to_a
+  #to_h
+  #to_hash
+  #to_s
+  #update
+  #value?
+  #values
+  #values_at
 end
 
 ts 'type Range[T]'
