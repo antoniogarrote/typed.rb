@@ -15,20 +15,24 @@ module TypedRb
       end
 
       def check_type(context)
-        class_type = Runtime::TypeParser.parse_singleton_object_type(class_name)
+        class_ruby_type = Types::TypingContext.find_namespace(class_name)
+        class_type = Runtime::TypeParser.parse_singleton_object_type(class_ruby_type.name)
         context = context.add_binding(:self, class_type)
-        if class_type.is_a?(Types::TyGenericSingletonObject)
-          # If the type is generic, we will collect all the restrictions
-          # found while processing the class body in a local type_context.
-          # This context will be complemented with the remaining restrictions
-          # coming from type var application when the generic type becomes
-          # concrete to yield the final type.
-          TmClass.with_fresh_bindings(class_type, context, node) do
-            body.check_type(context) if body
-          end
-        else
-          body.check_type(context) if body
-        end
+        Types::TypingContext.namespace_push(class_name)
+        result_type = if class_type.is_a?(Types::TyGenericSingletonObject)
+                        # If the type is generic, we will collect all the restrictions
+                        # found while processing the class body in a local type_context.
+                        # This context will be complemented with the remaining restrictions
+                        # coming from type var application when the generic type becomes
+                        # concrete to yield the final type.
+                        TmClass.with_fresh_bindings(class_type, context, node) do
+                          body.check_type(context) if body
+                        end
+                      else
+                        body.check_type(context) if body
+                      end
+        Types::TypingContext.namespace_pop
+        result_type
       end
 
 

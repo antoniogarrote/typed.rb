@@ -20,7 +20,9 @@ module TypedRb
 
       def check_type(context)
         if class_name != :self
-          class_type = Runtime::TypeParser.parse_singleton_object_type(class_name)
+
+          class_ruby_type = Types::TypingContext.find_namespace(class_name)
+          class_type = Runtime::TypeParser.parse_singleton_object_type(class_ruby_type.name)
           class_type.node = node
           context = context.add_binding(:self, class_type)
         end

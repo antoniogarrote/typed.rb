@@ -3,7 +3,7 @@ require_relative '../model'
 
 module TypedRb
   module Model
-    # Class expression
+    # Module expression
     class TmModule < Expr
       attr_reader :module_name, :body
 
@@ -14,12 +14,15 @@ module TypedRb
       end
 
       def check_type(context)
-        module_type = Runtime::TypeParser.parse_existential_object_type(module_name)
+        module_ruby_type = Types::TypingContext.find_namespace(module_name)
+        module_type = Runtime::TypeParser.parse_existential_object_type(module_ruby_type.name)
+        Types::TypingContext.namespace_push(module_name)
         module_type.node = node
         module_typing_context = TmModule.with_local_context(module_type, node) do |module_self_variable|
           context = context.add_binding(:self, module_type)
           body.check_type(context) if body
         end
+        Types::TypingContext.namespace_pop
         module_type.local_typing_context = module_typing_context
         unification = Types::Polymorphism::Unification.new(module_type.local_typing_context.all_constraints,
                                                            :allow_unbound_receivers => true)

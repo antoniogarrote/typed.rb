@@ -14,16 +14,15 @@ describe TypedRb::Model::TmConst do
     expect(result.ruby_type).to eq(TmConstTest2)
   end
 
-  it 'type checks user defined constants'
-  # it 'type checks user defined constants' do
-  #   code = <<__END
-  #     module TestConstTest3
-  #       MY_CONSTANT = 2
-  #     end
-  #
-  #     TestConstTest3::MY_CONSTANT
-#__END
-  #   result = language.check(code)
-  #   expect(result.ruby_type).to eq(Integer)
-  # end
+  xit 'type checks user defined constants' do
+    code = <<__END
+       module TestConstTest3
+         MY_CONSTANT = 2
+       end
+
+       TestConstTest3::MY_CONSTANT
+__END
+     result = language.check(code)
+     expect(result.ruby_type).to eq(Integer)
+  end
 end

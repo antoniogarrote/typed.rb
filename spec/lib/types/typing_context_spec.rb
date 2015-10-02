@@ -26,4 +26,61 @@ describe TypedRb::Types::TypingContext do
       expect(result).to_not eq(result2)
     end
   end
+
+  describe 'namespaces' do
+    eval('module TCNS1; AC=0; module TCNS2; class A; end; class B; BC=1; end; end; end;')
+
+    before do
+      described_class.namespace.clear
+    end
+
+    it 'works like a stack' do
+      expect(described_class.namespace.count).to eq(0)
+      described_class.namespace_push('TCNS1')
+      described_class.namespace_push('TCNS2')
+      described_class.namespace_push('A')
+
+      expect(described_class.namespace).to eq(['TCNS1', 'TCNS2', 'A'])
+
+      described_class.namespace_pop
+      described_class.namespace_pop
+      described_class.namespace_pop
+      expect(described_class.namespace.count).to eq(0)
+    end
+
+    it 'handles compound class names' do
+      expect(described_class.namespace.count).to eq(0)
+      described_class.namespace_push('TCNS1')
+      described_class.namespace_push('TCNS2::A')
+
+      expect(described_class.namespace).to eq(['TCNS1', 'TCNS2', 'A'])
+    end
+
+    it 'is able to find nested classes' do
+      expect(described_class.namespace.count).to eq(0)
+      described_class.namespace_push('TCNS1')
+      described_class.namespace_push('TCNS2')
+
+      result = described_class.find_namespace('A')
+      expect(result).to eq(TCNS1::TCNS2::A)
+
+      result = described_class.find_namespace('AC')
+      expect(result).to eq(TCNS1::AC)
+
+      result = described_class.find_namespace('B::BC')
+      expect(result).to eq(TCNS1::TCNS2::B::BC)
+
+      result = described_class.find_namespace('TCNS2::B::BC')
+      expect(result).to eq(TCNS1::TCNS2::B::BC)
+
+      result = described_class.find_namespace('::String')
+      expect(result).to eq(String)
+
+      result = described_class.find_namespace('TCNS1::TCNS2::B::BC')
+      expect(result).to eq(TCNS1::TCNS2::B::BC)
+
+      result = described_class.find_namespace('::TCNS1::TCNS2::B::BC')
+      expect(result).to eq(TCNS1::TCNS2::B::BC)
+    end
+  end
 end

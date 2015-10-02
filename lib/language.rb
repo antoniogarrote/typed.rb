@@ -36,11 +36,11 @@ module TypedRb
       files.each do |file|
         puts "*** FILE #{file}"
         expr = File.open(file, 'r').read
-        begin
+        #begin
           check_result = check_type(parse(expr))
-        rescue TypedRb::TypeCheckError => e
-          puts e.message
-        end
+        #rescue TypedRb::TypeCheckError => e
+        #  puts e.message
+        #end
       end
       ::BasicObject::TypeRegistry.check_super_type_annotations
       @unification_result = run_unification

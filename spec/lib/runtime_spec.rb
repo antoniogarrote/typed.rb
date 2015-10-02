@@ -382,7 +382,7 @@ __CODE
     expect(result.ruby_type).to eq(String)
   end
 
-  context 'handles bounds in method paramters' do
+  context 'handles bounds in method parameters' do
     it 'handles positive case' do
       code = <<__CODE
 

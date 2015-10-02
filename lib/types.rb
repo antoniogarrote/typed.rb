@@ -37,6 +37,30 @@ module TypedRb
 
       class << self
 
+        def namespace
+          @namespace ||= []
+        end
+
+        def namespace_push(constant)
+          parts = constant.split('::')
+          @namespace += parts.reject { |part| namespace.include?(part) }
+        end
+
+        def namespace_pop
+          @namespace.pop
+        end
+
+        def find_namespace(constant, namespace = self.namespace)
+          return Object.const_get(constant) if constant.start_with?('::')
+          Object.const_get(namespace.join('::') + '::' + constant)
+        rescue NameError => e
+          if namespace.empty?
+            raise e
+          else
+            find_namespace(constant, namespace.take(namespace.size - 1))
+          end
+        end
+
         def empty_typing_context
           Polymorphism::TypeVariableRegister.new(nil, :local)
         end
