@@ -85,6 +85,8 @@ module TypedRb
         parse_yield(node, context)
       when :const
         TmConst.new(parse_const(node), node)
+      when :casgn
+        map(node.children.last, context)
       when :sclass
         parse_sclass(node, context)
       when :dstr

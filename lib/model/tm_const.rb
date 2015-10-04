@@ -23,7 +23,7 @@ module TypedRb
                  Runtime::TypeParser.parse_existential_object_type(value_ruby_type.name)
                else
                  # Must be a user defined constant
-                 Runtime::TypeParser.parse_object_type(value_ruby_type.receiver.class.name)
+                 Types::TyObject.new(value_ruby_type.class)
                end
         type.node = node
         type
