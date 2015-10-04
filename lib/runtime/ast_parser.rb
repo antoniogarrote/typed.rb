@@ -77,6 +77,8 @@ module TypedRb
         parse_regexp(node, context)
       when :if
         parse_if_then_else(node, context)
+      when :case
+        parse_case_when(node, context)
       when :block
         parse_block(node, context)
       when :send
@@ -357,6 +359,21 @@ module TypedRb
                    map(cond_expr, context),
                    then_expr_term,
                    else_expr_term)
+    end
+
+    def parse_case_when(node, context)
+      case_statement = map(node.children.first, context)
+      when_statements = node.children.drop(1).select { |statement| statement.type == :when }
+      default_statement = node.children.drop(1).select { |statement| statement.type != :when }.last
+      when_statements = when_statements.map do |statement|
+        [
+          statement,
+          map(statement.children[0], context),
+          map(statement.children[1], context)
+        ]
+      end
+      default_statement = map(default_statement, context) if default_statement
+      TmCaseWhen.new(node, case_statement, when_statements, default_statement)
     end
 
     def parse_begin(node, context)

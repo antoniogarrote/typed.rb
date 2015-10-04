@@ -27,13 +27,20 @@ module TypedRb
       $TYPECHECK = true
       prelude_path = File.join(File.dirname(__FILE__), 'prelude.rb')
       load prelude_path
-      files.each { |file| load file if file != prelude_path }
+      Kernel.reset_dependencies
+      Kernel.with_dependency_tracking do
+        files.each { |file| load file if file != prelude_path }
+      end
+      ordered_files = Kernel.computed_dependencies.select do |file|
+        files.include?(file)
+      end
+      ordered_files += files.select { |file| !ordered_files.include?(file) }
       $TYPECHECK = false
       TypedRb.log(binding, :debug, 'Normalize top level')
       ::BasicObject::TypeRegistry.normalize_types!
       TypingContext.clear(:top_level)
       check_result = nil
-      files.each do |file|
+      ordered_files.each do |file|
         puts "*** FILE #{file}"
         expr = File.open(file, 'r').read
         #begin

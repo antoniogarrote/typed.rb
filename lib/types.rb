@@ -235,46 +235,8 @@ module TypedRb
     end
 
     # load type files
-    Dir[File.join(File.dirname(__FILE__),'types','*.rb')].each do |type_file|
-      load(type_file)
-    end
-
-    # Aliases for different basic types
-
-    class TyInteger < TyObject
-      def initialize(node = nil)
-        super(Integer, node)
-      end
-    end
-
-    class TyFloat < TyObject
-      def initialize(node = nil)
-        super(Float, node)
-      end
-    end
-
-    class TyString < TyObject
-      def initialize(node = nil)
-        super(String, node)
-      end
-    end
-
-    class TyUnit < TyObject
-      def initialize(node = nil)
-        super(NilClass, node)
-      end
-    end
-
-    class TySymbol < TyObject
-      def initialize(node = nil)
-        super(Symbol, node)
-      end
-    end
-
-    class TyRegexp < TyObject
-      def initialize(node = nil)
-        super(Regexp, node)
-      end
-    end
+    #Dir[File.join(File.dirname(__FILE__),'types','*.rb')].each do |type_file|
+    #  load(type_file)
+    #end
   end
 end

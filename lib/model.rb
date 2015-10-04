@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require_relative('./types')
 
 module TypedRb
@@ -51,9 +50,4 @@ module TypedRb
       end
     end
   end
-end
-
-# load term files
-Dir[File.join(File.dirname(__FILE__),'typing','*.rb')].each do |term_file|
-  load(term_file)
 end

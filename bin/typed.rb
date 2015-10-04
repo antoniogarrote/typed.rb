@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-$TYPECHECK = false
+require 'pry'
+
+#$TYPECHECK = false
+#$LOAD_TO_TYPECHECK = true
 require_relative '../lib/init'
+#$LOAD_TO_TYPECHECK = false
 require 'benchmark'
 
 require 'set'
