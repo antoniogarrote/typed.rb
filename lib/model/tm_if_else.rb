@@ -4,7 +4,8 @@ require_relative '../model'
 module TypedRb
   module Model
     class TmIfElse < Expr
-      attr_reader :condition_expr, :then_expr, :else_expr
+      attr_reader :condition_expr, :then_expr
+      attr_accessor :else_expr
       def initialize(node, condition_expr, then_expr, else_expr)
         super(node, nil)
         @condition_expr = condition_expr
