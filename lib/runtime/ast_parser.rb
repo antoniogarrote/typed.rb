@@ -109,6 +109,8 @@ module TypedRb
         parse_boolean_asgn(node, context)
       when :op_asgn
         parse_op_asgn(node, context)
+      when :defined?
+        TmDefined.new(map(node.children.first, context), node)
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
