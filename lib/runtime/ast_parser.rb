@@ -107,6 +107,8 @@ module TypedRb
         parse_block_pass(node, context)
       when :or_asgn, :and_asgn
         parse_boolean_asgn(node, context)
+      when :op_asgn
+        parse_op_asgn(node, context)
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
@@ -450,6 +452,37 @@ module TypedRb
         attr_reader = build_send_message(receiver, message, [], lhs, context)
         attr_writer = build_send_message(receiver, "#{message}=", [rhs], lhs, context)
         TmBooleanOperator.new(:or, attr_reader, attr_writer, node)
+      end
+    end
+
+    def parse_op_asgn(node, context)
+      lvalue, message, arg_expr  = node.children
+      lreceiver = lvalue.children.first
+      arg = map(arg_expr, context)
+      rvalue =  case lvalue.type
+                when :lvasgn
+                  TmSend.new(TmVar.new(lreceiver, lvalue),
+                             message, [arg], node)
+                when :ivasgn
+                  TmSend.new(TmInstanceVar.new(lreceiver, lvalue),
+                             message, [arg], node)
+                when :gvasgn
+                  TmSend.new(TmGlobalVar.new(lreceiver, lvalue),
+                             message, [arg], node)
+                when :casgn
+                  constant_name = parse_const(lvalue)
+                  return TmSend.new(TmConst.new(constant_name,lvalue), message, [arg], node)
+                else
+                  fail Types::TypeParsingError.new("Unknown += operator application", node)
+                end
+
+      case lvalue.type
+      when :lvasgn
+        TmLocalVarAsgn.new(lvalue, rvalue, node)
+      when :ivasgn
+        TmInstanceVarAssignment.new(TmInstanceVar.new(lreceiver, lvalue), rvalue, node)
+      when :gvasgn
+        TmGlobalVarAssignment.new(TmGlobalVar.new(lreceiver, lvalue), rvalue, node)
       end
     end
   end

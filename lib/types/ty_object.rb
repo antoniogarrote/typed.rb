@@ -80,7 +80,7 @@ module TypedRb
         find_function_type_in_hierarchy(:instance, message, num_args, block)
       end
 
-      def find_var_type(var)
+      def find_var_type(var, type=ruby_type)
         # This is only in case the type has been explicitely declared
         var_type = BasicObject::TypeRegistry.find(:instance_variable, ruby_type, var)
         if var_type
