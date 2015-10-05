@@ -61,6 +61,18 @@ module TypedRb
           end
         end
 
+        def function_context_push(type, message, args)
+          @function_context = [type, message, args]
+        end
+
+        def function_context
+          @function_context
+        end
+
+        def function_context_pop
+          @function_context = nil
+        end
+
         def empty_typing_context
           Polymorphism::TypeVariableRegister.new(nil, :local)
         end

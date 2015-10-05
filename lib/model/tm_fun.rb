@@ -123,16 +123,21 @@ module TypedRb
           # adding yield binding if present
           context = context.add_binding(:yield, function_type.block_type) if function_type.block_type
 
+          # set the current function context
+          TypedRb::Types::TypingContext.function_context_push(self_type, name, function_type.from)
+
           if is_constructor
             # constructor
             TmFun.with_fresh_bindings(function_klass_type, function_type) do
               body.check_type(context)
+              TypedRb::Types::TypingContext.function_context_pop
               function_type
             end
           else
             # check the body with the new bindings for the args
             TmFun.with_fresh_bindings(function_klass_type, function_type) do
               body_return_type = body.check_type(context)
+              TypedRb::Types::TypingContext.function_context_pop
               if body_return_type.is_a?(TmReturn)
                 body_return_type = body_return_type.check_type(context)
               end

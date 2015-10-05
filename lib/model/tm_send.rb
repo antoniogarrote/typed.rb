@@ -139,7 +139,7 @@ module TypedRb
           check_lambda_application(receiver_type, context)
         else
           function_klass_type, function_type = receiver_type.find_function_type(message, args.size, @block)
-          begin
+          #begin
             if function_type.nil?
               error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."
               fail TypeCheckError.new(error_message, node)
@@ -149,13 +149,13 @@ module TypedRb
               # function application
               check_application(receiver_type, function_type, context)
             end
-          rescue TypeCheckError => error
-            if function_klass_type != receiver_type.ruby_type
-              Types::TyDynamic.new(Object, node)
-            else
-              raise error
-            end
-          end
+          #rescue TypeCheckError => error
+          #  if function_klass_type != receiver_type.ruby_type
+          #    Types::TyDynamic.new(Object, node)
+          #  else
+          #    raise error
+          #  end
+          #end
         end
       end
 

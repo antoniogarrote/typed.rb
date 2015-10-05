@@ -111,9 +111,18 @@ module TypedRb
         parse_op_asgn(node, context)
       when :defined?
         TmDefined.new(map(node.children.first, context), node)
+      when :zsuper
+        TmSuper.new(nil, node)
+      when :super
+        parse_super_with_args(node, context)
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
+    end
+
+    def parse_super_with_args(node, context)
+      args = node.children.map { |arg_node| map(arg_node, context) }
+      TmSuper.new(args, node)
     end
 
     def parse_instance_var(node, _context)

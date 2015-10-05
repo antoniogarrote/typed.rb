@@ -146,7 +146,7 @@ module TypedRb
         signature_clean = signature.reject { |acc| acc.is_a?(Hash) && acc[:kind] == :block_arg }
         if signature_clean.count < min || signature_clean.count > max
           fail ::TypedRb::Types::TypeParsingError,
-          "Type signature declaration for method '#{method}': '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
+          "Type signature declaration for method '#{klass}.#{method}': '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
         end
 
         count = 0
