@@ -115,6 +115,8 @@ module TypedRb
         TmSuper.new(nil, node)
       when :super
         parse_super_with_args(node, context)
+      when :while
+        parse_while(node, context)
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
@@ -239,6 +241,8 @@ module TypedRb
           [:blockarg, arg.children.first]
         when :restarg
           [:restarg, arg.children.last]
+        when :mlhs
+          [:mlhs, TmMlhs.new(arg.children.map { |n| n.children.last }, arg)]
         else
           fail Types::TypeParsingError.new("Unknown type of arg '#{arg.type}'", node)
         end
@@ -387,6 +391,13 @@ module TypedRb
       end
       default_statement = map(default_statement, context) if default_statement
       TmCaseWhen.new(node, case_statement, when_statements, default_statement)
+    end
+
+    def parse_while(node, context)
+      condition, body = node.children
+      condition_expr = map(condition, context)
+      body_expr = body ? map(body, context) : nil
+      TmWhile.new(condition_expr, body_expr, node)
     end
 
     def parse_begin(node, context)

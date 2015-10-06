@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 require_relative '../model'
+require_relative 'tm_mlhs'
 
 module TypedRb
   module Model
@@ -11,19 +12,25 @@ module TypedRb
         super(node)
         @owner = parse_owner(owner)
         @name = name
-        rename = {}
+        @args = args
+        @body = body
+        # rename = {}
         # This is safe, within the function, args names are bound
         # to this reference
-        @args = args.map do |arg|
-          old_id = arg[1].to_s
-          uniq_arg = Model::GenSym.next(old_id)
-          rename[old_id] = uniq_arg
-          arg[1] = uniq_arg
-          arg
-        end
-        @body = rename.inject(body) do |body_acc, (old_id, new_id)|
-          body_acc.rename(old_id, new_id)
-        end
+        #@args = args.map do |arg|
+        #  if arg[1].instance_of?(TmMlhs)
+        #    rename.merge(arg[1].rename)
+        #  else
+        #    old_id = arg[1].to_s
+        #    uniq_arg = Model::GenSym.next(old_id)
+        #    rename[old_id] = uniq_arg
+        #    arg[1] = uniq_arg
+        #  end
+        #  arg
+        #end
+        #@body = rename.inject(body) do |body_acc, (old_id, new_id)|
+        #  body_acc.rename(old_id, new_id)
+        #end
       end
 
       def rename(from_binding, to_binding)
@@ -107,6 +114,9 @@ module TypedRb
                         else
                           fail TypeCheckError.new("Error type checking function #{owner}##{name}: Missing block type for block argument #{arg[1]}", node)
                         end
+                      when :mlhs
+                        tm_mlhs = arg[1]
+                        tm_mlhs.check_type(function_arg_type, context)
                       else
                         fail TypeCheckError.new("Error type checking function #{owner}##{name}: Unknown type of arg #{arg.first}", node)
                       end

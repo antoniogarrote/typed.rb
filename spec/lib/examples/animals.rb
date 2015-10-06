@@ -1,8 +1,3 @@
-class Array
-  ts '#push / [T]... -> Array[T]'
-  ts '#last / Integer... -> [T]'
-end
-
 class Animal1
 
   ts '#make_sound / -> String'
