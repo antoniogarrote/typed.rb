@@ -18,13 +18,6 @@ module TypedRb
                     end
       end
 
-      def rename(from_binding, to_binding)
-        @elements = elements.map do |element|
-          element.rename(from_binding, to_binding)
-        end
-        self
-      end
-
       def check_type(context)
         if elements.size == 1
           elements.first.check_type(context)

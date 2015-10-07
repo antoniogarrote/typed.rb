@@ -22,17 +22,6 @@ module TypedRb
         end
       end
 
-      def rename
-        rename = {}
-        @args = args.map do |arg|
-          old_id = arg.to_s
-          uniq_arg = Model::GenSym.next(old_id)
-          rename[old_id] = uniq_arg
-          uniq_arg
-        end
-        rename
-      end
-
       def compatible?(other_type, relation = :lt)
         if other_type.generic? && other_type.ruby_type.ancestors.include?(Array)
           if other_type.type_vars.size == 1

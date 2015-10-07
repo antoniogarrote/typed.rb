@@ -14,39 +14,6 @@ module TypedRb
         @name = name
         @args = args
         @body = body
-        # rename = {}
-        # This is safe, within the function, args names are bound
-        # to this reference
-        #@args = args.map do |arg|
-        #  if arg[1].instance_of?(TmMlhs)
-        #    rename.merge(arg[1].rename)
-        #  else
-        #    old_id = arg[1].to_s
-        #    uniq_arg = Model::GenSym.next(old_id)
-        #    rename[old_id] = uniq_arg
-        #    arg[1] = uniq_arg
-        #  end
-        #  arg
-        #end
-        #@body = rename.inject(body) do |body_acc, (old_id, new_id)|
-        #  body_acc.rename(old_id, new_id)
-        #end
-      end
-
-      def rename(from_binding, to_binding)
-        # rename receiver
-        if owner != :self
-          @owner = @owner.rename(from_binding, to_binding)
-        end
-        # rename default args
-        args.each do |arg|
-          if arg.first == :optarg
-            arg[2] = arg[2].rename(from_binding, to_binding)
-          end
-        end
-        #rename free variables -> not bound (and already renamed) in args
-        @body = @body.rename(from, to_binding)
-        self
       end
 
       def check_type(context)

@@ -12,19 +12,6 @@ module TypedRb
         @default_statement = default_statement
       end
 
-      def rename(from_binding, to_binding)
-        @case_statement.rename(from_binding, to_binding)
-        @when_statements.map! do |(node, conditional, then_statement)|
-          [
-            node,
-            conditional.rename(from_binding, to_binding),
-            then_statement.rename(from_binding, to_binding)
-          ]
-        end
-        @default_statement.rename(from_binding, to_binding) if default_statement
-        self
-      end
-
       def check_type(context)
         conditions = build_conditionals(case_statement, when_statements)
         conditions = conditions.reduce([]) do |acc, (node, condition, then_statement)|

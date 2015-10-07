@@ -10,10 +10,6 @@ module TypedRb
         @expression = expression
       end
 
-      def rename(from_binding, to_binding)
-        @expression = expression.rename(from_binding, to_binding)
-      end
-
       def check_type(context)
         expression.check_type(context)
         Types::TyString.new(node)

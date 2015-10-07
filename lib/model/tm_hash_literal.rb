@@ -9,15 +9,6 @@ module TypedRb
         @pairs = pairs
       end
 
-      def rename(from_binding, to_binding)
-        @pairs = pairs.map do |(key, value)|
-          key = key.rename(from_binding, to_binding)
-          value = value.rename(from_binding, to_binding)
-          [key, value]
-        end
-        self
-      end
-
       def check_type(context)
         pair_types = pairs.map { |key, element|  [key.check_type(context), element.check_type(context)] }
         max_key_type = pair_types.map(&:first).max rescue Types::TyObject.new(Object, node)

@@ -11,10 +11,6 @@ module TypedRb
         @val = val
       end
 
-      def rename(_from_binding, _to_binding)
-        self
-      end
-
       def check_type(_context)
         value_ruby_type = Types::TypingContext.find_namespace(@val)
         type = if value_ruby_type.instance_of?(Class)

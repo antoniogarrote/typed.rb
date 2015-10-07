@@ -18,19 +18,6 @@ module TypedRb
         @block = block
       end
 
-      def rename(from_binding, to_binding)
-        # rename receiver
-        if !@receiver.nil? && @receiver != :self
-          @receiver = @receiver.rename(from_binding, to_binding)
-        elsif @receiver.nil? && @message == from_binding.to_sym
-          @message = to_binding.to_sym
-        end
-
-        # rename default args
-        @args = @args.map { |arg| arg.rename(from_binding, to_binding) }
-        self
-      end
-
       def check_type(context)
         @context = context
         TypedRb.log(binding, :debug,  "Type checking message sent: #{message} at line #{node.loc.line}")

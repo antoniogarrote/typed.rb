@@ -14,11 +14,6 @@ module TypedRb
         @rvalue = rvalue
       end
 
-      def rename(from_binding, to_binding)
-        @rvalue = rvalue.rename(from_binding, to_binding)
-        self
-      end
-
       def check_type(context)
         rvalue_type = rvalue.check_type(context)
         self_type = context.get_type_for(:self)

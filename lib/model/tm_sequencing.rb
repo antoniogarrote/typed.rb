@@ -10,11 +10,6 @@ module TypedRb
         @terms = terms.reject(&:nil?)
       end
 
-      def rename(from_binding, to_binding)
-        @terms = @terms.each { |term| term.rename(from_binding, to_binding) }
-        self
-      end
-
       def check_type(context)
         first_type = @terms.first.check_type(context)
         first_type_acc = if @terms.first.is_a?(TmReturn)

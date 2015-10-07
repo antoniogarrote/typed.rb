@@ -18,19 +18,6 @@ describe TypedRb::Model::TmAbs do
     expect(result.from[1].variable.index("lambda:#{parsed.term.args[0].val}")).to_not be_nil
   end
 
-  it 'renames free variables in the term' do
-    parsed = parse('->(bound) { bound + free }')
-
-    expect(parsed.abs_type).to eq(:lambda)
-    expect(parsed.term.args[0].message).to eq(:free)
-    expect(parsed.arity).to eq(1)
-    parsed.rename('free','x').rename('bound','y')
-    # bound -/-> y, it's bound
-    expect(parsed.term.receiver.val).to eq(parsed.args[0][1].to_s)
-    # free --> x, it's free
-    expect(parsed.term.args[0].message).to eq(:x)
-  end
-
   it 'check types creating the right constraints for the type variables' do
     parsed = parse('->(x,y) { x + y }')
     expect(parsed.arity).to eq(2)
@@ -61,19 +48,6 @@ describe TypedRb::Model::TmAbs do
     expect(result.from.size).to eq(2)
     expect(result.from[0].variable.index("lambda:#{parsed.term.receiver.val}")).to_not be_nil
     expect(result.from[1].variable.index("lambda:#{parsed.term.args[0].val}")).to_not be_nil
-  end
-
-  it 'renames free variables in the term' do
-    parsed = parse('Proc.new { |bound| bound + free }')
-
-    expect(parsed.abs_type).to eq(:proc)
-    expect(parsed.term.args[0].message).to eq(:free)
-    expect(parsed.arity).to eq(1)
-    parsed.rename('free','x').rename('bound','y')
-    # bound -/-> y, it's bound
-    expect(parsed.term.receiver.val).to eq(parsed.args[0][1].to_s)
-    # free --> x, it's free
-    expect(parsed.term.args[0].message).to eq(:x)
   end
 
   it 'check types creating the right constraints for the type variables' do

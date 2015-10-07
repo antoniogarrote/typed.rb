@@ -13,11 +13,6 @@ module TypedRb
         @val = val
       end
 
-      def rename(_from_binding, _to_binding)
-        # global vars cannot be captured
-        self
-      end
-
       def check_type(context)
         type = Types::TypingContext.type_variable_for_global(val)
         type.node = node

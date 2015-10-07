@@ -12,12 +12,6 @@ module TypedRb
         @ptions = options
       end
 
-      def rename(from_binding, to_binding)
-        exp.rename(from_binding, to_binding)
-        options.rename(from_binding, to_binding) if options
-        self
-      end
-
       def check_type(context)
         options.check_type(context) if options
         exp_type = exp.check_type(context)

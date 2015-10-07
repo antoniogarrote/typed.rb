@@ -12,12 +12,6 @@ module TypedRb
         @rhs = rhs
       end
 
-      def rename(from_binding, to_binding)
-        @lhs = lhs.map { |node| node == from_binding ? to_binding : node }
-        @rhs = rhs.rename(from_binding, to_binding)
-        self
-      end
-
       def check_type(context)
         rhs_type = rhs.check_type(context)
         if (rhs_type.ruby_type == Array)

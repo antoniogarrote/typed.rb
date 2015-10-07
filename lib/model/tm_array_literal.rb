@@ -9,13 +9,6 @@ module TypedRb
         @elements = elements
       end
 
-      def rename(from_binding, to_binding)
-        @elements = elements.map do |element|
-          element.rename(from_binding, to_binding)
-        end
-        self
-      end
-
       def check_type(context)
         element_types = elements.map { |element|  element.check_type(context) }
         max_type = element_types.max rescue Types::TyObject.new(Object, node)

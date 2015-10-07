@@ -17,13 +17,6 @@ module TypedRb
         "#{GenSym.resolve(@val)}"
       end
 
-      def rename(from_binding, to_binding)
-        if @val == from_binding
-          @val = to_binding
-        end
-        self
-      end
-
       def check_type(context)
         type = context.get_type_for(@val)
         if type.nil?

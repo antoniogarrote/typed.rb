@@ -10,12 +10,6 @@ module TypedRb
         @rescue_terms = rescue_terms
       end
 
-      def rename(from_binding, to_binding)
-        @try_term.rename(from_binding, to_binding)
-        @rescue_terms.each{|term| term.rename(from_binding, to_binding) }
-        self
-      end
-
       def check_type(context)
         try_term_type = @try_term.check_type(context)
         rescue_term_types = @rescue_terms.map do |term|

@@ -11,11 +11,6 @@ module TypedRb
         @args = args
       end
 
-      def rename(from_binding, to_binding)
-        @args = args.map { |arg| arg.rename(from_binding, to_binding) } if args
-        self
-      end
-
       def check_type(context)
         if Types::TypingContext.function_context
           self_type, message, args = Types::TypingContext.function_context

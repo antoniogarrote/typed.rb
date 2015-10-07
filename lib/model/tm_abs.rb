@@ -14,13 +14,6 @@ module TypedRb
         @instantiation_count = 0
       end
 
-      def rename(from_binding, to_binding)
-        unless args.any? { |(_type, arg_value)| arg_value.to_s == from_binding.to_s }
-          term.rename(from_binding, to_binding)
-        end
-        self
-      end
-
       def check_type(context)
         with_fresh_bindings(context) do |var_type_args, var_type_return, context|
           type_term = term.check_type(context)

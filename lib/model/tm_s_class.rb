@@ -13,11 +13,6 @@ module TypedRb
         @body = body
       end
 
-      def rename(from_binding, to_binding)
-        body.rename(from_binding, to_binding)
-        self
-      end
-
       def check_type(context)
         if class_name != :self
 

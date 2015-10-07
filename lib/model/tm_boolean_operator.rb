@@ -13,11 +13,6 @@ module TypedRb
         @operator = operator
       end
 
-      def rename(from_binding, to_binding)
-        @lhs = @lhs.rename(from_binding, to_binding)
-        @rhs = @rhs.rename(from_binding, to_binding)
-      end
-
       def check_type(context)
         lhs_type = @lhs.check_type(context)
         rhs_type = @rhs.check_type(context)

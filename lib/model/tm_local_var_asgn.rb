@@ -12,16 +12,6 @@ module TypedRb
         @rhs = rhs
       end
 
-      #ts '#rename / String -> String -> Expr'
-      def rename(from_binding, to_binding)
-        # let binding shadows variables in the closure
-        if lhs == from_binding
-          @lhs = to_binding
-        end
-        rhs.rename(from_binding, to_binding)
-        self
-      end
-
       def check_type(context)
         binding_type = rhs.check_type(context)
         maybe_binding = context.get_type_for(lhs)

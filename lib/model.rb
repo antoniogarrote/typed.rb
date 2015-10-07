@@ -44,10 +44,6 @@ module TypedRb
         fail TypeCheckError.new('Type error: Unknown type', node) if @type.nil?
         @type
       end
-
-      def rename(_from_binding, _to_binding)
-        self
-      end
     end
   end
 end
