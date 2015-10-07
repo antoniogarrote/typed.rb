@@ -38,6 +38,19 @@ __CODE
     }.to raise_error(TypedRb::Types::UncomparableTypes)
   end
 
+  it 'raises an error if the type of the argument is not an array or tuple' do
+    code = <<__CODE
+      ts '#mlhstest_error / Integer -> Integer'
+      def mlhstest_error((a,b))
+        a + b
+      end
+__CODE
+
+    expect {
+      language.check(code)
+    }.to raise_error(TypedRb::TypeCheckError)
+  end
+
   it 'type checks array args for blocks, positive case' do
     code = <<__CODE
       ts '#mlhsaddition3 / Integer -> Integer -> Integer'

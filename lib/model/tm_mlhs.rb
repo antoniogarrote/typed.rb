@@ -18,7 +18,7 @@ module TypedRb
         elsif array_argument?(actual_argument)
           process_array(actual_argument, context)
         else
-          process_other(actual_argument, context)
+          fail TypeCheckError.new("Error type checking function MLHS term: Type is not subtype of Array:  #{actual_argument}", node)
         end
       end
 
@@ -65,19 +65,6 @@ module TypedRb
                    actual_argument.type_vars[0]
                  when 1
                    actual_argument.type_vars[1]
-                 else
-                   Types::TyUnit.new(node)
-                 end
-          context = context.add_binding(arg, type)
-        end
-        context
-      end
-
-      def process_other(actual_argument, context)
-        args.each_with_index do |arg, i|
-          type = case i
-                 when 0
-                   actual_argument
                  else
                    Types::TyUnit.new(node)
                  end
