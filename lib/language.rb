@@ -42,6 +42,7 @@ module TypedRb
       check_result = nil
       ordered_files.each do |file|
         puts "*** FILE #{file}"
+        $TYPECHECK_FILE=file
         expr = File.open(file, 'r').read
         #begin
           check_result = check_type(parse(expr))
