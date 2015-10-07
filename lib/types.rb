@@ -213,11 +213,11 @@ module TypedRb
       end
 
       def get_self
-        @bindings['self']
+        get_type_for('self')
       end
 
       def context_name
-        "#{@bindings['self']}"
+        get_self.to_s
       end
 
       protected

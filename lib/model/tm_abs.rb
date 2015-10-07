@@ -40,18 +40,23 @@ module TypedRb
         orig_context = Types::TypingContext.type_variables_register
         Types::TypingContext.push_context(:lambda)
         fresh_args = args.map do |(type, var, opt)|
-          type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}", context)
-          type_var_arg.node = node
-          context = case type
-                    when :arg, :block
-                      context.add_binding(var, type_var_arg)
-                    when :optarg
-                      declared_arg_type = opt.check_type(orig_context)
-                      if type_var_arg.compatible?(declared_arg_type, :gt)
+          if type == :mlhs
+            context = var.check_type(:lambda, context)
+            var
+          else
+            type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, "#{var}", context)
+            type_var_arg.node = node
+            context = case type
+                      when :arg, :block
                         context.add_binding(var, type_var_arg)
+                      when :optarg
+                        declared_arg_type = opt.check_type(orig_context)
+                        if type_var_arg.compatible?(declared_arg_type, :gt)
+                          context.add_binding(var, type_var_arg)
+                        end
                       end
-                    end
-          type_var_arg
+            type_var_arg
+          end
         end
 
         return_type_var_arg = Types::TypingContext.type_variable_for_abstraction(:lambda, nil, context)
