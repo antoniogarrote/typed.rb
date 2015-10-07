@@ -24,6 +24,8 @@ module TypedRb
         conditions.first.check_type(context)
       end
 
+      protected
+
       def build_conditionals(case_statement, when_statements)
         when_statements.map do |when_statement|
           node, conditional, then_statement = when_statement

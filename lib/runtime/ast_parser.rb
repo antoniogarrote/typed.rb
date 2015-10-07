@@ -117,6 +117,8 @@ module TypedRb
         parse_super_with_args(node, context)
       when :while
         parse_while(node, context)
+      when :irange, :erange
+        parse_range(node, context)
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
@@ -438,6 +440,12 @@ module TypedRb
         [map(pair.children.first, context), map(pair.children.last, context)]
       end
       TmHashLiteral.new(pairs, node)
+    end
+
+    def parse_range(node, context)
+      start_range = map(node.children.first, context)
+      end_range = map(node.children.last, context)
+      TmRangeLiteral.new(start_range, end_range, node)
     end
 
     def parse_return(node, context)
