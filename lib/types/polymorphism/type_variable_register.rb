@@ -36,7 +36,11 @@ module TypedRb
             type_var = upper_level.type_variables_register[[type, hierarchy.first, variable]]
             if type_var.nil?
               new_var_name = "#{hierarchy.first}:#{variable}"
-              type_var = TypeVariable.new(new_var_name, :gen_name => false)
+              type_var = if variable == :module_self
+                           ExistentialTypeVariable.new(new_var_name, :gen_name => false)
+                         else
+                           TypeVariable.new(new_var_name, :gen_name => false)
+                         end
               upper_level.type_variables_register[[type, hierarchy.first, variable]] = type_var
               type_var
             else

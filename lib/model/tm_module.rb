@@ -37,6 +37,7 @@ module TypedRb
         # Deal with upper/lower bounds here if required
         module_self_variable = Types::TypingContext.type_variable_for(module_type.ruby_type, :module_self, [module_type.ruby_type])
         module_self_variable.node = node
+        module_self_variable.module_type = module_type
         module_type.self_variable = module_self_variable
         yield(module_self_variable)
 
