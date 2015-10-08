@@ -218,6 +218,7 @@ class Array
   ts '#<=> / Array[T] -> Integer'
   ts '#== / Array[T] -> Array[T]'
   ts '#at / Integer -> [T]'
+  # Should we split this into #[] and #slice ?
   ts '#[] / Object -> Object'
   ts '#[] / Integer -> Integer -> Array[T]'
   ts '#any? / &([T] -> Boolean) -> Boolean'

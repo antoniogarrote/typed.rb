@@ -37,7 +37,7 @@ __CODE
   end
 
   context 'with an instance variable' do
-    it 'type checks assignment operations over local variables, positive case' do
+    it 'type checks assignment operations over instance variables, positive case' do
       expr = <<__CODE
          @a = 0
          @a += 1
@@ -46,7 +46,7 @@ __CODE
       expect(result.bound.ruby_type).to eq(Integer)
     end
 
-    it 'type checks assignment operations over local variables, negative case' do
+    it 'type checks assignment operations over instance variables, negative case' do
       expr = <<__CODE
          class LocalVarTest
            ts '#+ / LocalVarTest -> LocalVarTest'
@@ -69,7 +69,7 @@ __CODE
   end
 
   context 'with a global variable' do
-    it 'type checks assignment operations over local variables, positive case' do
+    it 'type checks assignment operations over global variables, positive case' do
       expr = <<__CODE
          $TEST_GLOBAL_OPS = 0
          $TEST_GLOBAL_OPS += 1
@@ -80,13 +80,25 @@ __CODE
   end
 
   context 'with a constant' do
-    it 'type checks assignment operations over local variables, positive case' do
+    it 'type checks assignment operations over global variables, positive case' do
       expr = <<__CODE
          TEST_GLOBAL_OPS = 0
          TEST_GLOBAL_OPS += 1
 __CODE
       result = language.check(expr)
       expect(result.ruby_type).to eq(Integer)
+    end
+  end
+
+  context 'with a message sent as the receiver' do
+    it 'type checks assignment operations over sending of messages, positive case' do
+      expr = <<__CODE
+        a = [1]
+        a[0] += 2
+__CODE
+
+      result = language.check(expr)
+      expect(result.ruby_type).to eq(Object)
     end
   end
 end
