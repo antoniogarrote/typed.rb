@@ -119,7 +119,7 @@ module TypedRb
         parse_while(node, context)
       when :irange, :erange
         parse_range(node, context)
-      when :break
+      when :break, :next
         Types::TyUnit.new
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
