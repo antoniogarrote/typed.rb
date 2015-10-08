@@ -119,6 +119,8 @@ module TypedRb
         parse_while(node, context)
       when :irange, :erange
         parse_range(node, context)
+      when :break
+        Types::TyUnit.new
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
       end
@@ -501,9 +503,11 @@ module TypedRb
                              message, [arg], node)
                 when :casgn
                   constant_name = parse_const(lvalue)
-                  return TmSend.new(TmConst.new(constant_name,lvalue), message, [arg], node)
+                  return TmSend.new(TmConst.new(constant_name, lvalue), message, [arg], node)
+                when :send
+                  return TmSend.new(map(lvalue, context), message, [arg], node)
                 else
-                  fail Types::TypeParsingError.new("Unknown += operator application", node)
+                  fail Types::TypeParsingError.new("Unknown += operator application for node '#{lvalue.type}'", node)
                 end
 
       case lvalue.type
