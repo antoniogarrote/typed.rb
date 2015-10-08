@@ -382,8 +382,8 @@ module TypedRb
 
     def parse_case_when(node, context)
       case_statement = map(node.children.first, context)
-      when_statements = node.children.drop(1).select { |statement| statement.type == :when }
-      default_statement = node.children.drop(1).select { |statement| statement.type != :when }.last
+      when_statements = node.children.drop(1).compact.select { |statement| statement.type == :when }
+      default_statement = node.children.drop(1).compact.select { |statement| statement.type != :when }.last
       when_statements = when_statements.map do |statement|
         [
           statement,

@@ -284,7 +284,12 @@ module TypedRb
           arg.check_type(context)
         end.each do |module_type|
           if module_type.is_a?(Types::TyExistentialType)
-            module_type.check_inclusion(self_type)
+            if module_type.local_typing_context
+              module_type.check_inclusion(self_type)
+            else
+              #TODO: report warning about missing module information
+              TypedRb.log(binding, :debug,  "Not type checking module #{module_type.ruby_type} inclusion due to lack of module information")
+            end
           else
             error_message = "Error type checking message sent '#{message}': Module type expected for inclusion in #{self_type}, #{module_type} found"
             fail TypeCheckError.new(error_message, node)
