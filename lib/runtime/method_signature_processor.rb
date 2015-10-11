@@ -52,7 +52,7 @@ module TypedRb
         end
 
         def parse_method_type_variable(message)
-          type_variables = message.scan(/(\[\w+\])/).flatten.map do |var|
+          type_variables = message.scan(/(\[\w+(\s*[<>]\s*\w+)?\])/).map(&:first).map do |var|
             ::TypedRb::TypeSignature::Parser.parse(var)
           end
           message = message.split(/\[[\w]+/).first

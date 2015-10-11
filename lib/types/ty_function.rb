@@ -150,6 +150,8 @@ module TypedRb
         substitutions = @local_typing_context.local_var_types.each_with_object({}) do |var_type, acc|
           #acc[var_type.variable] = Polymorphism::TypeVariable.new("#{var_type}_#{@application_count}", :node => node)
           acc[var_type.variable] = Polymorphism::TypeVariable.new(var_type.variable, :node => node, :gen_name => false)
+          acc[var_type.variable].upper_bound = var_type.upper_bound
+          acc[var_type.variable].lower_bound = var_type.lower_bound
           # new fro/to args for the materialized function
           maybe_from_arg = from.detect do |from_var|
             from_var.is_a?(Polymorphism::TypeVariable) && from_var.variable == var_type.variable
@@ -215,6 +217,7 @@ module TypedRb
         end
 
         TypingContext.with_context(applied_typing_context) do
+          # Adding constraints for the generic vriables in the materialised function
           yield materialized_function
         end
         # got all the constraints here

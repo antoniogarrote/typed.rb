@@ -222,6 +222,7 @@ module TypedRb
 
         def check_bindings
           groups.values.each do |group|
+            vars = group[:vars].keys.map(&:to_s).join(',').index('TMBSA:tmbs2')
             next if (group[:upper_type].nil? && group[:lower_type].nil?)
             group[:vars].keys.each do |var|
               final_lower_type = find_type(group[:lower_type], :lower_type)
@@ -272,7 +273,7 @@ module TypedRb
           { vars: vars,
             grouped: vars.keys.size > 1,
             lower_type: nil,
-            upper_type: nil}
+            upper_type: nil }
         end
 
         def merge_groups(group_l, group_r)

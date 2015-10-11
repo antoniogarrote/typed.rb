@@ -398,7 +398,7 @@ __CODE
       expect(result.ruby_type).to eq(Integer)
     end
 
-    xit 'handles negative case' do
+    it 'handles negative case' do
       code = <<__CODE
 
       class TMBSA

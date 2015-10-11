@@ -99,6 +99,16 @@ module TypedRb
 
         def type_variable_for_function_type(type_var)
           type_variables_register.type_variable_for_generic_type(type_var, true)
+          { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
+            if type_var.send(bound)
+              value = if type_var.send(bound).is_a?(TyGenericSingletonObject)
+                        type_var.send(bound).self_materialize
+                      else
+                        type_var.send(bound)
+                      end
+              type_var.compatible?(value, relation)
+            end
+          end
         end
 
         def type_variable_for_generic_type(type_var)
