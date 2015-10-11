@@ -415,18 +415,19 @@ __CODE
     end
   end
 
-  xit 'handles method type variables in main object' do
+  it 'handles method type variables in main object' do
     code = <<__END
 
-      ts '#tmm[E] / [E] -> [E]'
-      def tmm(x); x; end
+     ts '#tmm[E] / [E] -> [E]'
+     def tmm(x); x; end
 
-      tmm(2)
+     tmm(2)
+     tmm('string')
 __END
 
     result = language.check(code)
 
-    expect(result.ruby_type).to eq(Integer)
+    expect(result.ruby_type).to eq(String)
   end
 
   it 'handles combinations of optional parameters' do
