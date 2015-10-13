@@ -67,6 +67,10 @@ module TypedRb
         TyObject.new(ruby_type, node)
       end
 
+      def singleton?
+        true
+      end
+
       def to_s
         @ruby_type.name
       end

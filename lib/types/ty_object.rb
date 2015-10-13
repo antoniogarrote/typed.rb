@@ -47,6 +47,10 @@ module TypedRb
         false
       end
 
+      def singleton?
+        false
+      end
+
       def check_type(_context)
         self
       end
