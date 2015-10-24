@@ -3,7 +3,6 @@ require_relative '../model'
 require_relative '../types'
 
 module TypedRb
-
   class TermParsingError < TypeCheckError; end
 
   # Custom parser for type signatures.
@@ -192,7 +191,8 @@ module TypedRb
     end
 
     def parse_lambda(node, context)
-      args, body  = node.children[1], node.children[2]
+      args = node.children[1]
+      body = node.children[2]
       if args.type != :args
         fail Types::TypeParsingError.new("Error parsing function args [#{args}]", node)
       end
@@ -262,7 +262,7 @@ module TypedRb
       build_send_message(receiver, message, args, node, context)
     end
 
-    def build_send_message(receiver, message, args, node, context)
+    def build_send_message(receiver, message, args, node, _context)
       if message == :typesig
       # ignore
       else
@@ -283,31 +283,23 @@ module TypedRb
 
     def parse_yield(node, context)
       args = node.children
-      TmSend.new(nil, :yield, args.map { |arg| map(arg,context) }, node)
+      TmSend.new(nil, :yield, args.map { |arg| map(arg, context) }, node)
     end
 
     def parse_module(node, context)
       module_name = parse_const(node.children[0])
       context.with_type([:module, module_name]) do
-        module_body = if node.children[1]
-                       map(node.children[1], context)
-                     else
-                       nil
-                     end
+        module_body = map(node.children[1], context) if node.children[1]
         TmModule.new(context.path_name, module_body, node)
       end
     end
 
     def parse_class(node, context)
-      fail Types::TypeParsingError.new("Nil value parsing class") if node.nil? # No explicit class -> Object by default
+      fail Types::TypeParsingError.new('Nil value parsing class') if node.nil? # No explicit class -> Object by default
       class_name = parse_const(node.children[0])
       super_class_name = parse_const(node.children[1]) || 'Object'
       context.with_type([:class, class_name, super_class_name]) do
-        class_body = if node.children[2]
-                       map(node.children[2], context)
-                     else
-                       nil
-                     end
+        class_body = map(node.children[2], context) if node.children[2]
         TmClass.new(context.path_name, super_class_name, class_body, node)
       end
     end
@@ -336,11 +328,7 @@ module TypedRb
 
     def parse_def(node, context)
       fun_name, args, body = node.children
-      owner = if context.singleton_class?
-                :self
-              else
-                nil
-              end
+      owner = :self if context.singleton_class?
       parse_fun(owner, fun_name, args, body, node, context)
     end
 
@@ -385,7 +373,7 @@ module TypedRb
     def parse_case_when(node, context)
       case_statement = map(node.children.first, context)
       when_statements = node.children.drop(1).compact.select { |statement| statement.type == :when }
-      default_statement = node.children.drop(1).compact.select { |statement| statement.type != :when }.last
+      default_statement = node.children.drop(1).compact.reverse.find { |statement| statement.type != :when }
       when_statements = when_statements.map do |statement|
         [
           statement,
@@ -408,7 +396,7 @@ module TypedRb
       mapped = node.children.map do |child_node|
         map(child_node, context)
       end
-      sequencing = TmSequencing.new(mapped,node)
+      sequencing = TmSequencing.new(mapped, node)
       if sequencing.terms.size == 1
         sequencing.terms.first
       else
@@ -418,7 +406,7 @@ module TypedRb
 
     def parse_try(node, context)
       try_term = map(node.children.first, context)
-      rescue_terms = node.children.drop(1).compact.map{|term| map(term, context) }
+      rescue_terms = node.children.drop(1).compact.map { |term| map(term, context) }
       TmTry.new(try_term, rescue_terms, node)
     end
 
@@ -455,7 +443,7 @@ module TypedRb
       TmReturn.new(elements, node)
     end
 
-    def parse_self(node, context)
+    def parse_self(node, _context)
       TmSelf.new(node)
     end
 

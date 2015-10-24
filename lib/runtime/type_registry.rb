@@ -56,7 +56,7 @@ class BasicObject
                                                              :gen_name => false)
           end
         else
-          Array.(TypedRb::Types::Polymorphism::TypeVariable).new
+          Array.call(TypedRb::Types::Polymorphism::TypeVariable).new
         end
       end
 

@@ -5,8 +5,7 @@ module TypedRb
   module Model
     # instance variable assignation
     class TmInstanceVarAssignment < Expr
-
-      attr_accessor :lvalue,:rvalue
+      attr_accessor :lvalue, :rvalue
 
       def initialize(lvalue, rvalue, node)
         super(node)

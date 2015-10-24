@@ -35,12 +35,12 @@ module TypedRb
 
       def to_s
         args = @from.map(&:to_s).join(', ')
-        args = "#{args}, &#{block_type.to_s}" if block_type
+        args = "#{args}, &#{block_type}" if block_type
         "(#{args} -> #{@to})"
       end
 
       def name
-        @name || "lambda"
+        @name || 'lambda'
       end
 
       def check_args_application(actual_arguments, context)
@@ -104,7 +104,7 @@ module TypedRb
       protected
 
       def parse_function_arity
-        return Float::INFINITY if parameters_info.detect{ |arg| arg.is_a?(Hash) && arg[:kind] == :rest }
+        return Float::INFINITY if parameters_info.detect { |arg| arg.is_a?(Hash) && arg[:kind] == :rest }
         parameters_info.reject { |arg| arg.is_a?(Hash) && arg[:kind] == :block_arg }.count
       end
     end

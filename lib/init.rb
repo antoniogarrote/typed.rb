@@ -5,21 +5,20 @@ module Kernel
   alias_method :old_load, :load
   alias_method :old_require_relative, :require_relative
 
-
   def load(name, wrap = false)
     if $LOAD_TO_TYPECHECK
       return if $LOADED_MAP[name]
       to_load = if File.exist?(name)
                   File.absolute_path(name)
                 else
-                  dir = $:.detect do |d|
+                  dir = $LOAD_PATH.detect do |d|
                     File.exist?(File.join(d, name))
                   end
                   return if dir.nil?
                   File.absolute_path(File.join(dir, name))
                 end
       if $LOADED_MAP[to_load].nil?
-        #puts "** LOADING #{to_load}"
+        # puts "** LOADING #{to_load}"
         process_dependency(to_load) { old_load(name, wrap) }
       else
         old_load(name, wrap)
@@ -38,8 +37,8 @@ module Kernel
       else
         to_load = File.absolute_path(dependency)
         if $LOADED_MAP[to_load].nil?
-          #puts "** REQUIRING #{to_load}"
-          process_dependency(to_load) { old_require(name)}
+          # puts "** REQUIRING #{to_load}"
+          process_dependency(to_load) { old_require(name) }
         else
           old_require(name)
         end
@@ -57,7 +56,7 @@ module Kernel
     found = dirs.map do |dir|
       File.join(dir, name)
     end.detect do |potential_file|
-      (File.exist?(potential_file+'.rb') || File.exist?(potential_file+'.rb'))
+      (File.exist?(potential_file + '.rb') || File.exist?(potential_file + '.rb'))
     end
     require(found)
   end
@@ -76,9 +75,7 @@ module Kernel
 
   def self.computed_dependencies(acc = [], graph = $FILES_TO_TYPECHECK)
     graph.each do |(file, deps)|
-      if deps != {}
-        acc = computed_dependencies(acc, deps)
-      end
+      acc = computed_dependencies(acc, deps) if deps != {}
       acc << file
     end
     acc
@@ -114,14 +111,12 @@ module TypedRb
     line = client_binding.eval('__LINE__')
     file = client_binding.eval('__FILE__')
     message = "#{file}:#{line}\n  #{message}\n"
-    logger('['+client_id.gsub('::','/')+']').send(level, message)
+    logger('[' + client_id.gsub('::', '/') + ']').send(level, message)
   end
 
   def logger(client)
     logger = Log4r::Logger[client]
-    if logger.nil?
-      logger = Log4r::Logger.new(client)
-    end
+    logger = Log4r::Logger.new(client) if logger.nil?
     logger.outputters = Log4r::Outputter.stdout
     set_level(logger)
     logger

@@ -11,10 +11,10 @@ class BasicObject
         ::TypedRb::Runtime::MethodSignatureProcessor.process(signature, self)
       end
     end
-  #rescue ::StandardError => ex
-  #  puts ex.message
-  #  puts ex.backtrace.join("\n")
-  #  raise ::StandardError, "Error parsing type signature '#{signature}': #{ex.message}"
+    # rescue ::StandardError => ex
+    #  puts ex.message
+    #  puts ex.backtrace.join("\n")
+    #  raise ::StandardError, "Error parsing type signature '#{signature}': #{ex.message}"
   end
 
   def cast(from, _to)

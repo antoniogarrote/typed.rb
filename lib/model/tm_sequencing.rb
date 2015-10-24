@@ -5,7 +5,7 @@ module TypedRb
   module Model
     class TmSequencing < Expr
       attr_accessor :terms
-      def initialize(terms,node)
+      def initialize(terms, node)
         super(node)
         @terms = terms.reject(&:nil?)
       end

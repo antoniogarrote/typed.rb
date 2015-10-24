@@ -18,7 +18,7 @@ module TypedRb
         module_type = Runtime::TypeParser.parse_existential_object_type(module_ruby_type.name)
         Types::TypingContext.namespace_push(module_name)
         module_type.node = node
-        module_typing_context = TmModule.with_local_context(module_type, node) do |module_self_variable|
+        module_typing_context = TmModule.with_local_context(module_type, node) do |_module_self_variable|
           context = context.add_binding(:self, module_type)
           body.check_type(context) if body
         end
@@ -30,7 +30,6 @@ module TypedRb
 
         module_type
       end
-
 
       def self.with_local_context(module_type, node)
         Types::TypingContext.push_context(:module)

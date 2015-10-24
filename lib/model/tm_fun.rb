@@ -44,7 +44,7 @@ module TypedRb
       # 1 Find free type variables for the generic function.
       # 2 Create a new local typing context for the generic function
       # 3 Add free type variables to the typing context
-      def TmFun.with_fresh_bindings(klass, function_type)
+      def self.with_fresh_bindings(klass, function_type)
         if function_type.generic?
           Types::TypingContext.push_context(:method)
           function_type.free_type_variables(klass).each do |type_var|
@@ -89,28 +89,28 @@ module TypedRb
 
       def process_arguments(context, function_type)
         args.each_with_index do |arg, i|
-            function_arg_type = function_type.from[i]
-            # Generic arguments are parsed by runtime without checking constraints since they are not available at parsing type.
-            # We need to run unification in them before using the type to detect invalid type argument applications.
-            function_arg_type = function_arg_type.self_materialize if function_arg_type.is_a?(Types::TyGenericSingletonObject)
-            context = case arg.first
-                      when :arg, :restarg
-                        context.add_binding(arg[1], function_arg_type)
-                      when :optarg
-                        declared_arg_type = arg.last.check_type(context)
-                        context.add_binding(arg[1], function_arg_type) if declared_arg_type.compatible?(function_arg_type)
-                      when :blockarg
-                        if(function_type.block_type)
-                          context.add_binding(arg[1], function_type.block_type)
-                        else
-                          fail TypeCheckError.new("Error type checking function #{owner}##{name}: Missing block type for block argument #{arg[1]}", node)
-                        end
-                      when :mlhs
-                        tm_mlhs = arg[1]
-                        tm_mlhs.check_type(function_arg_type, context)
+          function_arg_type = function_type.from[i]
+          # Generic arguments are parsed by runtime without checking constraints since they are not available at parsing type.
+          # We need to run unification in them before using the type to detect invalid type argument applications.
+          function_arg_type = function_arg_type.self_materialize if function_arg_type.is_a?(Types::TyGenericSingletonObject)
+          context = case arg.first
+                    when :arg, :restarg
+                      context.add_binding(arg[1], function_arg_type)
+                    when :optarg
+                      declared_arg_type = arg.last.check_type(context)
+                      context.add_binding(arg[1], function_arg_type) if declared_arg_type.compatible?(function_arg_type)
+                    when :blockarg
+                      if function_type.block_type
+                        context.add_binding(arg[1], function_type.block_type)
                       else
-                        fail TypeCheckError.new("Error type checking function #{owner}##{name}: Unknown type of arg #{arg.first}", node)
+                        fail TypeCheckError.new("Error type checking function #{owner}##{name}: Missing block type for block argument #{arg[1]}", node)
                       end
+                    when :mlhs
+                      tm_mlhs = arg[1]
+                      tm_mlhs.check_type(function_arg_type, context)
+                    else
+                      fail TypeCheckError.new("Error type checking function #{owner}##{name}: Unknown type of arg #{arg.first}", node)
+                    end
         end
         context
       end

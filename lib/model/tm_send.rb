@@ -34,16 +34,14 @@ module TypedRb
         end
       end
 
-      def singleton_object_type(receiver,context)
-        parsed_receiver_type = if (receiver.nil? || receiver == :self)
+      def singleton_object_type(receiver, context)
+        parsed_receiver_type = if receiver.nil? || receiver == :self
                                  context.get_type_for(:self)
                                else
                                  receiver_type
                                end
         if parsed_receiver_type.is_a?(Types::TySingletonObject)
           parsed_receiver_type
-        else
-          nil
         end
       end
 
@@ -53,7 +51,7 @@ module TypedRb
       # but we return the class type instead of the return type
       # for the constructor application (should be unit/nil).
       def check_instantiation(context)
-        self_type = singleton_object_type(receiver,context).as_object_type
+        self_type = singleton_object_type(receiver, context).as_object_type
         function_klass_type, function_type = self_type.find_function_type(:initialize, args.size, @block)
         if function_type.nil?
           error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type} constructor not found"
@@ -126,23 +124,23 @@ module TypedRb
           check_lambda_application(receiver_type, context)
         else
           function_klass_type, function_type = receiver_type.find_function_type(message, args.size, @block)
-          #begin
-            if function_type.nil?
-              error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."
-              fail TypeCheckError.new(error_message, node)
-            elsif module_include_implementation?(function_klass_type)
-              check_module_inclusions(receiver_type, context)
-            else
-              # function application
-              check_application(receiver_type, function_type, context)
-            end
-          #rescue TypeCheckError => error
+          # begin
+          if function_type.nil?
+            error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."
+            fail TypeCheckError.new(error_message, node)
+          elsif module_include_implementation?(function_klass_type)
+            check_module_inclusions(receiver_type, context)
+          else
+            # function application
+            check_application(receiver_type, function_type, context)
+          end
+          # rescue TypeCheckError => error
           #  if function_klass_type != receiver_type.ruby_type
           #    Types::TyDynamic.new(Object, node)
           #  else
           #    raise error
           #  end
-          #end
+          # end
         end
       end
 
@@ -160,8 +158,6 @@ module TypedRb
               # TODO: do we need it at all?
               klass = if type.is_a?(Hash) && type[:kind] == :generic_type
                         Object.const_get(type[:type])
-                      else
-                        nil
                       end
               Runtime::TypeParser.parse(type, klass)
             end
@@ -254,7 +250,7 @@ module TypedRb
                     fail TypeCheckError.new(error_message, node)
                   end
                 rescue Types::UncomparableTypes, ArgumentError
-                  fail Types::UncomparableTypes.new(actual_argument_type, formal_parameter_type, node)
+                  raise Types::UncomparableTypes.new(actual_argument_type, formal_parameter_type, node)
                 end
               end
             end
@@ -285,7 +281,7 @@ module TypedRb
             if module_type.local_typing_context
               module_type.check_inclusion(self_type)
             else
-              #TODO: report warning about missing module information
+              # TODO: report warning about missing module information
               TypedRb.log(binding, :debug,  "Not type checking module #{module_type.ruby_type} inclusion due to lack of module information")
             end
           else

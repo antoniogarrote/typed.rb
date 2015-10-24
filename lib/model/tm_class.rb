@@ -35,8 +35,7 @@ module TypedRb
         result_type
       end
 
-
-      def self.with_fresh_bindings(generic_class, context, node)
+      def self.with_fresh_bindings(generic_class, _context, node)
         Types::TypingContext.push_context(:class)
         # Deal with upper/lower bounds here if required
         generic_class.type_vars.each do |type_var|

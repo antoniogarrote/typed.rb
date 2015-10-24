@@ -3,10 +3,9 @@ require_relative 'ty_object'
 module TypedRb
   module Types
     class TyExistentialType < TyObject
-
       attr_accessor :local_typing_context, :self_variable
 
-      def initialize(ruby_type, node=nil)
+      def initialize(ruby_type, node = nil)
         super(ruby_type, node)
       end
 

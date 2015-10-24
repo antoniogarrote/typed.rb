@@ -7,7 +7,7 @@ module TypedRb
     class TmNil < Expr
       attr_accessor :val
       def initialize(node)
-        super(node,Types::TyUnit.new(node))
+        super(node, Types::TyUnit.new(node))
       end
     end
   end

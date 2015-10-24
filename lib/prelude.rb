@@ -34,7 +34,7 @@ class Object
   ts '#=~ / Object -> unit'
   ts '#class / -> Class'
   ts '#clone / -> Object'
-  #ts '#define_singleton_method / '
+  # ts '#define_singleton_method / '
   ts '#display / -> unit'
   ts '#display / IO -> unit'
   ts '#dup / -> Object'
@@ -92,7 +92,6 @@ class Object
 end
 
 module Kernel
-
   ts '#Array[E] / Range[E] -> Array[E]'
   ts '#Complex / BasicObject -> Complex'
   ts '#Complex / Integer -> Integer -> Complex'
@@ -121,9 +120,9 @@ module Kernel
   ts '#caller / Integer -> Integer -> Array[String]'
   ts '#caller_locations / Range[Integer] -> Array[String]'
   ts '#caller_locations / Integer -> Integer -> Array[String]'
-  #ts '#catch / -> unit'
-  #ts '#chomp / String -> String'
-  #ts '#chop / String -> String'
+  # ts '#catch / -> unit'
+  # ts '#chomp / String -> String'
+  # ts '#chop / String -> String'
   ts '#eval / String -> BasicObject'
   ts '#eval / String -> Binding -> BasicObject'
   ts '#eval / String -> Binding -> String -> BasicObject'
@@ -161,7 +160,7 @@ module Kernel
   ts '#print / BasicObject... -> unit'
   ts '#printf / String -> BasicObject... -> unit'
   ts '#printf / IO -> String -> BasicObject... -> unit'
-  #ts '#proc / '
+  # ts '#proc / '
   ts '#putc / Integer -> Integer'
   ts '#puts / BasicObject -> BasicObject... -> unit'
   ts '#raise / -> unit'
@@ -180,21 +179,21 @@ module Kernel
   ts '#select / Array[IO] -> Array[IO] -> Array[IO]'
   ts '#select / Array[IO] -> Array[IO] -> Array[IO] -> Array[IO]'
   ts '#select / Array[IO] -> Array[IO] -> Array[IO] -> Integer -> Array[IO] '
-  #set_trace_func
+  # set_trace_func
   ts '#sleep / -> Integer'
   ts '#sleep / Integer -> Integer'
-  #spawn
+  # spawn
   ts '#sprintf / String -> BasicObject... -> String'
   ts '#srand / -> Bignum'
   ts '#srand / -> Bignum -> Bignum'
-  #sub
+  # sub
   ts '#syscall / Integer -> BasicObject... -> Integer'
-  #system
+  # system
   ts '#test / String -> BasicObject... -> BasicObject'
-  #throw
-  #trace_var
-  #trap
-  #untrace_var
+  # throw
+  # trace_var
+  # trap
+  # untrace_var
   ts '#warn / String -> unit'
   ts '#warn / String -> String... -> unit'
 end
@@ -343,59 +342,59 @@ class Hash
   ts '#initialize / &(Hash[S][T] -> [S] -> unit) -> Hash[S][T]'
   ts '#initialize / [T] -> Hash[S][T]'
   #==
-  #[]
+  # []
   ts '#[]= / [S] -> [T] -> [T]'
-  #any?
-  #assoc
-  #clear
-  #compare_by_identity
-  #compare_by_identity?
-  #default
-  #default=
-  #default_proc
-  #default_proc=
-  #delete
-  #delete_if
-  #each
-  #each_key
-  #each_pair
-  #each_value
-  #empty?
-  #eql?
-  #fetch
-  #flatten
-  #has_key?
-  #has_value?
-  #hash
-  #include?
-  #inspect
-  #invert
-  #keep_if
-  #key
-  #key?
-  #keys
-  #length
-  #member?
-  #merge
-  #merge!
-  #rassoc
-  #rehash
-  #reject
-  #reject!
-  #replace
-  #select
-  #select!
-  #shift
-  #size
-  #store
-  #to_a
-  #to_h
-  #to_hash
-  #to_s
-  #update
-  #value?
-  #values
-  #values_at
+  # any?
+  # assoc
+  # clear
+  # compare_by_identity
+  # compare_by_identity?
+  # default
+  # default=
+  # default_proc
+  # default_proc=
+  # delete
+  # delete_if
+  # each
+  # each_key
+  # each_pair
+  # each_value
+  # empty?
+  # eql?
+  # fetch
+  # flatten
+  # has_key?
+  # has_value?
+  # hash
+  # include?
+  # inspect
+  # invert
+  # keep_if
+  # key
+  # key?
+  # keys
+  # length
+  # member?
+  # merge
+  # merge!
+  # rassoc
+  # rehash
+  # reject
+  # reject!
+  # replace
+  # select
+  # select!
+  # shift
+  # size
+  # store
+  # to_a
+  # to_h
+  # to_hash
+  # to_s
+  # update
+  # value?
+  # values
+  # values_at
 end
 
 ts 'type Range[T]'
@@ -406,7 +405,7 @@ end
 
 class Integer
   ts '#+ / Integer -> Integer'
-  def +(other)
+  def +(_other)
     fail StandardError.new('Error invoking abstract method Integer#+')
   end
 

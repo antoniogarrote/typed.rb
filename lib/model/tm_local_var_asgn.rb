@@ -5,7 +5,7 @@ module TypedRb
   module Model
     class TmLocalVarAsgn < Expr
       attr_accessor :lhs, :rhs
-      #ts '#initialize / String -> Node -> Node -> unit'
+      # ts '#initialize / String -> Node -> Node -> unit'
       def initialize(lhs, rhs, node)
         super(node)
         @lhs = lhs
@@ -20,7 +20,7 @@ module TypedRb
             if maybe_binding.compatible?(binding_type, :gt)
               maybe_binding
             else
-              raise Types::UncomparableTypes.new(maybe_binding, binding_type, node)
+              fail Types::UncomparableTypes.new(maybe_binding, binding_type, node)
             end
           rescue Types::UncomparableTypes
             raise Types::UncomparableTypes.new(maybe_binding, binding_type, node)

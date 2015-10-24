@@ -7,7 +7,6 @@ require 'benchmark'
 require 'set'
 
 class TargetFinder
-
   # Generate a list of target files by expanding globbing patterns
   # (if any). If args is empty, recursively find all Ruby source
   # files under the current directory
@@ -39,9 +38,7 @@ class TargetFinder
   # @return [Array] Array of filenames
   def target_files_in_dir(base_dir = Dir.pwd)
     # Support Windows: Backslashes from command-line -> forward slashes
-    if File::ALT_SEPARATOR
-      base_dir.gsub!(File::ALT_SEPARATOR, File::SEPARATOR)
-    end
+    base_dir.gsub!(File::ALT_SEPARATOR, File::SEPARATOR) if File::ALT_SEPARATOR
     all_files = find_files(base_dir, File::FNM_DOTMATCH)
     hidden_files = Set.new(all_files - find_files(base_dir, 0))
 
@@ -86,7 +83,6 @@ class TargetFinder
       File.directory?(dir) && !(dir.end_with?('/.') || dir.end_with?('/..'))
     end
   end
-
 
   def ruby_executable?(file)
     return false unless File.extname(file).empty?

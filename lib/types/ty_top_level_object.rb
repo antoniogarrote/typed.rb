@@ -1,7 +1,6 @@
 module TypedRb
   module Types
     class TyTopLevelObject < TyObject
-
       def initialize
         super(TOPLEVEL_BINDING.receiver.class)
       end

@@ -10,7 +10,7 @@ module TypedRb
         @args     = args
         @term     = term
         @abs_type = abs_type
-        @arity    = args.select { |(arg_type, _, _)|  arg_type == :arg }.count
+        @arity    = args.count { |(arg_type, _, _)|  arg_type == :arg }
         @instantiation_count = 0
       end
 

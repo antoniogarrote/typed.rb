@@ -5,7 +5,6 @@ module TypedRb
   module Model
     # variable
     class TmVar < Expr
-
       attr_accessor :val
 
       def initialize(val, node)

@@ -1,9 +1,7 @@
 module TypedRb
   module Types
     class TypingContext
-
       class << self
-
         def namespace
           @namespace ||= []
         end
@@ -32,9 +30,7 @@ module TypedRb
           @function_context = [type, message, args]
         end
 
-        def function_context
-          @function_context
-        end
+        attr_reader :function_context
 
         def function_context_pop
           @function_context = nil
@@ -115,7 +111,7 @@ module TypedRb
         end
 
         def push_context(type)
-          new_register = Polymorphism::TypeVariableRegister.new(self.type_variables_register, type)
+          new_register = Polymorphism::TypeVariableRegister.new(type_variables_register, type)
           @type_variables_register.children << new_register
           @type_variables_register = new_register
           new_register
@@ -123,9 +119,9 @@ module TypedRb
 
         def pop_context
           fail StandardError, 'Empty typing context stack, impossible to pop' if @type_variables_register.nil?
-          last_register = self.type_variables_register
+          last_register = type_variables_register
           @type_variables_register = @type_variables_register.parent
-          @type_variables_register.children.reject!{ |child| child == last_register }
+          @type_variables_register.children.reject! { |child| child == last_register }
           last_register
         end
 
@@ -149,9 +145,7 @@ module TypedRb
 
           if method_registry
             method_registry.type_variables_register.map do |(key, type_var)|
-              if key.first == :generic
-                type_var
-              end
+              type_var if key.first == :generic
             end.compact.each_with_object({}) do |type_var, acc|
               var_name = type_var.variable.split(':').last
               acc["[#{var_name}]"] = type_var
@@ -167,17 +161,17 @@ module TypedRb
         TypingContext.new.add_binding!(:self, TyTopLevelObject.new)
       end
 
-      def initialize(parent=nil)
+      def initialize(parent = nil)
         @parent = parent
         @bindings = {}
       end
 
-      def add_binding(val,type)
-        TypingContext.new(self).push_binding(val,type)
+      def add_binding(val, type)
+        TypingContext.new(self).push_binding(val, type)
       end
 
-      def add_binding!(val,type)
-        push_binding(val,type)
+      def add_binding!(val, type)
+        push_binding(val, type)
       end
 
       def get_type_for(val)
@@ -199,7 +193,7 @@ module TypedRb
 
       protected
 
-      def push_binding(val,type)
+      def push_binding(val, type)
         @bindings[val.to_s] = type
         self
       end

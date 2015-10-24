@@ -2,9 +2,8 @@ require_relative './ty_function'
 
 module TypedRb
   module Types
-
     class TyDynamic < TyObject
-      def compatible?(other_type, relation = :lt)
+      def compatible?(_other_type, _relation = :lt)
         true
       end
 
@@ -14,7 +13,7 @@ module TypedRb
     end
 
     class TyDynamicFunction < TyFunction
-      def initialize(klass, message, with_block = true, node=nil)
+      def initialize(klass, message, with_block = true, node = nil)
         super([], TyDynamic.new(Object, node), nil, node)
         @klass = klass
         @message = message
@@ -32,7 +31,7 @@ module TypedRb
 
       def check_args_application; end
 
-      def compatible?(other_type, relation = :lt)
+      def compatible?(_other_type, _relation = :lt)
         true
       end
     end

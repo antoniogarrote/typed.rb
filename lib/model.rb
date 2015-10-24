@@ -2,7 +2,6 @@ require_relative('./types')
 
 module TypedRb
   module Model
-
     class GenSym
       COUNTS = {} unless defined?(COUNTS)
 
@@ -10,7 +9,7 @@ module TypedRb
         COUNTS.clear
       end
 
-      def self.next(x="_gs")
+      def self.next(x = '_gs')
         count = COUNTS[x] || 1
         sym = "#{x}[[#{count}"
         COUNTS[x] = count + 1
@@ -19,7 +18,7 @@ module TypedRb
 
       def self.resolve(gx)
         if gx.index('[[')
-          orig, count = gx.split("[[")
+          orig, count = gx.split('[[')
           if count == '1'
             orig
           else

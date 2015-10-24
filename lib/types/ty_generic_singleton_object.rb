@@ -4,7 +4,6 @@ require_relative 'polymorphism/generic_comparisons'
 module TypedRb
   module Types
     class TyGenericSingletonObject < TySingletonObject
-
       include Polymorphism::GenericComparisons
 
       attr_reader :type_vars, :super_type
@@ -59,7 +58,7 @@ module TypedRb
           # Appy constraints for application of Type args
           apply_type_arguments(fresh_vars_generic_type, actual_arguments)
         end
-                # got all the constraints here
+        # got all the constraints here
         # do something with the context -> unification? merge context?
         # applied_typing_context.all_constraints.each{|(l,t,r)| puts "#{l} #{t} #{r}" }
         unification = Polymorphism::Unification.new(applied_typing_context.all_constraints).run
@@ -114,10 +113,10 @@ module TypedRb
       end
 
       def apply_bindings(bindings_map)
-        type_vars.each_with_index do |var, i|
+        type_vars.each_with_index do |var, _i|
           if var.is_a?(Polymorphism::TypeVariable)
             var.apply_bindings(bindings_map)
-            #type_vars[i] = var.bound if var.bound
+            # type_vars[i] = var.bound if var.bound
           elsif var.is_a?(TyGenericSingletonObject) || var.is_a?(TyGenericObject)
             var.apply_bindings(bindings_map)
           end
@@ -126,7 +125,7 @@ module TypedRb
       end
 
       def clone
-        cloned_type_vars = type_vars.map { |type_var| type_var.clone }
+        cloned_type_vars = type_vars.map(&:clone)
         TyGenericSingletonObject.new(ruby_type, cloned_type_vars, super_type, node)
       end
 
@@ -166,7 +165,7 @@ module TypedRb
               { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
                 if argument.send(bound)
                   value = if argument.send(bound).is_a?(TyGenericSingletonObject)
-                            argument.send(bound).clone#.self_materialize
+                            argument.send(bound).clone # .self_materialize
                           else
                             argument.send(bound)
                           end
@@ -177,7 +176,7 @@ module TypedRb
             elsif argument.bound # var type with a particular value
               argument = argument.bound
               if argument.is_a?(TyGenericSingletonObject)
-                argument = argument.clone #.self_materialize
+                argument = argument.clone # .self_materialize
               end
               # This is only for matches T =:= Type1 -> T < Type1, T > Type1
               fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
@@ -190,7 +189,7 @@ module TypedRb
             end
           else
             if argument.is_a?(TyGenericSingletonObject)
-              argument = argument.clone #.self_materialize
+              argument = argument.clone # .self_materialize
             end
             # This is only for matches T =:= Type1 -> T < Type1, T > Type1
             fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)

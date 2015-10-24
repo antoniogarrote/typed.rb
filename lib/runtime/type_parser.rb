@@ -68,12 +68,12 @@ module TypedRb
         def parse_rest_args(type,  klass)
           parsed_parameter = parse(type[:parameters].first, klass)
           if parsed_parameter.is_a?(Types::Polymorphism::TypeVariable)
-            #TODO: should I use #parse_singleton_object_type here?
+            # TODO: should I use #parse_singleton_object_type here?
             Types::TyGenericSingletonObject.new(Array, [parsed_parameter])
           else
             type_var = Types::Polymorphism::TypeVariable.new('Array:T', :gen_name => false,
-                                                      :upper_bound => parsed_parameter,
-                                                      :lower_bound => parsed_parameter)
+                                                                        :upper_bound => parsed_parameter,
+                                                                        :lower_bound => parsed_parameter)
             type_var.bind(parsed_parameter)
             Types::TyGenericObject.new(Array, [type_var])
           end
@@ -172,7 +172,7 @@ module TypedRb
           raise TypeParsingError, "Unknown Ruby type #{type}"
         end
 
-        def parse_singleton_object_type(type, node=nil)
+        def parse_singleton_object_type(type, node = nil)
           ruby_type = Object.const_get(type)
           generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
           if generic_type
@@ -191,14 +191,14 @@ module TypedRb
           block_type = if arg_types.last.is_a?(Hash) && arg_types.last[:kind] == :block_arg
                          block_type = arg_types.pop
                          parse_function_type(block_type[:block], klass)
-                       else
-                         nil
                        end
-          parsed_arg_types = arg_types.map{ |arg| parse(arg, klass) }
-          is_generic = (parsed_arg_types + [return_type]).any? { |var| var.is_a?(Types::TyGenericSingletonObject) ||
-                                                          var.is_a?(Types::Polymorphism::TypeVariable) }
+          parsed_arg_types = arg_types.map { |arg| parse(arg, klass) }
+          is_generic = (parsed_arg_types + [return_type]).any? do |var|
+            var.is_a?(Types::TyGenericSingletonObject) ||
+            var.is_a?(Types::Polymorphism::TypeVariable)
+          end
 
-          is_generic = is_generic || block_type.generic? if block_type
+          is_generic ||= block_type.generic? if block_type
 
           function_class = is_generic ? Types::TyGenericFunction : Types::TyFunction
           function_type = function_class.new(parsed_arg_types, return_type, arg_types)

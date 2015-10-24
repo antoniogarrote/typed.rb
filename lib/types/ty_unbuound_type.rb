@@ -2,12 +2,10 @@ require_relative './ty_function'
 
 module TypedRb
   module Types
-
     class TyUnboundType
-
       attr_reader :variable_name, :bound_type
 
-      def initialize(variable_name, bound_type)
+      def initialize(variable_name, _bound_type)
         @variable_name = variable_name
         @bound_type
       end

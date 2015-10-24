@@ -1,5 +1,4 @@
 module TypedRb
-
   class TypeCheckError < TypeError
     attr_reader :node
 
@@ -30,7 +29,6 @@ module TypedRb
   end
 
   module Types
-
     class TypeParsingError < TypeCheckError; end
 
     class Type

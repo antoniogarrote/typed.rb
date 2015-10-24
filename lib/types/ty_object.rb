@@ -1,6 +1,5 @@
 module TypedRb
   module Types
-
     class UncomparableTypes < TypeCheckError
       attr_reader :from, :to
       def initialize(from, to, node = nil)
@@ -22,13 +21,13 @@ module TypedRb
 
       attr_reader :hierarchy, :classes, :modules, :ruby_type, :with_ruby_type
 
-      def initialize(ruby_type, node=nil, classes=[], modules=[])
+      def initialize(ruby_type, node = nil, classes = [], modules = [])
         super(node)
         if ruby_type
           @ruby_type = ruby_type
           @hierarchy = ruby_type.ancestors
-          @classes = @hierarchy.select{|klass| klass.instance_of?(Class) }
-          @modules = @hierarchy.select{|klass| klass.instance_of?(Module) }
+          @classes = @hierarchy.select { |klass| klass.instance_of?(Class) }
+          @modules = @hierarchy.select { |klass| klass.instance_of?(Module) }
           @with_ruby_type = true
         else
           @ruby_type = classes.first
@@ -56,7 +55,7 @@ module TypedRb
       end
 
       def defaults_to_dynamic?
-        ! BasicObject::TypeRegistry.registered?(ruby_type)
+        !BasicObject::TypeRegistry.registered?(ruby_type)
       end
 
       def compatible?(other_type, relation = :lt)
@@ -84,7 +83,7 @@ module TypedRb
         find_function_type_in_hierarchy(:instance, message, num_args, block)
       end
 
-      def find_var_type(var, type=ruby_type)
+      def find_var_type(var, _type = ruby_type)
         # This is only in case the type has been explicitely declared
         var_type = BasicObject::TypeRegistry.find(:instance_variable, ruby_type, var)
         if var_type
@@ -117,7 +116,7 @@ module TypedRb
         if @with_ruby_type
           @ruby_type.name
         else
-          "#{@classes.first.to_s} with [#{@modules.map(&:to_s).join(',')}]"
+          "#{@classes.first} with [#{@modules.map(&:to_s).join(',')}]"
         end
       end
 
@@ -136,8 +135,6 @@ module TypedRb
               compare_with_union(other)
             end
           end
-        else
-          nil
         end
       end
 
@@ -145,9 +142,9 @@ module TypedRb
         common_classes = classes & other.classes
         common_modules = modules & other.modules
         if common_modules.size == 1
-          TyObject.new(common_modules.first, (self.node || other.node))
+          TyObject.new(common_modules.first, (node || other.node))
         else
-          TyObject.new(nil, (self.node || other.node), common_classes, common_modules)
+          TyObject.new(nil, (node || other.node), common_classes, common_modules)
         end
       end
 
@@ -167,16 +164,14 @@ module TypedRb
             1
           elsif hierarchy.include?(other.ruby_type)
             -1
-          else
-            nil
-            #fail UncomparableTypes.new(self, other)
+            # fail UncomparableTypes.new(self, other)
           end
         end
       end
 
       def compare_with_union(other)
-        all_those_modules_included = other.modules.all?{ |m| hierarchy.include?(m) }
-        all_these_modules_included = modules.all?{ |m| other.hierarchy.include?(m) }
+        all_those_modules_included = other.modules.all? { |m| hierarchy.include?(m) }
+        all_these_modules_included = modules.all? { |m| other.hierarchy.include?(m) }
 
         if other.ruby_type == ruby_type && all_these_modules_included && all_these_modules_included
           0
@@ -184,9 +179,7 @@ module TypedRb
           1
         elsif hierarchy.include?(ruby_type) && all_those_modules_included && !all_these_modules_included
           -1
-        else
-          nil
-          #fail UncomparableTypes.new(self, other)
+          # fail UncomparableTypes.new(self, other)
         end
       end
 
@@ -194,7 +187,7 @@ module TypedRb
         functions = BasicObject::TypeRegistry.find(kind, klass, message)
         initial_values = functions.select { |fn| fn.arg_compatible?(num_args) }
         if initial_values.count == 2 && block
-          initial_values.detect { |f| f.block_type }
+          initial_values.detect(&:block_type)
         elsif initial_values.count == 2 && !block
           initial_values.detect { |f| f.block_type.nil? }
         else

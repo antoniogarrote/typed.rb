@@ -36,7 +36,7 @@ module TypedRb
         class_type = Runtime::TypeParser.parse_singleton_object_type(klass.name)
         if class_type.generic?
           type_variables.reject do |type_var|
-            class_type.type_vars.detect{ |class_type_var| class_type_var.variable == type_var.variable }
+            class_type.type_vars.detect { |class_type_var| class_type_var.variable == type_var.variable }
           end
         else
           type_variables
@@ -92,20 +92,16 @@ module TypedRb
       end
 
       def type_variables
-        vars = (from + [ to ]).map do |arg|
+        vars = (from + [to]).map do |arg|
           if arg.is_a?(Polymorphism::TypeVariable)
             arg
           elsif arg.generic?
             arg.type_vars
-          else
-            nil
-          end
+                    end
         end
         vars = vars.flatten.compact
 
-        if block_type && block_type.generic?
-          vars += block_type.type_variables
-        end
+        vars += block_type.type_variables if block_type && block_type.generic?
 
         vars.uniq
       end

@@ -7,7 +7,7 @@ module TypedRb
     class TmInt < Expr
       attr_accessor :val
       def initialize(node)
-        super(node,Types::TyInteger.new(node))
+        super(node, Types::TyInteger.new(node))
         @val = node.children.first
       end
     end

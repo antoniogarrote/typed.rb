@@ -5,7 +5,7 @@ module TypedRb
         def compatible?(other_type, relation = :lt)
           if other_type.is_a?(TyDynamic) || other_type.is_a?(TyError)
             true
-          elsif (other_type.is_a?(TyGenericObject) || other_type.is_a?(TyGenericSingletonObject))
+          elsif other_type.is_a?(TyGenericObject) || other_type.is_a?(TyGenericSingletonObject)
             if check_generic_type_relation(other_type.ruby_type, relation)
               type_vars.each_with_index do |type_var, i|
                 other_type_var = other_type.type_vars[i]
@@ -32,10 +32,10 @@ module TypedRb
           right_var = other_type_var.bound || other_type_var.lower_bound || other_type_var.upper_bound || other_type_var
 
           left_var.is_a?(Polymorphism::TypeVariable) &&
-          right_var.is_a?(Polymorphism::TypeVariable) &&
-          left_var.variable != right_var.variable &&
-          (TypingContext.bound_generic_type_var?(left_var) &&
-           TypingContext.bound_generic_type_var?(right_var))
+            right_var.is_a?(Polymorphism::TypeVariable) &&
+            left_var.variable != right_var.variable &&
+            (TypingContext.bound_generic_type_var?(left_var) &&
+             TypingContext.bound_generic_type_var?(right_var))
         end
 
         def compatible_free_type_vars?(type_var, other_type_var)
@@ -43,10 +43,10 @@ module TypedRb
           right_var = other_type_var.bound || other_type_var.lower_bound || other_type_var.upper_bound || other_type_var
 
           left_var.is_a?(Polymorphism::TypeVariable) &&
-          right_var.is_a?(Polymorphism::TypeVariable) &&
-          left_var.variable == right_var.variable &&
-          (TypingContext.bound_generic_type_var?(left_var) &&
-           TypingContext.bound_generic_type_var?(right_var))
+            right_var.is_a?(Polymorphism::TypeVariable) &&
+            left_var.variable == right_var.variable &&
+            (TypingContext.bound_generic_type_var?(left_var) &&
+             TypingContext.bound_generic_type_var?(right_var))
         end
 
         def check_generic_type_relation(other_ruby_type, relation)

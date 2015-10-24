@@ -2,7 +2,6 @@ module TypedRb
   module Types
     module Polymorphism
       class TypeVariable
-
         attr_accessor :bound, :variable, :upper_bound, :lower_bound, :name, :node
 
         def initialize(var_name, options = {})
@@ -32,7 +31,7 @@ module TypedRb
 
         def compatible?(type, relation = :lt)
           if @bound
-            @bound.compatible?(type,relation)
+            @bound.compatible?(type, relation)
           elsif incompatible_vars?(type)
             false
           else
@@ -109,10 +108,10 @@ module TypedRb
             right_var = type.bound || type
 
             left_var.is_a?(TypeVariable) &&
-            right_var.is_a?(TypeVariable) &&
-            left_var.variable != right_var.variable &&
-            (TypingContext.bound_generic_type_var?(left_var) &&
-             TypingContext.bound_generic_type_var?(right_var))
+              right_var.is_a?(TypeVariable) &&
+              left_var.variable != right_var.variable &&
+              (TypingContext.bound_generic_type_var?(left_var) &&
+               TypingContext.bound_generic_type_var?(right_var))
           end
         end
       end

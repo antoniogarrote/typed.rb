@@ -4,7 +4,6 @@ require_relative 'polymorphism/generic_comparisons'
 module TypedRb
   module Types
     class TyGenericObject < TyObject
-
       include Polymorphism::GenericComparisons
 
       attr_reader :type_vars
@@ -43,7 +42,7 @@ module TypedRb
 
         generic_function = (from_args + [to_arg, materialized_block_type]).any? do |arg|
           arg.is_a?(Polymorphism::TypeVariable) ||
-            (arg.respond_to?(:generic?) && arg.generic?)
+          (arg.respond_to?(:generic?) && arg.generic?)
         end
 
         if generic_function
@@ -96,11 +95,11 @@ module TypedRb
         if arg.is_a?(Polymorphism::TypeVariable)
           matching_var = type_vars.detect do |type_var|
             type_var.variable == arg.variable ||
-              (type_var.bound && type_var.bound.respond_to?(:variable) && type_var.bound.variable == arg.variable)
+            (type_var.bound && type_var.bound.respond_to?(:variable) && type_var.bound.variable == arg.variable)
           end
-          #if matching_var && matching_var.wildcard? && matching_var.lower_bound
+          # if matching_var && matching_var.wildcard? && matching_var.lower_bound
           #  matching_var.lower_bound
-          #elsif matching_var
+          # elsif matching_var
           # WILDCARD
           if matching_var
             # Type variables and generic methods => function will still be generic
@@ -123,12 +122,11 @@ module TypedRb
         base_string = super
         var_types_strings = @type_vars.map do |var_type|
           if var_type.bound
-            #"[#{var_type.variable} <= #{var_type.bound}]"
+            # "[#{var_type.variable} <= #{var_type.bound}]"
             "[#{var_type.bound}]"
           else
-            "[#{var_type.to_s}]"
+            "[#{var_type}]"
           end
-
         end
         "#{base_string}#{var_types_strings.join}"
       end

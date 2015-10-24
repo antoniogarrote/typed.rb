@@ -1,10 +1,9 @@
 module TypedRb
   module Types
     class TySingletonObject < TyObject
-
       def initialize(ruby_type, node = nil)
-        #super(ruby_type.class)
-        #@ruby_type = ruby_type
+        # super(ruby_type.class)
+        # @ruby_type = ruby_type
         super(ruby_type, node)
       end
 

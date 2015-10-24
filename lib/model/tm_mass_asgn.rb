@@ -5,7 +5,7 @@ module TypedRb
     class TmMassAsgn < Expr
       attr_reader :lhs, :rhs
 
-      def initialize(lhs, rhs,node)
+      def initialize(lhs, rhs, node)
         super(node)
         @lhs = lhs.map { |lhs_node| lhs_node.children.first }
         @lhs_children = lhs

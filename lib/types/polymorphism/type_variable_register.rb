@@ -12,7 +12,7 @@ module TypedRb
           end
         end
 
-        def initialize(parent=nil, kind)
+        def initialize(parent = nil, kind)
           @kind = kind
           @parent = parent
           if @parent
@@ -81,9 +81,7 @@ module TypedRb
         end
 
         def type_variable_for_abstraction(abs_kind, variable, context)
-          if variable.nil?
-            variable = Model::GenSym.next("#{abs_kind}_ret}")
-          end
+          variable = Model::GenSym.next("#{abs_kind}_ret}") if variable.nil?
           ensure_string(variable)
           key = [abs_kind.to_sym, context.context_name, variable]
           type_var = recursive_constraint_search(key)
@@ -132,7 +130,7 @@ module TypedRb
 
         def constraints_for(variable)
           found = constraints[variable]
-          children_found = children.map{ |child_context|  child_context.constraints_for(variable) }.reduce(&:+)
+          children_found = children.map { |child_context|  child_context.constraints_for(variable) }.reduce(&:+)
           (found || []) + (children_found || [])
         end
 
@@ -144,7 +142,7 @@ module TypedRb
           self_variables_constraints = @type_variables_register.values.reduce([]) do |constraints_acc, type_var|
             constraints_acc + type_var.constraints(self)
           end
-          self_variables_constraints + (children.map { |register| register.all_constraints }.reduce(&:+) || [])
+          self_variables_constraints + (children.map(&:all_constraints).reduce(&:+) || [])
         end
 
         def all_variables
@@ -158,8 +156,8 @@ module TypedRb
         end
 
         def add_constraint(variable_name, relation_type, type)
-          #puts "SEARCHING #{variable_name} in #{kind}"
-          #puts type_variables_register.values.map(&:name).inspect
+          # puts "SEARCHING #{variable_name} in #{kind}"
+          # puts type_variables_register.values.map(&:name).inspect
           TypedRb.log(binding, :debug, "Adding constraint #{variable_name} #{relation_type} #{type}")
           if type_variables_register.values.detect { |variable| variable.variable == variable_name }
             var_constraints = @constraints[variable_name] || []
@@ -195,16 +193,14 @@ module TypedRb
         protected
 
         def method_var_types
-          @type_variables_register.map do |(key,value)|
+          @type_variables_register.map do |(key, value)|
             type = key.first
-            if type != :instance_variable && type != :class_variable
-              value
-            end
+            value if type != :instance_variable && type != :class_variable
           end.compact
         end
 
         def class_var_types
-          @type_variables_register.map do |(key,value)|
+          @type_variables_register.map do |(key, value)|
             type = key.first
             if type == :instance_variable || type == :class_variable || type == :generic
               value
@@ -230,7 +226,7 @@ module TypedRb
           constraints.each_with_object({}) do |(variable_name, values), acc|
             new_variable_name = type_variable_mapping[variable_name] ? type_variable_mapping[variable_name].variable : variable_name
             new_values = values.map do |(rel, type)|
-              if(rel == :send)
+              if (rel == :send)
                 old_return_type = type[:return]
                 new_return_type = if old_return_type.is_a?(TypeVariable)
                                     type_variable_mapping[old_return_type.variable] ? type_variable_mapping[old_return_type.variable] : old_return_type
@@ -244,7 +240,7 @@ module TypedRb
                     arg
                   end
                 end
-                [:send, {args: new_args, return: new_return_type, message: type[:message]}]
+                [:send, { args: new_args, return: new_return_type, message: type[:message] }]
               else
                 if type.is_a?(TypeVariable) && type_variable_mapping[type.variable]
                   [rel, type_variable_mapping[type.variable]]
@@ -281,15 +277,13 @@ module TypedRb
 
         def top_level_register
           current = self
-          while current.kind != :top_level
-            current = current.parent
-          end
+          current = current.parent while current.kind != :top_level
           current
         end
 
         def ensure_string(variable)
           variable = variable.to_s if variable.is_a?(Symbol)
-          fail StandardError, "Variable name must be a String for register" unless variable.is_a?(String)
+          fail StandardError, 'Variable name must be a String for register' unless variable.is_a?(String)
         end
       end
     end

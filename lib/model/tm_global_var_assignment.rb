@@ -6,7 +6,6 @@ module TypedRb
   module Model
     # global variable assignation
     class TmGlobalVarAssignment < TmInstanceVarAssignment
-
       def check_type(context)
         rvalue_type = rvalue.check_type(context)
         lvalue_type = Types::TypingContext.type_variable_for_global(lvalue.val)

@@ -57,7 +57,7 @@ module TypedRb
           end
           message = message.split(/\[[\w]+/).first
 
-          method_type_var_info = type_variables.each_with_object(::Hash.(::String, 'Hash[Symbol][String]').new) do |variable, acc|
+          method_type_var_info = type_variables.each_with_object(::Hash.call(::String, 'Hash[Symbol][String]').new) do |variable, acc|
             var_name = variable[:type]
             variable[:type] = "#{message}:#{var_name}"
             acc[var_name] = variable

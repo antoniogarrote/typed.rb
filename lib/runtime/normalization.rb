@@ -6,7 +6,7 @@ module TypedRb
       include Validations
       ts '#normalize_generic_types! / -> unit'
       def normalize_generic_types!
-        initial_value = Hash.(Class, TypedRb::Types::TyGenericSingletonObject).new
+        initial_value = Hash.call(Class, TypedRb::Types::TyGenericSingletonObject).new
         @generic_types_registry = generic_types_parser_registry.each_with_object(initial_value) do |type_info, acc|
           generic_singleton_object = build_generic_singleton_object(type_info)
           acc[generic_singleton_object.ruby_type] = generic_singleton_object
@@ -136,8 +136,8 @@ module TypedRb
                           klass.method(method).parameters
                         end
                       end
-        ruby_params_clean = ruby_params.reject { |(kind,_)| kind == :block }
-        min, max = ruby_params_clean.each_with_object([0,0]) do |(kind,_), acc|
+        ruby_params_clean = ruby_params.reject { |(kind, _)| kind == :block }
+        min, max = ruby_params_clean.each_with_object([0, 0]) do |(kind, _), acc|
           acc[1] += 1
           acc[1] = Float::INFINITY if kind == :rest
           acc[0] += 1 if kind == :req
@@ -146,7 +146,7 @@ module TypedRb
         signature_clean = signature.reject { |acc| acc.is_a?(Hash) && acc[:kind] == :block_arg }
         if signature_clean.count < min || signature_clean.count > max
           fail ::TypedRb::Types::TypeParsingError,
-          "Type signature declaration for method '#{klass}.#{method}': '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
+               "Type signature declaration for method '#{klass}.#{method}': '#{signature_clean}' inconsistent with method parameters #{ruby_params.inspect}"
         end
 
         count = 0
