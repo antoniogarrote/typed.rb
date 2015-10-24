@@ -20,12 +20,12 @@ module TypedRb
       def find_function_type(message, num_args, block)
         function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message, num_args, block)
         if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
-          materialise_super_type_found_function(message, num_args, block)
+          materialize_super_type_found_function(message, num_args, block)
         else
           TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}"
-          materialised_function = materialise_found_function(function_type)
-          TypedRb.log binding, :debug, "Found message '#{message}', materialised generic function: #{materialised_function}"
-          [function_klass_type, materialised_function]
+          materialized_function = materialize_found_function(function_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', materialized generic function: #{materialized_function}"
+          [function_klass_type, materialized_function]
         end
       end
 
@@ -33,30 +33,30 @@ module TypedRb
         true
       end
 
-      def materialise_found_function(function_type)
-        from_args = function_type.from.map { |arg| materialise_found_function_arg(arg) }
-        to_arg = materialise_found_function_arg(function_type.to)
+      def materialize_found_function(function_type)
         return function_type unless function_type.generic?
+        from_args = function_type.from.map { |arg| materialize_found_function_arg(arg) }
+        to_arg = materialize_found_function_arg(function_type.to)
         if function_type.block_type
-          materialised_block_type = materialise_found_function(function_type.block_type)
+          materialized_block_type = materialize_found_function(function_type.block_type)
         end
 
-        generic_function = (from_args + [to_arg, materialised_block_type]).any? do |arg|
+        generic_function = (from_args + [to_arg, materialized_block_type]).any? do |arg|
           arg.is_a?(Polymorphism::TypeVariable) ||
             (arg.respond_to?(:generic?) && arg.generic?)
         end
 
         if generic_function
-          materialised_function = TyGenericFunction.new(from_args, to_arg, function_type.parameters_info, node)
-          materialised_function.local_typing_context = function_type.local_typing_context
+          materialized_function = TyGenericFunction.new(from_args, to_arg, function_type.parameters_info, node)
+          materialized_function.local_typing_context = function_type.local_typing_context
         else
-          materialised_function = TyFunction.new(from_args, to_arg, function_type.parameters_info, node)
+          materialized_function = TyFunction.new(from_args, to_arg, function_type.parameters_info, node)
         end
 
-        materialised_function.with_block_type(materialised_block_type)
+        materialized_function.with_block_type(materialized_block_type)
       end
 
-      def materialise_super_type_found_function(message, num_args, block)
+      def materialize_super_type_found_function(message, num_args, block)
         super_type_object = BasicObject::TypeRegistry.find_generic_type(generic_singleton_object.super_type.ruby_type)
         super_type_vars = generic_singleton_object.super_type.type_vars
         super_type_materialization_args = parse_super_type_materialization_args(super_type_vars)
@@ -92,7 +92,7 @@ module TypedRb
         super_type_klass.ruby_type.ancestors.include?(function_klass_type)
       end
 
-      def materialise_found_function_arg(arg)
+      def materialize_found_function_arg(arg)
         if arg.is_a?(Polymorphism::TypeVariable)
           matching_var = type_vars.detect do |type_var|
             type_var.variable == arg.variable ||
@@ -131,6 +131,19 @@ module TypedRb
 
         end
         "#{base_string}#{var_types_strings.join}"
+      end
+
+      def clone_with_substitutions(substitutions)
+        materialized_type_vars = type_vars.map do |type_var|
+          if type_var.is_a?(Polymorphism::TypeVariable)
+            substitutions[type_var.variable] || type_var.clone
+          elsif type_var.is_a?(TyGenericSingletonObject) || type_var.is_a?(TyGenericObject)
+            type_var.clone_with_substitutions(substitutions)
+          else
+            type_var
+          end
+        end
+        self.class.new(ruby_type, materialized_type_vars, node)
       end
 
       def apply_bindings(bindings_map)

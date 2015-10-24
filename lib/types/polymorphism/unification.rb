@@ -61,7 +61,12 @@ module TypedRb
           inferred_receiver = infer_receiver(receiver)
           if inferred_receiver
             klass, function = inferred_receiver.find_function_type(message, arg_types.size, false)
-            return true if function.is_a?(Types::TyDynamicFunction)
+            if function.is_a?(Types::TyDynamicFunction)
+              # TODO: should I bind the var to type dynamic in this case?
+              graph[return_type][:upper_type] = Types::TyDynamic.new(Object)
+              graph[return_type][:lower_type] = Types::TyDynamic.new(Object)
+              return true
+            end
             if function && can_apply?(function, arg_types)
               if return_type && graph[return_type][:upper_type]
                 compatible_gt_type?(graph[return_type][:upper_type], function.to, false)
@@ -222,15 +227,12 @@ module TypedRb
 
         def check_bindings
           groups.values.each do |group|
-            vars = group[:vars].keys.map(&:to_s).join(',').index('TMBSA:tmbs2')
             next if (group[:upper_type].nil? && group[:lower_type].nil?)
-            group[:vars].keys.each do |var|
-              final_lower_type = find_type(group[:lower_type], :lower_type)
-              final_upper_type = find_type(group[:upper_type], :upper_type)
-              if final_lower_type && final_upper_type && final_lower_type != final_upper_type
-                # final lower <= final upper
-                compatible_lt_type?(final_upper_type, final_lower_type)
-              end
+            final_lower_type = find_type(group[:lower_type], :lower_type)
+            final_upper_type = find_type(group[:upper_type], :upper_type)
+            if final_lower_type && final_upper_type && final_lower_type != final_upper_type
+              # final lower <= final upper
+              compatible_lt_type?(final_upper_type, final_lower_type)
             end
           end
         end
@@ -379,11 +381,6 @@ module TypedRb
         def print_constraints
           text = StringIO.new
           text << "Running unification on #{constraints.size} constraints:\n"
-          # begin
-          #   fail StandardError
-          # rescue StandardError => e
-          #   puts e.backtrace.join("\n")
-          # end
           @gt_constraints.each do |(l, _t, r)|
             l = if l.is_a?(Hash)
                   l.keys.map(&:to_s).join(',')

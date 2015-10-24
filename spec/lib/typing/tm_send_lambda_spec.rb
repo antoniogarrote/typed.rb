@@ -69,6 +69,7 @@ __END
 
       result = language.check(expr)
       expect(result).to eq(tystring)
+
     end
 
     it 'catches expcetions in lambda applications' do

@@ -88,7 +88,6 @@ module TypedRb
       end
 
       def process_arguments(context, function_type)
-        #orig_context = context.dup
         args.each_with_index do |arg, i|
             function_arg_type = function_type.from[i]
             # Generic arguments are parsed by runtime without checking constraints since they are not available at parsing type.
@@ -139,7 +138,7 @@ module TypedRb
       def check_return_type(context, function_type, body_return_type)
         return function_type.to if function_type.to.instance_of?(Types::TyUnit)
         # Same as before but for the return type
-        function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.self_materialize : function_type.to
+        function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.clone : function_type.to
         body_return_type = body_return_type.check_type(context) if body_return_type.is_a?(TmReturn)
         if body_return_type.compatible?(function_type_to, :lt)
           function_type

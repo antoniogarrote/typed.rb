@@ -185,7 +185,7 @@ module TypedRb
           function_type.to
         else
           if function_type.generic?
-            function_type.local_typing_context.parent = Marshal::load(Marshal.dump(Types::TypingContext.type_variables_register))
+            function_type.local_typing_context.parent = Types::TypingContext.type_variables_register
             return_type = function_type.materialize do |materialized_function|
               check_application(receiver_type, materialized_function, context)
             end.to
@@ -216,8 +216,6 @@ module TypedRb
       end
 
       def check_lambda_application(lambda_type, context)
-        # TODO: please, refactor this.
-        #Types::TyFunction.instance_method(:check_args_application).bind(lambda_type).call(args, context).to
         lambda_type.check_args_application(args, context).to
       end
 

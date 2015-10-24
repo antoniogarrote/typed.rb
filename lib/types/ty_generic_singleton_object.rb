@@ -38,84 +38,32 @@ module TypedRb
         BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
       end
 
-      # ts 'MyClass[X][Y]'
-      # class MyClass
-      #  ...
-      # end
-      # MyClass.(TypeArg1, TypeArg2)  -> make X<TypeArg1, Y<TypeArg2, X>TypeArg1, X>TypeArg2
-      # @see comment below
-      def materialize(actual_arguments)
-        TypedRb.log binding, :debug, "Materialising generic singleton object '#{self}' with args [#{actual_arguments.map(&:to_s).join(',')}]"
-        with_fresh_var_types do |fresh_vars_generic_type|
-          actual_arguments.each_with_index do |argument, i|
-            if argument.is_a?(Polymorphism::TypeVariable)
-              if argument.wildcard?
-                # Wild card type
-                # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
-                { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
-                  if argument.send(bound)
-                    value = if argument.send(bound).is_a?(TyGenericSingletonObject)
-                              argument.send(bound).self_materialize
-                            else
-                              argument.send(bound)
-                            end
-                    fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
-                  end
-                end
-                fresh_vars_generic_type.type_vars[i].to_wildcard! # WILD CARD
-              elsif argument.bound # var type with a particular value
-                argument = argument.bound
-                if argument.is_a?(TyGenericSingletonObject)
-                  argument = argument.self_materialize
-                end
-                # This is only for matches T =:= Type1 -> T < Type1, T > Type1
-                fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
-                fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
-              else
-                # Type variable
-                fresh_vars_generic_type.type_vars[i].bound = argument
-                fresh_vars_generic_type.type_vars[i].lower_bound = argument
-                fresh_vars_generic_type.type_vars[i].upper_bound = argument
-              end
-            else
-              if argument.is_a?(TyGenericSingletonObject)
-                argument = argument.self_materialize
-              end
-              # This is only for matches T =:= Type1 -> T < Type1, T > Type1
-              fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
-              fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
-            end
-          end
-        end
-      end
-
       # materialize will be invoked by the logic handling invocations like:
       # ts 'MyClass[X][Y]'
       # class MyClass
       #  ...
       # end
-      #
+      # MyClass.(TypeArg1, TypeArg2)  -> make X<TypeArg1, Y<TypeArg2, X>TypeArg1, X>TypeArg2
       # MyClass.(TypeArg1, TypeArg2)  -> Materialize here > make X<TypeArg1, Y<TypeArg2 > Unification
-      def with_fresh_var_types
+      def materialize(actual_arguments)
+        TypedRb.log binding, :debug, "Materialising generic singleton object '#{self}' with args [#{actual_arguments.map(&:to_s).join(',')}]"
         # This can happen when we're dealing with a generic singleton object that has only been
         # annotated but we don't have the annotated implementation. e.g. Array[T]
         # We need to provide a default local_type_context based on the upper bounds provided in the
         # type annotation.
-        if @local_typing_context.nil?
-          compute_minimal_typing_context
-        end
-        fresh_vars_generic_type = TypingContext.duplicate(self)
-        applied_typing_context = fresh_vars_generic_type.local_typing_context
+        compute_minimal_typing_context if @local_typing_context.nil?
 
+        applied_typing_context, substitutions = @local_typing_context.clone(:class)
+        fresh_vars_generic_type = clone_with_substitutions(substitutions)
         TypingContext.with_context(applied_typing_context) do
           # Appy constraints for application of Type args
-          yield fresh_vars_generic_type
+          apply_type_arguments(fresh_vars_generic_type, actual_arguments)
         end
-
-        # got all the constraints here
+                # got all the constraints here
         # do something with the context -> unification? merge context?
         # applied_typing_context.all_constraints.each{|(l,t,r)| puts "#{l} #{t} #{r}" }
         unification = Polymorphism::Unification.new(applied_typing_context.all_constraints).run
+        applied_typing_context.unlink # these constraints have already been satisfied
         # - Create a new ty_generic_object for the  unified types
         # - Apply the unified types to all the methods in the class/instance
         #   - this can be dynamically done with the right implementation of find_function_type
@@ -177,6 +125,11 @@ module TypedRb
         self
       end
 
+      def clone
+        cloned_type_vars = type_vars.map { |type_var| type_var.clone }
+        TyGenericSingletonObject.new(ruby_type, cloned_type_vars, super_type, node)
+      end
+
       def to_s
         base_string = super
         var_types_strings = @type_vars.map do |var_type|
@@ -187,6 +140,63 @@ module TypedRb
           end
         end
         "#{base_string}#{var_types_strings.join}"
+      end
+
+      def clone_with_substitutions(substitutions)
+        materialized_type_vars = type_vars.map do |type_var|
+          if type_var.is_a?(Polymorphism::TypeVariable)
+            substitutions[type_var.variable] || type_var.clone
+          elsif type_var.is_a?(TyGenericSingletonObject) || type_var.is_a?(TyGenericObject)
+            type_var.clone_with_substitutions(substitutions)
+          else
+            type_var
+          end
+        end
+        self.class.new(ruby_type, materialized_type_vars, super_type, node)
+      end
+
+      protected
+
+      def apply_type_arguments(fresh_vars_generic_type, actual_arguments)
+        actual_arguments.each_with_index do |argument, i|
+          if argument.is_a?(Polymorphism::TypeVariable)
+            if argument.wildcard?
+              # Wild card type
+              # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
+              { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
+                if argument.send(bound)
+                  value = if argument.send(bound).is_a?(TyGenericSingletonObject)
+                            argument.send(bound).clone#.self_materialize
+                          else
+                            argument.send(bound)
+                          end
+                  fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
+                end
+              end
+              fresh_vars_generic_type.type_vars[i].to_wildcard! # WILD CARD
+            elsif argument.bound # var type with a particular value
+              argument = argument.bound
+              if argument.is_a?(TyGenericSingletonObject)
+                argument = argument.clone #.self_materialize
+              end
+              # This is only for matches T =:= Type1 -> T < Type1, T > Type1
+              fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
+              fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
+            else
+              # Type variable
+              fresh_vars_generic_type.type_vars[i].bound = argument
+              fresh_vars_generic_type.type_vars[i].lower_bound = argument
+              fresh_vars_generic_type.type_vars[i].upper_bound = argument
+            end
+          else
+            if argument.is_a?(TyGenericSingletonObject)
+              argument = argument.clone #.self_materialize
+            end
+            # This is only for matches T =:= Type1 -> T < Type1, T > Type1
+            fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
+            fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
+          end
+        end
       end
     end
   end

@@ -66,7 +66,7 @@ describe TypedRb::Types::Polymorphism::TypeVariableRegister do
 
       renamed_x = tyvariable('renamed_x')
       renamed_return_id_x = tyvariable('renamed_ret_id_x')
-      renamed_register = register.apply_type(nil, {xvar.variable => renamed_x, ret_type.variable => renamed_return_id_x})
+      renamed_register = register.send(:apply_type,nil, {xvar.variable => renamed_x, ret_type.variable => renamed_return_id_x})
 
       constraints = renamed_register.all_constraints
       expect(constraints.size).to eq(1)
@@ -102,7 +102,7 @@ describe TypedRb::Types::Polymorphism::TypeVariableRegister do
       argy.compatible?(argx)
 
       substitution = tyvariable('substitution')
-      result = parent.apply_type(nil, argx.variable => substitution)
+      result = parent.send(:apply_type, nil, argx.variable => substitution)
       constraints = result.all_constraints
       var, type, info = constraints[0]
       expect(var).to eq(argy)

@@ -58,8 +58,6 @@ module TypedRb
         end
 
         def check_type_var_inclusion(type_var, other_type_var, relation)
-#          if (type_var.fully_bound? && !other_type_var.fully_bound?) ||
-#             (!type_var.fully_bound? && other_type_var.fully_bound?)
           if (!type_var.wildcard? && !type_var.fully_bound?) ||
              (!other_type_var.wildcard? && !other_type_var.fully_bound?)
             add_type_var_constraint(type_var, other_type_var, relation)

@@ -14,7 +14,7 @@ module TypedRb
           var_name.sub!(/:?\?/, '') if @wildcard
           @name = var_name
           @variable = gen_name ? Model::GenSym.next("TV_#{var_name}") : var_name
-          @bound = nil
+          @bound = options[:bound]
         end
 
         def add_constraint(relation, type)
@@ -78,6 +78,17 @@ module TypedRb
 
         def unbind
           @bound = nil
+        end
+
+        def clone
+          var = TypeVariable.new(variable,
+                                 node: node,
+                                 gen_name: false,
+                                 upper_bound: upper_bound,
+                                 lower_bound: lower_bound,
+                                 bound: bound)
+          var.to_wildcard! if wildcard?
+          var
         end
 
         def to_s

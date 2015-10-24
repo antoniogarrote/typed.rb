@@ -1,6 +1,7 @@
 require_relative '../../../spec_helper'
 
 describe TypedRb::Types::Polymorphism::GenericComparisons do
+
   let(:language) { TypedRb::Language.new }
 
   let(:int_bound) do

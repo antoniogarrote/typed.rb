@@ -24,6 +24,11 @@ module TypedRb
           @type_variables_register = {}
         end
 
+        def unlink
+          return if @parent.nil?
+          @parent.children.delete(self)
+        end
+
         def type_variable_for(type, variable, hierarchy)
           ensure_string(variable)
           upper_level = upper_class_register # we need to get a class register
@@ -98,9 +103,7 @@ module TypedRb
           if type_var_in_registry
             type_var_in_registry
           else
-            type_var_in_registry = TypeVariable.new(type_var.variable,
-                                                    :upper_bound => type_var.upper_bound,
-                                                    :gen_name    => false)
+            type_var_in_registry = type_var.clone
             type_variables_register[key] = type_var_in_registry
             type_var_in_registry
           end
@@ -157,6 +160,7 @@ module TypedRb
         def add_constraint(variable_name, relation_type, type)
           #puts "SEARCHING #{variable_name} in #{kind}"
           #puts type_variables_register.values.map(&:name).inspect
+          TypedRb.log(binding, :debug, "Adding constraint #{variable_name} #{relation_type} #{type}")
           if type_variables_register.values.detect { |variable| variable.variable == variable_name }
             var_constraints = @constraints[variable_name] || []
             var_constraints << [relation_type, type]
@@ -168,8 +172,48 @@ module TypedRb
           end
         end
 
+        def print_constraints
+          constraints.each do |(variable_name, constraints)|
+            constraints.each do |(rel, val)|
+              if rel == :send
+                puts "#{variable_name} #{rel} #{val[:message]}#{val[:args].map(&:to_s).join(',')}"
+              else
+                puts "#{variable_name} #{rel} #{val}"
+              end
+            end
+          end
+        end
+
+        def clone(scope)
+          vars = (scope == :method) ? method_var_types : class_var_types
+          substitutions = vars.each_with_object({}) do |var_type, acc|
+            acc[var_type.variable] = var_type.clone
+          end
+          [apply_type(parent, substitutions), substitutions]
+        end
+
+        protected
+
+        def method_var_types
+          @type_variables_register.map do |(key,value)|
+            type = key.first
+            if type != :instance_variable && type != :class_variable
+              value
+            end
+          end.compact
+        end
+
+        def class_var_types
+          @type_variables_register.map do |(key,value)|
+            type = key.first
+            if type == :instance_variable || type == :class_variable || type == :generic
+              value
+            end
+          end.compact
+        end
+
         def apply_type(parent, type_variable_mapping)
-          register = TypeVariableRegister.new(parent, :local)
+          register = TypeVariableRegister.new(parent, kind)
           apply_type_to_register(register, type_variable_mapping)
         end
 
@@ -212,26 +256,6 @@ module TypedRb
             acc[new_variable_name] = new_values
           end
         end
-
-        def local_var_types
-          @type_variables_register.map do |(key,value)|
-            type = key.first
-            if type != :instance_variable && type != :class_variable
-              value
-            end
-          end.compact
-        end
-
-        def generic_type_local_var_types
-          @type_variables_register.map do |(key,value)|
-            type = key.first
-            if type == :instance_variable || type == :class_variable || type == :generic
-              value
-            end
-          end.compact
-        end
-
-        protected
 
         def recursive_constraint_search(key)
           current = self
