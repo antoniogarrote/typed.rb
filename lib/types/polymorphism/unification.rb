@@ -77,9 +77,7 @@ module TypedRb
               fail UnificationError, "Message #{message} not found for type variable #{receiver}"
             end
           else
-            unless @allow_unbound_receivers
-              fail UnificationError, "Unbound variable #{receiver} type acting as receiver for #{message}"
-            end
+            add_to_send_bubble_constraints(receiver, send_args)
           end
         end
 
@@ -90,6 +88,27 @@ module TypedRb
           else
             receiver
           end
+        end
+
+        # if the type variable is not bound, we try to
+        # find the variable in an upper typing context
+        # to satisfy the constraint there.
+        # If no container context is found, we fail
+        # the unification run unless unbound vars are allowed.
+        def add_to_send_bubble_constraints(receiver, send_args)
+          return check_unbound_receivers(receiver, send_args) if receiver.nil?
+          vars = receiver[:vars].keys.select do |var|
+            Types::TypingContext.include?(var.variable)
+          end
+          return check_unbound_receivers(receiver, send_args) if vars.empty?
+          vars.each do |var|
+            @to_bubble << [var, send_args]
+          end
+        end
+
+        def check_unbound_receivers(receiver, send_args)
+          return if @allow_unbound_receivers
+          fail UnificationError, "Unbound variable #{receiver} type acting as receiver for #{send_args[:message]}"
         end
 
         def can_apply?(fn, arg_types)
@@ -133,6 +152,7 @@ module TypedRb
           end.uniq
 
           @groups = vars.each_with_object({}) do |var, groups|
+            # lower_type, and upper_type can come from a bubbled up :send constraint type variable
             groups[var] = make_group(var => true)
           end
         end
@@ -327,6 +347,7 @@ module TypedRb
           end
           @send_constraints = @constraints.select { |(_, t, _r)| t == :send }
           @graph = Topography.new(@constraints)
+          @to_bubble = []
         end
 
         def canonical_form(constraints)
@@ -359,10 +380,23 @@ module TypedRb
           unify(@send_constraints)
           graph.check_bindings
           graph.print_groups
+          bubble_send_constraints
           graph.do_bindings! if bind_variables
           self
         end
 
+        def bubble_send_constraints
+          @to_bubble.each do |(var, constraint)|
+            return_var = constraint[:return]
+            message = constraint[:message]
+            args = constraint[:args]
+            lower_type = @graph[return_var][:lower_type]
+            upper_type = @graph[return_var][:upper_type]
+            fresh_return_var = var.add_message_constraint(message, args)
+            Types::TypingContext.add_constraint(fresh_return_var.variable, :lt, lower_type) if lower_type
+            Types::TypingContext.add_constraint(fresh_return_var.variable, :gt, upper_type) if upper_type
+          end
+        end
         def bindings
           graph.vars
         end
@@ -453,6 +487,7 @@ module TypedRb
                     end
 
           # this will throw an exception if types no compatible
+
           compatible_type = compatible_type?(value_l, t, value_r)
           if t == :lt
             graph[l][:lower_type] = compatible_type if bind

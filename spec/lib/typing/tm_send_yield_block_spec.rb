@@ -236,10 +236,51 @@ __CODE
         ftstp1(TStP1.new, &:test)
 __CODE
 
-      # TODO: the correct signature for this method would be #ftstp1 / [T] -> &([T] -> String) -> String
-      # but we don't have generic methods yet
       result = language.check(expr)
       expect(result.ruby_type).to eq(String)
+    end
+
+    it 'type-checks symbol.to_proc converted arguments for generic functions' do
+      expr = <<__CODE
+        class TStP1g
+          ts '#test / -> String'
+          def test
+            'string'
+          end
+        end
+
+        ts '#ftstp1g[T] / [T] -> &([T] -> String) -> String'
+        def ftstp1g(obj, &b)
+          yield obj
+        end
+
+        ftstp1g(TStP1g.new, &:test)
+__CODE
+
+      result = language.check(expr)
+      expect(result.ruby_type).to eq(String)
+    end
+
+    it 'type-checks symbol.to_proc converted arguments for generic functions, negative case' do
+      expr = <<__CODE
+        class TStP1gn
+          ts '#test / -> Integer'
+          def test
+            1
+          end
+        end
+
+        ts '#ftstp1gn[T] / [T] -> &([T] -> String) -> String'
+        def ftstp1gn(obj, &b)
+          yield obj
+        end
+
+        ftstp1gn(TStP1gn.new, &:test)
+__CODE
+
+      expect {
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
 
     it 'captures errors in the application of  symbol.to_proc converted arguments' do
@@ -263,7 +304,5 @@ __CODE
         language.check(expr)
       }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
-
-    # TODO: Check for a generic class, see TODO above.
   end
 end

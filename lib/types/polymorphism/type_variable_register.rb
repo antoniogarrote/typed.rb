@@ -170,6 +170,15 @@ module TypedRb
           end
         end
 
+        def include?(variable)
+          found = @type_variables_register.values.detect do |var|
+            var.variable == variable
+          end
+          return true if found
+          return false if parent.nil?
+          parent.include?(variable)
+        end
+
         def print_constraints
           constraints.each do |(variable_name, constraints)|
             constraints.each do |(rel, val)|

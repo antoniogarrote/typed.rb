@@ -90,6 +90,10 @@ module TypedRb
           type_variables_register.all_variables
         end
 
+        def include?(variable)
+          type_variables_register.include?(variable)
+        end
+
         def add_constraint(variable, relation, type)
           type_variables_register.add_constraint(variable, relation, type)
         end
