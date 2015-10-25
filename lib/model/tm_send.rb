@@ -40,9 +40,7 @@ module TypedRb
                                else
                                  receiver_type
                                end
-        if parsed_receiver_type.is_a?(Types::TySingletonObject)
-          parsed_receiver_type
-        end
+        return parsed_receiver_type if parsed_receiver_type.is_a?(Types::TySingletonObject)
       end
 
       # we received new, but we look for initialize in the class,
@@ -53,67 +51,38 @@ module TypedRb
       def check_instantiation(context)
         self_type = singleton_object_type(receiver, context).as_object_type
         function_klass_type, function_type = self_type.find_function_type(:initialize, args.size, @block)
-        if function_type.nil?
-          error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type} constructor not found"
-          fail TypeCheckError.new(error_message, node)
-        else
-          # function application
-          @message = :initialize
-          begin
-            check_application(self_type, function_type, context)
-          rescue TypeCheckError => error
-            raise error if function_klass_type == self_type.ruby_type
-          end
-          self_type
+        # function application
+        @message = :initialize
+        begin
+          check_application(self_type, function_type, context)
+        rescue TypeCheckError => error
+          raise error if function_klass_type == self_type.ruby_type
         end
+        self_type
       end
 
       def check_type_no_explicit_receiver(context)
-        # local variables take precedence over message sending
-        if context.get_type_for(message) && args.size == 0
-          context.get_type_for(message)
-        elsif message == :yield
-          yield_abs_type = context.get_type_for(:yield)
-          if yield_abs_type
-            check_lambda_application(yield_abs_type, context)
-          else
-            fail TypeCheckError.new("Error type checking message sent '#{message}': Cannot find yield function defined in typing context", node)
-          end
+        if message == :yield
+          check_yield_application(context)
         else
-          self_type = context.get_type_for(:self) # check message in self type -> application
-          if self_type.is_a?(Types::Polymorphism::TypeVariable) # Existential type (Module)
-            # TODO: what can we do if this is the inclusion of a module?
-            arg_types = args.map { |arg| arg.check_type(context) }
-            self_type.add_message_constraint(message, arg_types)
-          else
-            function_klass_type, function_type = self_type.find_function_type(message, args.size, @block)
-            begin
-              if function_type.nil?
-                error_message = "Error type checking message sent '#{message}': Type information for #{self_type}:#{message} not found"
-                fail TypeCheckError.new(error_message, node)
-              elsif cast?(function_klass_type)
-                check_casting(context)
-              elsif module_include_implementation?(function_klass_type)
-                check_module_inclusions(self_type, context)
-              else
-                # function application
-                check_application(self_type, function_type, context)
-              end
-            rescue TypeCheckError => error
-              if  !(function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject)) && function_klass_type != self_type.ruby_type
-                Types::TyDynamic.new(Object, node)
-              elsif function_klass_type == :main && self_type.is_a?(Types::TyTopLevelObject) && function_type.nil?
-                Types::TyDynamic.new(Object, node)
-              else
-                raise error
-              end
-            end
-          end
+          @receiver_type = context.get_type_for(:self) # check message in self type -> application
+          check_type_explicit_receiver(context)
+        end
+      end
+
+      def check_yield_application(context)
+        yield_abs_type = context.get_type_for(:yield)
+        if yield_abs_type
+          check_lambda_application(yield_abs_type, context)
+        else
+          fail TypeCheckError.new("Error type checking message sent '#{message}': Cannot find yield function defined in typing context", node)
         end
       end
 
       def check_type_explicit_receiver(context)
         if receiver_type.is_a?(Types::Polymorphism::TypeVariable)
+          # Existential type (Module) if receiver_type is self
+          # TODO: what can we do if this is the inclusion of a module?
           arg_types = args.map { |arg| arg.check_type(context) }
           receiver_type.add_message_constraint(message, arg_types)
         elsif receiver_type.is_a?(Types::TyGenericSingletonObject) && (message == :call)
@@ -128,6 +97,8 @@ module TypedRb
           if function_type.nil?
             error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."
             fail TypeCheckError.new(error_message, node)
+          elsif cast?(function_klass_type)
+            check_casting(context)
           elsif module_include_implementation?(function_klass_type)
             check_module_inclusions(receiver_type, context)
           else
