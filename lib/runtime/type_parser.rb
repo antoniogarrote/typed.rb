@@ -67,7 +67,8 @@ module TypedRb
 
         def parse_rest_args(type,  klass)
           parsed_parameter = parse(type[:parameters].first, klass)
-          if parsed_parameter.is_a?(Types::Polymorphism::TypeVariable)
+          if parsed_parameter.is_a?(Types::Polymorphism::TypeVariable) ||
+             parsed_parameter.is_a?(Types::TyGenericSingletonObject)
             # TODO: should I use #parse_singleton_object_type here?
             Types::TyGenericSingletonObject.new(Array, [parsed_parameter])
           else
@@ -142,7 +143,7 @@ module TypedRb
                                                                                            :gen_name => false)
                                     concrete_param.bind(bound)
                                     concrete_param
-                                  rescue NameError => e # [E] / E != ruby type
+                                  rescue NameError # [E] / E != ruby type
                                     # TODO: transform this into the method_type_var shown before
                                     is_generic = true
                                     Types::Polymorphism::TypeVariable.new(param[:type], :gen_name => false)

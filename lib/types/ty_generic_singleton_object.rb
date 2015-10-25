@@ -16,20 +16,42 @@ module TypedRb
         @application_count = 0
       end
 
+      def type_vars
+        @type_vars.map do |type_var|
+          if type_var.is_a?(Polymorphism::TypeVariable)
+            type_var
+          else
+            type_var.type_vars
+          end
+        end.flatten.each_with_object({}) do |type_var, acc|
+          acc[type_var.variable] = type_var
+        end.values
+      end
+
       def materialize_with_type_vars(type_vars, bound_type)
         TypedRb.log binding, :debug, "Materialising generic singleton object with type vars '#{self}' <= #{type_vars.map(&:to_s).join(',')} :: #{bound_type}"
         bound_type_vars = @type_vars.map do |type_var|
-          maybe_class_bound = type_vars.detect do |bound_type_var|
-            type_var.variable == bound_type_var.variable
-          end
-          if maybe_class_bound.nil?
-            # it has to be method generic variable
+          if type_var.is_a?(Types::TyGenericSingletonObject)
             type_var
           else
-            maybe_class_bound
+            maybe_class_bound = type_vars.detect do |bound_type_var|
+              type_var.variable == bound_type_var.variable
+            end
+            if maybe_class_bound.nil?
+              # it has to be method generic variable
+              type_var
+            else
+              maybe_class_bound
+            end
           end
         end
-        materialize(bound_type_vars.map { |type_var| type_var.send(bound_type) })
+        materialize(bound_type_vars.map do |type_var|
+                      if type_var.is_a?(Types::TyGenericSingletonObject)
+                        type_var.materialize_with_type_vars(type_vars, bound_type)
+                      else
+                        type_var.send(bound_type)
+                      end
+                    end)
       end
 
       def self_materialize
@@ -132,7 +154,9 @@ module TypedRb
       def to_s
         base_string = super
         var_types_strings = @type_vars.map do |var_type|
-          if var_type.bound && var_type.bound.is_a?(Polymorphism::TypeVariable)
+          if !var_type.is_a?(Polymorphism::TypeVariable)
+            "[#{var_type}]"
+          elsif var_type.bound && var_type.bound.is_a?(Polymorphism::TypeVariable)
             "[#{var_type.variable} <= #{var_type.bound.bound || var_type.bound.variable}]"
           else
             "[#{var_type.bound || var_type.variable}]"
@@ -157,45 +181,69 @@ module TypedRb
       protected
 
       def apply_type_arguments(fresh_vars_generic_type, actual_arguments)
-        actual_arguments.each_with_index do |argument, i|
-          if argument.is_a?(Polymorphism::TypeVariable)
-            if argument.wildcard?
-              # Wild card type
-              # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
-              { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
-                if argument.send(bound)
-                  value = if argument.send(bound).is_a?(TyGenericSingletonObject)
-                            argument.send(bound).clone # .self_materialize
-                          else
-                            argument.send(bound)
-                          end
-                  fresh_vars_generic_type.type_vars[i].compatible?(value, relation)
-                end
-              end
-              fresh_vars_generic_type.type_vars[i].to_wildcard! # WILD CARD
-            elsif argument.bound # var type with a particular value
-              argument = argument.bound
-              if argument.is_a?(TyGenericSingletonObject)
-                argument = argument.clone # .self_materialize
-              end
-              # This is only for matches T =:= Type1 -> T < Type1, T > Type1
-              fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
-              fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
-            else
-              # Type variable
-              fresh_vars_generic_type.type_vars[i].bound = argument
-              fresh_vars_generic_type.type_vars[i].lower_bound = argument
-              fresh_vars_generic_type.type_vars[i].upper_bound = argument
-            end
+        fresh_vars_generic_type.type_vars.each_with_index do |type_var, i|
+          if type_var.bound.is_a?(TyGenericSingletonObject)
+            type_var.bind(apply_type_arguments_recursively(type_var.bound, actual_arguments))
           else
+            apply_type_argument(actual_arguments[i], type_var)
+          end
+        end
+      end
+
+      def apply_type_argument(argument, type_var)
+        if argument.is_a?(Polymorphism::TypeVariable)
+          if argument.wildcard?
+            # Wild card type
+            # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
+            { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
+              if argument.send(bound)
+                value = if argument.send(bound).is_a?(TyGenericSingletonObject)
+                          argument.send(bound).clone # .self_materialize
+                        else
+                          argument.send(bound)
+                        end
+                type_var.compatible?(value, relation)
+              end
+            end
+            type_var.to_wildcard! # WILD CARD
+          elsif argument.bound # var type with a particular value
+            argument = argument.bound
             if argument.is_a?(TyGenericSingletonObject)
               argument = argument.clone # .self_materialize
             end
             # This is only for matches T =:= Type1 -> T < Type1, T > Type1
-            fresh_vars_generic_type.type_vars[i].compatible?(argument, :lt)
-            fresh_vars_generic_type.type_vars[i].compatible?(argument, :gt)
+            fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :lt)
+            fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :gt)
+          else
+            # Type variable
+            type_var.bound = argument
+            type_var.lower_bound = argument
+            type_var.upper_bound = argument
           end
+        else
+          if argument.is_a?(TyGenericSingletonObject)
+            argument = argument.clone # .self_materialize
+          end
+          # This is only for matches T =:= Type1 -> T < Type1, T > Type1
+          fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :lt)
+          fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :gt)
         end
+      end
+
+      def apply_type_arguments_recursively(generic_type_bound, actual_arguments)
+        arg_names = actual_arguments_hash(actual_arguments)
+        recursive_actual_arguments = generic_type_bound.type_vars.map do |type_var|
+          arg_names[type_var.variable] || fail("Unbound type variable #{type_var.variable} for recursive generic type #{generic_type_bound}")
+        end
+        generic_type_bound.materialize(recursive_actual_arguments)
+      end
+
+      def actual_arguments_hash(actual_arguments)
+        acc = {}
+        type_vars.each_with_index do |type_var, i|
+          acc[type_var.variable] = actual_arguments[i]
+        end
+        acc
       end
     end
   end

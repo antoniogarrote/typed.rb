@@ -221,4 +221,14 @@ describe TypedRb::TypeSignature::Parser do
                                             {:type => "U", :bound => "Object", :binding => '<', :kind => :type_var}],
                            :kind       => :generic_type}])
   end
+
+  it 'parses parametric rest arguments' do
+    result = described_class.parse('Array[X]... -> String')
+    expect(result).to eq([{:kind=>:rest,
+                           :type=>"Array",
+                           :parameters=>[{:type=>"Array",
+                                         :parameters=>[{:type=>"X", :kind=>:type_var}],
+                                         :kind=>:generic_type}]},
+                          "String"])
+  end
 end

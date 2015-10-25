@@ -97,13 +97,16 @@ module TypedRb
             arg
           elsif arg.generic?
             arg.type_vars
-                    end
+          end
         end
         vars = vars.flatten.compact
 
         vars += block_type.type_variables if block_type && block_type.generic?
 
-        vars.uniq
+        # vars.each_with_object({}) do |type_var, acc|
+        #   acc[type_var.variable] = type_var
+        # end.values
+        vars
       end
     end
   end

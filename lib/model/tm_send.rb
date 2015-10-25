@@ -198,6 +198,7 @@ module TypedRb
           else
             if require_info == :rest
               break if actual_argument.nil? # invocation without any of the optional arguments
+              #binding.pry unless formal_parameter_type.respond_to?(:type_vars)
               rest_type = formal_parameter_type.type_vars.first
               formal_parameter_type = if rest_type.bound
                                         rest_type.bound
@@ -205,6 +206,7 @@ module TypedRb
                                         rest_type
                                       end
               actual_arguments[index..-1].each do |actual_argument|
+                #binding.pry
                 unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
                   error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                   fail TypeCheckError.new(error_message, node)

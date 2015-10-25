@@ -41,6 +41,13 @@ module TypedRb
 
       def transform_nested_function(token_group)
         if token_group.size > 1 &&
+           token_group.last.is_a?(Hash) &&
+           token_group.last[:kind] == :rest
+          remaining_tokens = transform_nested_function(token_group[0...-1] + token_group.last[:parameters])
+          {:kind => :rest,
+           :type => 'Array',
+           :parameters => [remaining_tokens]}
+        elsif token_group.size > 1 &&
            variable_group?(token_group) &&
            token_group[0].is_a?(String)
           { :type       => token_group.first,

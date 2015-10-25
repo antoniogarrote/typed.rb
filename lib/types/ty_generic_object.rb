@@ -17,6 +17,7 @@ module TypedRb
       # The generic Function we retrieve from the registry might be generic
       # If it is generic we apply the bound parameters and we obtain a concrete function type
       def find_function_type(message, num_args, block)
+        #binding.pry if message.to_s == 'product'
         function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message, num_args, block)
         if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
           materialize_super_type_found_function(message, num_args, block)
