@@ -53,8 +53,10 @@ module TypedRb
           { :type       => token_group.first,
             :parameters => token_group.drop(1),
             :kind       => :generic_type }
-        else
+        elsif token_group.size < 2
           token_group.first
+        else
+          token_group
         end
       end
     end
@@ -216,7 +218,6 @@ module TypedRb
 
       def build_final_signature
         fail ParsingError.new(@input_expression, 'Unbalanced parentheses.') unless @stack.empty?
-
         new_type = parse_new_type
 
         @current_function << new_type unless @current_type.empty?
