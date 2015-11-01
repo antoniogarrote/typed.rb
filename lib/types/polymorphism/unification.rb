@@ -353,7 +353,8 @@ module TypedRb
         def canonical_form(constraints)
           disambiguation = {}
 
-          constraints.map do |(l, t, r)|
+          constraints.inject([]) do |acc, (l, t, r)|
+            next acc if r.nil? || (r.respond_to?(:ruby_type) && r.ruby_type == NilClass)
             if l.is_a?(TypeVariable)
               l = disambiguation[l.variable] || l
               disambiguation[l.variable] = l
@@ -363,9 +364,9 @@ module TypedRb
               disambiguation[r.variable] = r
             end
             if l.is_a?(TypeVariable) && r.is_a?(TypeVariable) && t == :lt
-              [r, :gt, l]
+              acc << [r, :gt, l]
             else
-              [l, t, r]
+              acc << [l, t, r]
             end
           end
         end
