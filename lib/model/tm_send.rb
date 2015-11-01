@@ -124,18 +124,26 @@ module TypedRb
             if maybe_generic_method_var || maybe_generic_class_var
               maybe_generic_method_var || maybe_generic_class_var
             else
-              type = TypeSignature::Parser.parse(type_var_signature)
-              # TODO: do this recursively in the case of nested generic type
-              # TODO: do we need it at all?
-              klass = if type.is_a?(Hash) && type[:kind] == :generic_type
-                        Object.const_get(type[:type])
-                      end
-              Runtime::TypeParser.parse(type, klass)
+              parsed_types = TypeSignature::Parser.parse(type_var_signature)
+              if parsed_types.is_a?(Array)
+                parsed_types.map { |parsed_type| parse_type_application_argument(parsed_type) }
+              else
+                parse_type_application_argument(parsed_types)
+              end
             end
           else
             argument.check_type(context)
           end
-        end
+        end.flatten
+      end
+
+      def parse_type_application_argument(type)
+        # TODO: do this recursively in the case of nested generic type
+        # TODO: do we need it at all?
+        klass = if type.is_a?(Hash) && type[:kind] == :generic_type
+                  Object.const_get(type[:type])
+                end
+        Runtime::TypeParser.parse(type, klass)
       end
 
       def type_application_counter
@@ -198,7 +206,6 @@ module TypedRb
           else
             if require_info == :rest
               break if actual_argument.nil? # invocation without any of the optional arguments
-              #binding.pry unless formal_parameter_type.respond_to?(:type_vars)
               rest_type = formal_parameter_type.type_vars.first
               formal_parameter_type = if rest_type.bound
                                         rest_type.bound
@@ -206,7 +213,6 @@ module TypedRb
                                         rest_type
                                       end
               actual_arguments[index..-1].each do |actual_argument|
-                #binding.pry
                 unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
                   error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                   fail TypeCheckError.new(error_message, node)
