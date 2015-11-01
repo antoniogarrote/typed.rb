@@ -231,4 +231,9 @@ describe TypedRb::TypeSignature::Parser do
                                          :kind=>:generic_type}]},
                           "String"])
   end
+
+  it 'parses multiple type variables in sequence' do
+    result = described_class.parse('[X][Y][Z]')
+    expect(result).to eq([{:type=>"X", :kind=>:type_var}, {:type=>"Y", :kind=>:type_var}, {:type=>"Z", :kind=>:type_var}])
+  end
 end

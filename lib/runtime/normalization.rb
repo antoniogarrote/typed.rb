@@ -104,7 +104,6 @@ module TypedRb
       def normalize_method_signatures(method_signatures, klass, method_type)
         method_signatures.each_with_object({}) do |method_info, signatures_acc|
           method, signatures = method_info
-          #binding.pry if method.to_s == 'product' && klass == Array
           validate_method(find_methods(klass), klass, method, method_type)
           normalized_signatures = signatures.map do |signature|
             normalized_method = normalize_signature!(klass, signature)

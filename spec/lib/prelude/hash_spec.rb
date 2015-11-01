@@ -9,7 +9,7 @@ describe Hash do
       expect(result.to_s).to eq('Hash[String][Integer]')
     end
 
-    xit 'type checks / -> Hash[S][T] with a literal type annotation' do
+    it 'type checks / -> Hash[S][T] with a literal type annotation' do
       result = language.check("Hash.('[String][Integer]').new")
       expect(result.to_s).to eq('Hash[String][Integer]')
     end
@@ -23,8 +23,8 @@ describe Hash do
       }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
 
-    xit 'type checks / &(Hash[S][T] -> unit) -> Hash[S][T]' do
-      result = language.check("Hash.(String,Integer).new { |acc,k| acc[k] = 0}")
+    it 'type checks / &(Hash[S][T] -> [S] -> unit) -> Hash[S][T]' do
+      result = language.check("Hash.(String,Integer).new { |acc,k| acc[k] = 0 }")
       expect(result.to_s).to eq('Hash[String][Integer]')
 
       expect {
