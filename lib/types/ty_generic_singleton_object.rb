@@ -23,9 +23,10 @@ module TypedRb
           else
             type_var.type_vars
           end
-        end.flatten.each_with_object({}) do |type_var, acc|
-          acc[type_var.variable] = type_var
-        end.values
+        end.flatten
+        #  .each_with_object({}) do |type_var, acc|
+        #  acc[type_var.variable] = type_var
+        #end.values
       end
 
       def materialize_with_type_vars(type_vars, bound_type)
