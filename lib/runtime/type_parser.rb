@@ -5,7 +5,7 @@ module TypedRb
     class TypeParser
       class << self
         def parse(type, klass)
-          fail TypeParsingError, 'Error parsing type: nil value.' if type.nil?
+          fail TypedRb::Types::TypeParsingError, 'Error parsing type: nil value.' if type.nil?
           if type == 'unit'
             Types::TyUnit.new
           elsif type == 'Boolean'
@@ -170,7 +170,7 @@ module TypedRb
           BasicObject::TypeRegistry.find_existential_type(ruby_type)
         rescue StandardError => e
           TypedRb.log(binding, :error, "Error parsing existential object from type #{type}, #{e.message}")
-          raise TypeParsingError, "Unknown Ruby type #{type}"
+          raise TypedRb::Types::TypeParsingError, "Unknown Ruby type #{type}"
         end
 
         def parse_singleton_object_type(type, node = nil)
@@ -184,7 +184,7 @@ module TypedRb
           end
         rescue StandardError => e
           TypedRb.log(binding, :error, "Error parsing singleton object from type #{type}, #{e.message}")
-          raise TypeParsingError, "Unknown Ruby type #{type}"
+          raise TypedRb::Types::TypeParsingError, "Unknown Ruby type #{type}"
         end
 
         def parse_function_type(arg_types, klass)
