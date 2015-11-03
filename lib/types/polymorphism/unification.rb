@@ -354,7 +354,7 @@ module TypedRb
           disambiguation = {}
 
           constraints.inject([]) do |acc, (l, t, r)|
-            next acc if r.nil? || (r.respond_to?(:ruby_type) && r.ruby_type == NilClass)
+            next acc if r.nil? || (r.respond_to?(:ruby_type) && r.ruby_type == NilClass) || r.is_a?(Types::TyDynamic)
             if l.is_a?(TypeVariable)
               l = disambiguation[l.variable] || l
               disambiguation[l.variable] = l
