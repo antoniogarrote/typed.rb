@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe Object do
   let(:language) { TypedRb::Language.new }
 
-  context 'Strings' do
+  describe 'Strings' do
     it 'is a Showable' do
       code = <<__CODE
         ts '#st1 / Showable -> Showable'
@@ -16,7 +16,7 @@ __CODE
     end
   end
 
-  context 'Symbols' do
+  describe 'Symbols' do
     it 'is a Showable' do
       code = <<__CODE
         ts '#st1 / Showable -> Showable'

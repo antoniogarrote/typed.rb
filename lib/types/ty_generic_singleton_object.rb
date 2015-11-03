@@ -6,7 +6,7 @@ module TypedRb
     class TyGenericSingletonObject < TySingletonObject
       include Polymorphism::GenericComparisons
 
-      attr_reader :type_vars, :super_type
+      attr_reader :super_type
       attr_accessor :local_typing_context
 
       def initialize(ruby_type, type_vars, super_type = nil, node = nil)
@@ -17,7 +17,11 @@ module TypedRb
       end
 
       def type_vars
+        # puts " !!! IN TYPE VARS"
         @type_vars.map do |type_var|
+          # if type_var.is_a?(Polymorphism::TypeVariable) && type_var.bound_to_generic?
+          #   type_var.bound.type_vars
+          # elsif type_var.is_a?(Polymorphism::TypeVariable)
           if type_var.is_a?(Polymorphism::TypeVariable)
             type_var
           else
@@ -31,9 +35,12 @@ module TypedRb
 
       def materialize_with_type_vars(type_vars, bound_type)
         TypedRb.log binding, :debug, "Materialising generic singleton object with type vars '#{self}' <= #{type_vars.map(&:to_s).join(',')} :: #{bound_type}"
+        #binding.pry if self.to_s == 'Array[Pair[Hash:S][Hash:T]]'
         bound_type_vars = @type_vars.map do |type_var|
           if type_var.is_a?(Types::TyGenericSingletonObject)
             type_var
+          #elsif type_var.bound && type_var.bound.is_a?(Types::TyGenericSingletonObject)
+          #  type_var.bound
           else
             maybe_class_bound = type_vars.detect do |bound_type_var|
               type_var.variable == bound_type_var.variable

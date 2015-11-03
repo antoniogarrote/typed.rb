@@ -3,7 +3,7 @@ require_relative '../../spec_helper'
 describe Array do
   let(:language) { TypedRb::Language.new }
 
-  context '#initialize' do
+  describe '#initialize' do
     it 'type checks / -> Array[T]' do
       result = language.check('Array.(Integer).new')
       expect(result.ruby_type).to eq(Array)
@@ -27,7 +27,7 @@ describe Array do
     end
   end
 
-  context '#[]' do
+  describe '#[]' do
     it 'type checks / Object -> Object' do
       result = language.check('Array.(Integer).new(10,0)[0]')
       expect(result.ruby_type).to eq(Object)
@@ -40,7 +40,7 @@ describe Array do
     end
   end
 
-  context '#collect[E]' do
+  describe '#collect[E]' do
     it 'type checks / &([T] -> [E]) -> Array[E]' do
       result = language.check('Array.(Integer).new(10,0).collect{ |e| e.to_s }')
       expect(result.ruby_type).to eq(Array)
@@ -48,7 +48,7 @@ describe Array do
     end
   end
 
-  context '#concat' do
+  describe '#concat' do
     it 'type checks / Array[T] -> Array[T]' do
       result = language.check('Array.(Integer).new(10,0).concat(Array.(Integer).new(10,0))')
       expect(result.ruby_type).to eq(Array)
@@ -60,7 +60,7 @@ describe Array do
     end
   end
 
-  context '#count' do
+  describe '#count' do
     it 'type checks / &([T] -> Boolean) -> Integer' do
       result = language.check('Array.(Integer).new(10,0).count(0)')
       expect(result.ruby_type).to eq(Integer)
@@ -80,7 +80,7 @@ __CODE
     end
   end
 
-  context '#eql?' do
+  describe '#eql?' do
     it 'type checks / Array[?] -> Boolean' do
       code = <<__CODE
         as = Array.(Integer).new(10,0)
@@ -93,7 +93,7 @@ __CODE
     end
   end
 
-  context '#flatten' do
+  describe '#flatten' do
     it 'type checks / -> Array[Object]' do
       code =  <<__END
          a1 =  Array.(Integer).new.fill(10,0)
@@ -123,7 +123,7 @@ __END
     end
   end
 
-  context '#include?' do
+  describe '#include?' do
     it 'type checks / [T] -> Boolean' do
       code = <<__END
          a = Array.(Integer).new.fill(10,0)
@@ -144,7 +144,7 @@ __END
     end
   end
 
-  context '#insert' do
+  describe '#insert' do
     it 'type checks / Integer -> [T] -> Array[T]' do
       code = <<__END
          a = Array.(Integer).new.fill(10,0)
@@ -160,7 +160,7 @@ __END
     end
   end
 
-  context '#last' do
+  describe '#last' do
     it 'type checks / -> [T]' do
       code = <<__END
         a = Array.(Integer).new.fill(10,0)
@@ -181,7 +181,7 @@ __END
     end
   end
 
-  context '#map[E]' do
+  describe '#map[E]' do
     it 'type checks / &([T] -> [E]) -> Array[E]' do
       result = language.check('Array.(Integer).new(10,0).map{ |e| e.to_s }')
       expect(result.ruby_type).to eq(Array)
@@ -189,7 +189,7 @@ __END
     end
   end
 
-  context '#permutation' do
+  describe '#permutation' do
     it 'type checks / -> Array[Array[T]]' do
       result = language.check('Array.(Integer).new(10,0).permutation')
       expect(result.ruby_type).to eq(Array)
@@ -198,7 +198,7 @@ __END
     end
   end
 
-  context '#product' do
+  describe '#product' do
     it 'type checks / Array[T]... -> Array[Array[T]]' do
       result = language.check('Array.(Integer).new(10,0).product(Array.(Integer).new(5,1), Array.(Integer).new(5,2))')
       expect(result.ruby_type).to eq(Array)
@@ -207,7 +207,7 @@ __END
     end
   end
 
-  context '#push' do
+  describe '#push' do
 
     it 'type checks / [T]... -> Array[T]' do
       result = language.check('Array.(Integer).new.push(1,2,3)')
@@ -220,7 +220,7 @@ __END
     end
   end
 
-  context '#sort' do
+  describe '#sort' do
     it 'type checks / &([T] -> [T] -> Integer) -> Array[T]' do
       code = <<__END
         a = Array.(Integer).new.fill(10,0)
@@ -253,7 +253,7 @@ __END
     end
   end
 
-  context '#to_s' do
+  describe '#to_s' do
     it 'type checks / -> Hash[T][T]' do
       result = language.check('Array.(Integer).new.to_h')
       expect(result.ruby_type).to eq(Hash)
