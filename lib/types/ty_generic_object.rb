@@ -93,10 +93,8 @@ module TypedRb
 
       def materialize_found_function_arg(arg)
         if arg.is_a?(Polymorphism::TypeVariable)
-          matching_var = type_vars.detect do |type_var|
-            type_var.variable == arg.variable ||
-            (type_var.bound && type_var.bound.respond_to?(:variable) && type_var.bound.variable == arg.variable)
-          end
+          matching_var = generic_type_var_to_applied_type_var(arg)
+
           # if matching_var && matching_var.wildcard? && matching_var.lower_bound
           #  matching_var.lower_bound
           # elsif matching_var
@@ -158,6 +156,11 @@ module TypedRb
 
       def generic_singleton_object
         @generic_singleton_object ||= BasicObject::TypeRegistry.find_generic_type(ruby_type)
+      end
+
+      def generic_type_var_to_applied_type_var(type_var)
+        i = TypeRegistry.find_generic_type(ruby_type).type_vars.find_index { |generic_type_var| generic_type_var.variable == type_var.variable }
+        i && type_vars[i]
       end
     end
   end
