@@ -344,57 +344,86 @@ class Hash
   #==
   # []
   ts '#[]= / [S] -> [T] -> [T]'
-  # any?
-  # assoc
-  # clear
-  # compare_by_identity
-  # compare_by_identity?
-  # default
-  # default=
-  # default_proc
+  ts '#any? / &([S] -> [T] -> Boolean) -> Boolean'
+  ts '#assoc / [S] -> Pair[S][T]'
+  unless (instance_method(:untyped_assoc) rescue false)
+    alias_method :untyped_assoc, :assoc
+    def assoc(k)
+      res = untyped_assoc(k)
+      return res if res.nil?
+      Pair.('[S][T]').new(res)
+    end
+  end
+  ts '#clear / -> Hash[S][T]'
+  ts '#compare_by_identity / -> Hash[S][T]'
+  ts '#compare_by_identity? / -> Boolean'
+  ts '#default / -> [T]'
+  ts '#default / [S] -> [T]'
+  ts '#default= / [T] -> [T]'
+  # ts '#default_proc / -> (Hash[S][T] -> [S] -> [K])'
   # default_proc=
-  # delete
-  # delete_if
-  # each
-  # each_key
-  # each_pair
-  # each_value
-  # empty?
-  # eql?
-  # fetch
-  # flatten
-  # has_key?
-  # has_value?
-  # hash
-  # include?
-  # inspect
-  # invert
-  # keep_if
-  # key
-  # key?
-  # keys
-  # length
-  # member?
-  # merge
-  # merge!
-  # rassoc
-  # rehash
-  # reject
-  # reject!
-  # replace
-  # select
-  # select!
-  # shift
-  # size
-  # store
-  # to_a
-  # to_h
-  # to_hash
-  # to_s
-  # update
-  # value?
-  # values
-  # values_at
+  ts '#delete / [S] -> &([S] -> [T]) -> [T]'
+  ts '#delete_if / &([S] -> [T] -> Boolean) -> Hash[S][T]'
+  ts '#each / &([S] -> [T] -> unit) -> Hash[S][T]'
+  ts '#each_key / -> Enumerator' # TODO: make this generic, do for other functions as well
+  ts '#each_key / &([S] -> unit) -> Hash[S][T]'
+  ts '#each_pair / &([S] -> [T] -> unit) -> Hash[S][T]'
+  ts '#each_value / &([T] -> unit) -> Hash[S][T]'
+  ts '#empty? / -> Boolean'
+  #ts '#eql? / Hash[?][?] -> Boolean' -> from Object
+  ts '#fetch / [S] -> &([S] -> [T]) -> [T]'
+  ts '#fetch / [S] -> [T] -> [T]'
+  ts '#flatten / -> Array[Object]'
+  ts '#flatten / Integer -> Array[Object]'
+  ts '#has_key? / [S] -> Boolean'
+  ts '#has_value? / [T] -> Boolean'
+  ts '#hash / -> Fixnum'
+  ts '#include? / [S] -> Boolean'
+  ts '#invert / -> Hash[T][S]'
+  ts '#keep_if / &([S] -> [T] -> Boolean) -> Hash[S][T]'
+  ts '#key / [T] -> [S]'
+  ts '#key? / [S] -> Boolean'
+  ts '#keys / -> Array[S]'
+  ts '#length / -> Fixnum'
+  ts '#member? / [S] -> Boolean'
+  ts '#merge / Hash[S][T] -> Hash[S][T]'
+  ts '#merge / Hash[S][T] -> &([S] -> [T] -> [T] -> [T]) -> Hash[S][T]'
+  ts '#merge! / Hash[S][T] -> Hash[S][T]'
+  ts '#merge! / Hash[S][T] -> &([S] -> [T] -> [T] -> [T]) -> Hash[S][T]'
+  ts '#rassoc / [T] -> Pair[S][T]'
+  unless (instance_method(:untyped_rassoc) rescue false)
+    alias_method :untyped_rassoc, :rassoc
+    def rassoc(k)
+      res = untyped_rassoc(k)
+      return res if res.nil?
+      Pair.('[S][T]').new(res)
+    end
+  end
+  ts '#rehash / -> Hash[S][T]'
+  ts '#reject / &([S] -> [T] -> Boolean) -> Hash[S][T]'
+  ts '#reject! / &([S] -> [T] -> Boolean) -> Hash[S][T]'
+  ts '#replace / Hash[S][T] -> Hash[S][T]'
+  ts '#select / &([S] -> [T] -> Boolean) -> Hash[S][T]'
+  ts '#select! / &([S] -> [T] -> Boolean) -> Hash[S][T]'
+  ts  '#shift / -> Pair[S][T]'
+  unless (instance_method(:untyped_shift) rescue false)
+    alias_method :untyped_shift, :shift
+    def shift
+      res = untyped_shift
+      return res if res.nil?
+      Pair.('[S][T]').new(res)
+    end
+  end
+  ts '#size / -> Fixnum'
+  ts '#store / [S] -> [T] -> [T]'
+  # ts '#to_a / -> Array[Pair[S][T]]'
+  ts '#to_h / -> Hash[S][T]'
+  ts '#to_hash / -> Hash[S][T]'
+  ts '#update / Hash[S][T] -> Hash[S][T]'
+  ts '#update / Hash[S][T] -> &([S] -> [T] -> [T] -> [T]) -> Hash[S][T]'
+  ts '#value? / [T] -> Boolean'
+  ts '#values / -> Array[T]'
+  ts '#values_at / [S]... -> Array[T]'
 end
 
 ts 'type Range[T]'
