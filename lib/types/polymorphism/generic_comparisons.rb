@@ -23,7 +23,7 @@ module TypedRb
               false
             end
           else
-            false
+            check_generic_type_relation(other_type.ruby_type, relation)
           end
         end
 
