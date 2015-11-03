@@ -416,7 +416,7 @@ class Hash
   end
   ts '#size / -> Fixnum'
   ts '#store / [S] -> [T] -> [T]'
-  # ts '#to_a / -> Array[Pair[S][T]]'
+  ts '#to_a / -> Array[Pair[S][T]]'
   ts '#to_h / -> Hash[S][T]'
   ts '#to_hash / -> Hash[S][T]'
   ts '#update / Hash[S][T] -> Hash[S][T]'

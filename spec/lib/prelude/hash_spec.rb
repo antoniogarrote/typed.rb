@@ -339,7 +339,7 @@ __CODE
   end
 
   describe '#to_a' do
-    xit 'type checks / -> Array[Pair[S][T]]' do
+    it 'type checks / -> Array[Pair[S][T]]' do
       result = language.check('Hash.(String,Integer).new.to_a')
       expect(result.to_s).to eq('Array[Pair[String][Integer]]')
     end

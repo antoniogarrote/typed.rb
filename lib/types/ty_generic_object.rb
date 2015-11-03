@@ -119,7 +119,7 @@ module TypedRb
       def to_s
         base_string = super
         var_types_strings = @type_vars.map do |var_type|
-          if var_type.bound
+          if var_type.respond_to?(:bound) && var_type.bound
             # "[#{var_type.variable} <= #{var_type.bound}]"
             "[#{var_type.bound}]"
           else

@@ -105,7 +105,7 @@ module TypedRb
                               else
                                 if param[:kind] == :generic_type
                                   # It is a nested generic type
-                                  klass = Object.const_get(param[:type])
+                                  #klass = Object.const_get(param[:type])
                                   bound = parse(param, klass)
                                   concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
                                                                                          :upper_bound => bound,

@@ -282,18 +282,7 @@ __CODE
 __CODE
 
       result = language.check(expr)
-      expect(result.ruby_type).to eq(GColl6)
-      expect(result.type_vars.size).to eq(1)
-      expect(result.type_vars.first.variable).to eq('GColl6:T')
-      expect(result.type_vars.first.lower_bound).to eq(result.type_vars.first.bound)
-      expect(result.type_vars.first.upper_bound).to eq(result.type_vars.first.bound)
-      expect(result.type_vars.first.bound.ruby_type).to eq(Array)
-      expect(result.type_vars.first.bound.type_vars.size).to eq(1)
-      expect(result.type_vars.first.bound.type_vars.first.variable).to eq('Array:T')
-      expect(result.type_vars.first.bound.type_vars.first.bound.ruby_type).to eq(Array)
-      expect(result.type_vars.first.bound.type_vars.first.bound.type_vars.size).to eq(1)
-      expect(result.type_vars.first.bound.type_vars.first.bound.type_vars.first.variable).to eq('Array:T')
-      expect(result.type_vars.first.bound.type_vars.first.bound.type_vars.first.bound.ruby_type).to eq(Integer)
+      expect(result.to_s).to eq('GColl6[Array[Array[Integer]]]')
     end
   end
 end

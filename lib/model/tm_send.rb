@@ -207,7 +207,7 @@ module TypedRb
             if require_info == :rest
               break if actual_argument.nil? # invocation without any of the optional arguments
               rest_type = formal_parameter_type.type_vars.first
-              formal_parameter_type = if rest_type.bound
+              formal_parameter_type = if rest_type.respond_to?(:bound)
                                         rest_type.bound
                                       else
                                         rest_type

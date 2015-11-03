@@ -156,8 +156,6 @@ module TypedRb
         end
 
         def add_constraint(variable_name, relation_type, type)
-          # puts "SEARCHING #{variable_name} in #{kind}"
-          # puts type_variables_register.values.map(&:name).inspect
           TypedRb.log(binding, :debug, "Adding constraint #{variable_name} #{relation_type} #{type}")
           if type_variables_register.values.detect { |variable| variable.variable == variable_name }
             var_constraints = @constraints[variable_name] || []

@@ -100,6 +100,10 @@ module TypedRb
           "#{@variable}#{wildcard_part}::#{bound_part}"
         end
 
+        def bound_to_generic?
+          bound && bound.respond_to?(:generic?) && bound.generic?
+        end
+
         private
 
         def incompatible_vars?(type)
