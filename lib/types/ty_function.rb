@@ -1,7 +1,7 @@
 module TypedRb
   module Types
     class TyFunction < Type
-      attr_accessor :from, :to, :parameters_info, :block_type, :arity
+      attr_accessor :from, :to, :parameters_info, :block_type, :arity, :min_arity
       attr_writer :name
 
       def initialize(from, to, parameters_info = nil, node = nil)
@@ -13,6 +13,7 @@ module TypedRb
           @parameters_info = @from.map { |type| [:req, type] }
         end
         @arity           = parse_function_arity
+        @min_arity       = parse_min_function_arity
         @block_type      = nil
       end
 
@@ -22,7 +23,7 @@ module TypedRb
       end
 
       def arg_compatible?(num_args)
-        arity == Float::INFINITY ? true : arity == num_args
+        num_args >= min_arity && (arity == Float::INFINITY || arity == num_args)
       end
 
       def generic?
@@ -106,6 +107,12 @@ module TypedRb
       def parse_function_arity
         return Float::INFINITY if parameters_info.detect { |arg| arg.is_a?(Hash) && arg[:kind] == :rest }
         parameters_info.reject { |arg| arg.is_a?(Hash) && arg[:kind] == :block_arg }.count
+      end
+
+      def parse_min_function_arity
+        parameters_info.select do |arg|
+          !(arg.is_a?(Hash) && (arg[:kind] == :rest || arg[:kind] == :block_arg ))
+        end.count
       end
     end
   end
