@@ -60,7 +60,7 @@ __CODE
       expect(result.to_s).to eq('Enumerator[Pair[Integer][Integer]]')
     end
 
-    xit 'type checks / -> Enumerator[Pair[T][Integer]] multiple invocations' do
+    it 'type checks / -> Enumerator[Pair[T][Integer]] multiple invocations' do
       result = language.check('Enumerator.(Integer).new { |y| y.yield(10) }.each_with_index.each_with_index')
       expect(result.to_s).to eq('Enumerator[Pair[Pair[Integer][Integer]][Integer]]')
     end
