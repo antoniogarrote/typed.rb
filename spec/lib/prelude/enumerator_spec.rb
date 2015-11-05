@@ -92,7 +92,7 @@ __CODE
   end
 
   describe '#each_with_object' do
-    xit 'type checks[E] / -> Enumerator[Pair[T][E]]' do
+    it 'type checks[E] / -> Enumerator[Pair[T][E]]' do
       result = language.check('Enumerator.(Integer).new { |y| y.yield(10) }.each_with_object("String")')
 
       expect(result.to_s).to eq('Enumerator[Pair[Integer][String]]')

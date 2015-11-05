@@ -66,11 +66,13 @@ module TypedRb
 
         def apply_bindings(bindings_map)
           bound_var = bindings_map[variable]
-          if bound_var
+          if bound_var && bound.nil?
             self.bound = bound_var.bound
             self.upper_bound = bound_var.upper_bound
             self.lower_bound = bound_var.lower_bound
             self.to_wildcard! if bound_var.wildcard?
+          elsif bound && (bound.is_a?(TyGenericSingletonObject) || bound.is_a?(TyGenericObject))
+             bound.apply_bindings(bindings_map)
           end
           self
         end

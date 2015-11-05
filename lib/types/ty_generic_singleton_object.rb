@@ -77,8 +77,7 @@ module TypedRb
         # got all the constraints here
         # do something with the context -> unification? merge context?
         # applied_typing_context.all_constraints.each{|(l,t,r)| puts "#{l} #{t} #{r}" }
-        ### unification = Polymorphism::Unification.new(applied_typing_context.all_constraints).run
-        Polymorphism::Unification.new(applied_typing_context.all_constraints).run
+        unification = Polymorphism::Unification.new(applied_typing_context.all_constraints).run
         applied_typing_context.unlink # these constraints have already been satisfied
         # - Create a new ty_generic_object for the  unified types
         # - Apply the unified types to all the methods in the class/instance
@@ -91,8 +90,7 @@ module TypedRb
         #   - this can be accomplished with the overloading version of as_object_type, that will return
         #     an instance of a new class ty_generic_object with overloaded versions of find_function_type /find_var_type
         ########################
-        fresh_vars_generic_type
-        ### fresh_vars_generic_type.apply_bindings(unification.bindings_map)
+        fresh_vars_generic_type.apply_bindings(unification.bindings_map)
       end
 
       # TODO: We do need this for cases like Array.(Int).class_method

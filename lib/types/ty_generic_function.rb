@@ -96,7 +96,6 @@ module TypedRb
           if arg.is_a?(Polymorphism::TypeVariable) && arg.bound_to_generic?
             arg.bound.type_vars
           elsif arg.is_a?(Polymorphism::TypeVariable)
-          #if arg.is_a?(Polymorphism::TypeVariable)
             arg
           elsif arg.generic?
             arg.type_vars

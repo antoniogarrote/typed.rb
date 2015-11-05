@@ -404,7 +404,7 @@ module TypedRb
 
         def bindings_map
           graph.vars.each_with_object({}) do |var, acc|
-            acc[var.variable] = var
+            acc[var.variable] = var if var.bound
           end
         end
 
