@@ -84,6 +84,7 @@ module TypedRb
           # parameter_names -> container class type vars
           TypedRb.log(binding, :debug, "Parsing concrete type #{type} within #{klass}")
 
+          #TODO: GET RID OF THIS?
           parameter_names = BasicObject::TypeRegistry.type_vars_for(klass).each_with_object({}) do |variable, acc|
             acc[variable.name.split(':').last] = variable
           end
@@ -97,6 +98,7 @@ module TypedRb
           # - klass.is not variable? ->  bound_type -> generic object
           rrt = BasicObject::TypeRegistry.type_vars_for(ruby_type)
           rrt.each_with_index do |type_var, i|
+            #TODO: GET RID OF THIS?
             param = type[:parameters][i]
             maybe_bound_param = parameter_names[param[:type]]
             parsed_type_var = if maybe_bound_param

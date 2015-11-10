@@ -17,7 +17,11 @@ module TypedRb
         end
 
         def add_constraint(relation, type)
-          TypingContext.add_constraint(variable, relation, type)
+          if type.is_a?(TypeVariable) && type.bound
+            TypingContext.add_constraint(variable, relation, type.bound)
+          else
+            TypingContext.add_constraint(variable, relation, type)
+          end
         end
 
         def add_message_constraint(message, args)

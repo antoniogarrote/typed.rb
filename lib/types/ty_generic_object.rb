@@ -19,7 +19,14 @@ module TypedRb
       def find_function_type(message, num_args, block)
         function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message, num_args, block)
         if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
-          materialize_super_type_found_function(message, num_args, block)
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, explicit super type #{generic_singleton_object.super_type}"
+          target_class = generic_singleton_object.super_type
+          target_type_vars = generic_singleton_object.super_type.type_vars
+          materialize_super_type_found_function(message, num_args, block, target_class, target_type_vars)
+        elsif function_klass_type != ruby_type && BasicObject::TypeRegistry.find_generic_type(function_klass_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, implict super type #{function_klass_type}"
+          target_class = BasicObject::TypeRegistry.find_generic_type(function_klass_type)
+          materialize_super_type_found_function(message, num_args, block, target_class, type_vars)
         else
           TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}"
           materialized_function = materialize_found_function(function_type)
@@ -55,11 +62,18 @@ module TypedRb
         materialized_function.with_block_type(materialized_block_type)
       end
 
-      def materialize_super_type_found_function(message, num_args, block)
-        super_type_object = BasicObject::TypeRegistry.find_generic_type(generic_singleton_object.super_type.ruby_type)
-        super_type_vars = generic_singleton_object.super_type.type_vars
+      def materialize_super_type_found_function(message, num_args, block,
+                                                super_type,
+                                                super_type_vars)
         super_type_materialization_args = parse_super_type_materialization_args(super_type_vars)
-        materialized_super_type = super_type_object.materialize(super_type_materialization_args)
+        # we build the concrete type for the arguments based in the subclass bindings and the
+        # super type parsed value
+        materialized_super_type_in_context = super_type.materialize(super_type_materialization_args).type_vars(recursive: false)
+        # Now we check if the parsed type is valid  provided the constraints of the super class
+        super_type_generic_object = BasicObject::TypeRegistry.find_generic_type(super_type.ruby_type)
+        materialized_super_type = super_type_generic_object.materialize(materialized_super_type_in_context)
+
+        # materialized_super_type.type_vars = super_type.type_vars # ...
         materialized_super_type.as_object_type.find_function_type(message, num_args, block)
       end
 
@@ -101,7 +115,7 @@ module TypedRb
           # WILDCARD
           if matching_var
             # Type variables and generic methods => function will still be generic
-            matching_var.bound || matching_var
+            (matching_var.is_a?(Polymorphism::TypeVariable) && matching_var.bound) || matching_var
           else
             # generic_function = true
             # TyUnboundType.new(matching_var.variable, :lower_bound)

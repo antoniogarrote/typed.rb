@@ -70,8 +70,9 @@ module TypedRb
         if other_type.is_a?(TyGenericFunction)
           other_type.compatible?(self, relation == :lt ? :gt : :lt)
         elsif other_type.is_a?(TyFunction)
+          other_from = deconstruct_from_arguments(other_type)
           from.each_with_index do |arg, i|
-            other_arg = other_type.from[i]
+            other_arg = other_from[i]
             return false unless arg.compatible?(other_arg, :gt)
           end
           return false unless to.compatible?(other_type.to, :lt)
@@ -79,6 +80,18 @@ module TypedRb
           fail TypeCheckError.new("Type error checking function '#{name}': Comparing function type with no function type")
         end
         true
+      end
+
+      def deconstruct_from_arguments(other_type)
+        if from.size == other_type.from.size
+          other_type.from
+        elsif from.size > 1 && other_type.from.size == 1 && other_type.from.first.ruby_type.ancestors.include?(Pair)
+          other_type.from.first.type_vars(recursive: false)
+        elsif from.size > 1 && other_type.from.size == 1 && other_type.from.first.ruby_type.ancestors.include?(Array)
+          other_type.from.first.type_vars(recursive: false) * from.size
+        else
+          other_type.from
+        end
       end
 
       def apply_bindings(bindings_map)

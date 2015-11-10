@@ -11,6 +11,9 @@ module TypedRb
           generic_singleton_object = build_generic_singleton_object(type_info)
           acc[generic_singleton_object.ruby_type] = generic_singleton_object
         end
+        generic_types_parser_registry.each do |type_info|
+          check_generic_super_type(type_info)
+        end
       end
 
       ts '#normalize_methods! / -> unit'
@@ -34,16 +37,24 @@ module TypedRb
         type_class, info = type_info
         TypedRb.log(binding, :debug,  "Normalising generic type: #{type_class}")
         info[:type] = Object.const_get(type_class)
-        super_type = build_generic_super_type(info)
         info[:parameters] = info[:parameters].map do |parameter|
           ::TypedRb::Runtime::TypeParser.parse(parameter, info[:type])
         end
-        ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters], super_type)
+        ::TypedRb::Types::TyGenericSingletonObject.new(info[:type], info[:parameters])
+      end
+
+      def check_generic_super_type(type_info)
+        _, info = type_info
+        super_type = build_generic_super_type(info)
+        @generic_types_registry[info[:type]].super_type = super_type if super_type
       end
 
       def build_generic_super_type(info)
         with_super_type = valid_super_type?(info[:type], info[:super_type])
-        build_generic_singleton_object([info[:super_type][:type], info[:super_type]]) if with_super_type
+        if with_super_type
+          TypedRb.log(binding, :debug,  "Normalising generic super type: #{info[:super_type][:type]} for #{info[:type]}")
+          build_generic_singleton_object([info[:super_type][:type], info[:super_type]])
+        end
       end
 
       def valid_super_type?(base_class, super_type_info)

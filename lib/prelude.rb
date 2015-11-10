@@ -204,6 +204,98 @@ class Class
   ts '#allocate / -> BasicObject'
 end
 
+class Module
+  ts '#include / Module... -> Class'
+end
+
+ts 'type Enumerable[T]'
+module Enumerable
+  ts '#all? / &([T] -> Boolean) -> Boolean'
+#   ts '#any? / &([T] -> Boolean) -> Boolean'
+#   ts '#chunk / '
+#   ts '#collect / '
+#   ts '#collect_concat / '
+#   ts '#count / '
+#   ts '#cycle / '
+#   ts '#detect / '
+#   ts '#drop / '
+#   ts '#drop_while / '
+#   ts '#each_cons / '
+#   ts '#each_entry / '
+#   ts '#each_slice / '
+#   ts '#each_with_index / '
+#   ts '#each_with_object / '
+#   ts '#entries / '
+#   ts '#find / '
+#   ts '#find_all / '
+#   ts '#find_index / '
+#   ts '#first / '
+#   ts '#flat_map / '
+#   ts '#grep / '
+#   ts '#group_by / '
+#   ts '#include? / '
+#   ts '#inject / '
+#   ts '#lazy / '
+#   ts '#map / '
+#   ts '#max / '
+#   ts '#max_by / '
+#   ts '#member? / '
+#   ts '#min / '
+#   ts '#min_by / '
+#   ts '#minmax / '
+#   ts '#minmax_by / '
+#   ts '#none? / '
+#   ts '#one? / '
+#   ts '#partition / '
+#   ts '#reduce / '
+#   ts '#reject / '
+#   ts '#reverse_each / '
+#   ts '#select / '
+#   ts '#slice_after / '
+#   ts '#slice_before / '
+#   ts '#slice_when / '
+#   ts '#sort / '
+#   ts '#sort_by / '
+#   ts '#take / '
+#   ts '#take_while / '
+#   ts '#to_a / '
+#   ts '#to_h / '
+#   ts '#zip / '
+end
+
+ts 'type Enumerator[T]'
+class Enumerator
+  ts '#initialize / &(Enumerator::Yielder[T] -> unit) -> Enumerator[T]'
+  ts '#initialize / Object -> &(Enumerator::Yielder[T] -> unit) -> Enumerator[T]'
+  ts '#initialize / Object -> Symbol -> Enumerator[T]'
+  ts '#initialize / Object -> Symbol -> Object... -> Enumerator[T]'
+  ts '#each / -> Enumerator[T]'
+  ts '#each / &([T] -> unit) -> Object'
+  ts '#each_with_index / -> Enumerator[Pair[T][Integer]]'
+  ts '#each_with_index / &([T] -> Integer -> unit) -> Object'
+  ts '#each_with_object[E] / [E] -> &([T] -> [E] -> unit) -> [E]'
+  ts '#each_with_object[E] / [E] -> Enumerator[Pair[T][E]]'
+  ts '#feed / [T] -> unit'
+  ts '#next / -> [T]'
+  ts '#next_values / -> Array[T]'
+  ts '#peek / -> [T]'
+  ts '#peek_values / -> Array[T]'
+  ts '#rewind / ->Enumerator[T]'
+  ts '#size / -> Integer'
+  ts '#with_index / &([T] -> Integer -> unit) -> Object'
+  ts '#with_index / -> Enumerator[Pair[T][Integer]]'
+  ts '#with_index / Integer -> &([T] -> Integer -> unit) -> Object'
+  ts '#with_index / Integer -> Enumerator[Pair[T][Integer]]'
+  ts '#with_object[E] / [E] -> &([T] -> [E] -> unit) -> [E]'
+  ts '#with_object[E] / [E] -> Enumerator[Pair[T][E]]'
+end
+
+ts 'type Enumerator::Yielder[T]'
+class Enumerator::Yielder
+  ts '#<< / [T] -> unit'
+  ts '#yield / [T] -> unit'
+end
+
 ts 'type Array[T]'
 class Array
   ts '.[] / [T]... -> Array[T]'
@@ -329,11 +421,17 @@ class Array
   ts '#| / Array[T] -> Array[T]'
 end
 
-class Module
-  ts '#include / Module... -> Class'
+ts 'type Pair[S][T] super Array[Object]'
+class Pair < Array
+  ts '#first / -> [S]'
+
+  ts '#second / -> [T]'
+  def second
+    cast(at(1), '[T]')
+  end
 end
 
-ts 'type Hash[S][T]'
+ts 'type Hash[S][T] super Enumerable[Pair[S][T]]'
 class Hash
   #  ts '#map[E] / &(Pair[S][T] -> [E]) -> Array[E]'
 
@@ -427,93 +525,6 @@ class Hash
   ts '#values_at / [S]... -> Array[T]'
 end
 
-# ts 'type Enumerable[T]'
-# module Enumerable
-#   ts '#all? / &([T] -> Boolean) -> Boolean'
-#   ts '#any? / &([T] -> Boolean) -> Boolean'
-#   ts '#chunk / '
-#   ts '#collect / '
-#   ts '#collect_concat / '
-#   ts '#count / '
-#   ts '#cycle / '
-#   ts '#detect / '
-#   ts '#drop / '
-#   ts '#drop_while / '
-#   ts '#each_cons / '
-#   ts '#each_entry / '
-#   ts '#each_slice / '
-#   ts '#each_with_index / '
-#   ts '#each_with_object / '
-#   ts '#entries / '
-#   ts '#find / '
-#   ts '#find_all / '
-#   ts '#find_index / '
-#   ts '#first / '
-#   ts '#flat_map / '
-#   ts '#grep / '
-#   ts '#group_by / '
-#   ts '#include? / '
-#   ts '#inject / '
-#   ts '#lazy / '
-#   ts '#map / '
-#   ts '#max / '
-#   ts '#max_by / '
-#   ts '#member? / '
-#   ts '#min / '
-#   ts '#min_by / '
-#   ts '#minmax / '
-#   ts '#minmax_by / '
-#   ts '#none? / '
-#   ts '#one? / '
-#   ts '#partition / '
-#   ts '#reduce / '
-#   ts '#reject / '
-#   ts '#reverse_each / '
-#   ts '#select / '
-#   ts '#slice_after / '
-#   ts '#slice_before / '
-#   ts '#slice_when / '
-#   ts '#sort / '
-#   ts '#sort_by / '
-#   ts '#take / '
-#   ts '#take_while / '
-#   ts '#to_a / '
-#   ts '#to_h / '
-#   ts '#zip / '
-# end
-
-ts 'type Enumerator[T]'
-class Enumerator
-  ts '#initialize / &(Enumerator::Yielder[T] -> unit) -> Enumerator[T]'
-  ts '#initialize / Object -> &(Enumerator::Yielder[T] -> unit) -> Enumerator[T]'
-  ts '#initialize / Object -> Symbol -> Enumerator[T]'
-  ts '#initialize / Object -> Symbol -> Object... -> Enumerator[T]'
-  ts '#each / -> Enumerator[T]'
-  ts '#each / &([T] -> unit) -> Object'
-  ts '#each_with_index / -> Enumerator[Pair[T][Integer]]'
-  ts '#each_with_index / &([T] -> Integer -> unit) -> Object'
-  ts '#each_with_object[E] / [E] -> &([T] -> [E] -> unit) -> [E]'
-  ts '#each_with_object[E] / [E] -> Enumerator[Pair[T][E]]'
-  ts '#feed / [T] -> unit'
-  ts '#next / -> [T]'
-  ts '#next_values / -> Array[T]'
-  ts '#peek / -> [T]'
-  ts '#peek_values / -> Array[T]'
-  ts '#rewind / ->Enumerator[T]'
-  ts '#size / -> Integer'
-  ts '#with_index / &([T] -> Integer -> unit) -> Object'
-  ts '#with_index / -> Enumerator[Pair[T][Integer]]'
-  ts '#with_index / Integer -> &([T] -> Integer -> unit) -> Object'
-  ts '#with_index / Integer -> Enumerator[Pair[T][Integer]]'
-  ts '#with_object[E] / [E] -> &([T] -> [E] -> unit) -> [E]'
-  ts '#with_object[E] / [E] -> Enumerator[Pair[T][E]]'
-end
-
-ts 'type Enumerator::Yielder[T]'
-class Enumerator::Yielder
-  ts '#<< / [T] -> unit'
-  ts '#yield / [T] -> unit'
-end
 
 ts 'type Range[T]'
 class Range
@@ -529,14 +540,4 @@ class Integer
 
   # TODO
   # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
-end
-
-ts 'type Pair[S][T] super Array[Object]'
-class Pair < Array
-  ts '#first / -> [S]'
-
-  ts '#second / -> [T]'
-  def second
-    cast(at(1), '[T]')
-  end
 end

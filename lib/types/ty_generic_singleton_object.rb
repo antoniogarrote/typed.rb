@@ -6,8 +6,7 @@ module TypedRb
     class TyGenericSingletonObject < TySingletonObject
       include Polymorphism::GenericComparisons
 
-      attr_reader :super_type
-      attr_accessor :local_typing_context
+      attr_accessor :local_typing_context, :super_type
 
       def initialize(ruby_type, type_vars, super_type = nil, node = nil)
         super(ruby_type, node)
