@@ -117,6 +117,7 @@ module TypedRb
           method, signatures = method_info
           validate_method(find_methods(klass), klass, method, method_type)
           normalized_signatures = signatures.map do |signature|
+            validate_function_signature(klass, method, signature, method_type)
             normalized_method = normalize_signature!(klass, signature)
             validate_signature(method_type, normalized_method)
             compute_parameters_info(method_type, klass, method, normalized_method, signature)

@@ -34,6 +34,13 @@ module TypedRb
             end
           end
         end
+
+        def validate_function_signature(klass, method, signature, method_type)
+          if signature.is_a?(Hash)
+            join = method_type == :instance ? '#' : '::'
+            fail ::TypedRb::Types::TypeParsingError, "Declared method #{klass}#{join}#{method}(#{signature}) is not a valid arrow"
+          end
+        end
       end
     end
   end
