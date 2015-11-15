@@ -44,11 +44,15 @@ module TypedRb
         puts "*** FILE #{file}"
         $TYPECHECK_FILE = file
         expr = File.open(file, 'r').read
-        # begin
-        check_result = check_type(parse(expr))
-        # rescue TypedRb::TypeCheckError => e
+        #begin
+          check_result = check_type(parse(expr))
+        #rescue TypedRb::Types::UncomparableTypes => e
+        #  puts e.backtrace.join("\n")
         #  puts e.message
-        # end
+        #  exit(-1)
+        #rescue TypedRb::TypeCheckError => e
+        # puts e.message
+        #end
       end
       ::BasicObject::TypeRegistry.check_super_type_annotations
       @unification_result = run_unification

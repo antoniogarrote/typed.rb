@@ -103,7 +103,7 @@ class TargetFinder
 end
 
 time = Benchmark.realtime do
-  TypedRb::Language.new.check_files TargetFinder.new.find(ARGV)
+  TypedRb::Language.new.check_files(TargetFinder.new.find(ARGV))
 end
 
 puts "Finished in #{time} seconds"
