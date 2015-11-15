@@ -10,10 +10,11 @@ module TypedRb
       end
 
       def check_inclusion(self_type)
-        Types::TypingContext.with_context(local_typing_context.dup) do
+        cloned_context, _ = local_typing_context.clone(:module_self)
+        Types::TypingContext.with_context(cloned_context) do
           context_self_type = Types::TypingContext.type_variable_for(ruby_type, :module_self, [ruby_type])
           context_self_type.compatible?(self_type, :lt)
-          Types::Polymorphism::Unification.new(Types::TypingContext.all_constraints).run
+          Types::Polymorphism::Unification.new(Types::TypingContext.all_constraints).run(false)
         end
       end
     end

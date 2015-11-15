@@ -142,7 +142,7 @@ module TypedRb
           self_variables_constraints = @type_variables_register.values.reduce([]) do |constraints_acc, type_var|
             constraints_acc + type_var.constraints(self)
           end
-          self_variables_constraints + (children.map(&:all_constraints).reduce(&:+) || [])
+          self_variables_constraints + (children.reject{ |r| r.kind == :module }.map(&:all_constraints).reduce(&:+) || [])
         end
 
         def all_variables

@@ -60,4 +60,30 @@ __CODE
     result = language.check(code)
     expect(result.ruby_type).to eq(Integer)
   end
+
+  it 'typechecks the inclusion of a module in multiple classes' do
+    code = <<__CODE
+       module TMod4
+        ts '#x / Integer -> unit'
+        def x(i); @a = i; end
+       end
+
+       class TMod4C1
+         include TMod4
+
+         ts '#a / -> Integer'
+         def a; @a; end
+       end
+
+       class TMod4C2
+         include TMod4
+       end
+
+       TMod4C2.new.x(3)
+       TMod4C1.new.a
+__CODE
+
+    result = language.check(code)
+    expect(result.ruby_type).to eq(Integer)
+  end
 end
