@@ -1,12 +1,11 @@
 require_relative 'ty_object'
 require_relative 'polymorphism/generic_comparisons'
-
+require_relative 'polymorphism/generic_variables'
 module TypedRb
   module Types
     class TyGenericObject < TyObject
       include Polymorphism::GenericComparisons
-
-      attr_reader :type_vars
+      include Polymorphism::GenericVariables
 
       def initialize(ruby_type, type_vars, node = nil)
         super(ruby_type, node)
@@ -144,7 +143,7 @@ module TypedRb
       end
 
       def clone_with_substitutions(substitutions)
-        materialized_type_vars = type_vars.map do |type_var|
+        materialized_type_vars = type_vars(recursive: false).map do |type_var|
           if type_var.is_a?(Polymorphism::TypeVariable)
             substitutions[type_var.variable] || type_var.clone
           elsif type_var.is_a?(TyGenericSingletonObject) || type_var.is_a?(TyGenericObject)

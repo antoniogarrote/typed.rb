@@ -1,10 +1,12 @@
 require_relative 'ty_singleton_object'
 require_relative 'polymorphism/generic_comparisons'
+require_relative 'polymorphism/generic_variables'
 
 module TypedRb
   module Types
     class TyGenericSingletonObject < TySingletonObject
       include Polymorphism::GenericComparisons
+      include Polymorphism::GenericVariables
 
       attr_accessor :local_typing_context, :super_type
 
@@ -13,22 +15,6 @@ module TypedRb
         @super_type = super_type
         @type_vars = type_vars
         @application_count = 0
-      end
-
-      def type_vars(options = { recursive: true })
-        return @type_vars unless options[:recursive]
-        @type_vars.map do |type_var|
-          if type_var.is_a?(Polymorphism::TypeVariable) && type_var.bound_to_generic?
-            type_var.bound.type_vars
-          elsif type_var.is_a?(Polymorphism::TypeVariable)
-            type_var
-          else
-            type_var.type_vars
-          end
-        end.flatten
-        #  .each_with_object({}) do |type_var, acc|
-        #  acc[type_var.variable] = type_var
-        #end.values
       end
 
       def materialize_with_type_vars(type_vars, bound_type)

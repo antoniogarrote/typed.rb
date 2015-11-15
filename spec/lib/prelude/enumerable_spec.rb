@@ -185,4 +185,68 @@ __CODE
       end
     end
   end
+
+  describe '#grep' do
+    describe 'Regexp -> Array[T]' do
+      it 'type checks it correctly' do
+        result = language.check('["1","2","3","e","f","4"].grep(/\d/)')
+        expect(result.to_s).to eq('Array[String]')
+      end
+    end
+
+    describe '[E] / Regexp -> &([T] -> [E]) -> Array[E]' do
+      it 'type checks it correctly, positive case' do
+        code = <<__CODE
+        ts '#s_to_i / String -> Integer'
+        def s_to_i(s); 0; end
+
+        ["1","2","3","e","f","4"].grep(/\d/){ |e| s_to_i(e) }
+__CODE
+        result = language.check(code)
+        expect(result.to_s).to eq('Array[Integer]')
+      end
+
+      it 'type checks it correctly, negative case' do
+        code = <<__CODE
+        ts '#f_to_i / Float -> Integer'
+        def f_to_i(s); 0; end
+
+        ["1","2","3","e","f","4"].grep(/\d/){ |e| f_to_i(e) }
+__CODE
+        expect {
+          language.check(code)
+        }.to raise_error(TypedRb::Types::UncomparableTypes)
+      end
+    end
+  end
+
+  describe '#max' do
+    describe '&(Pair[T][T] -> Integer) -> [T]' do
+      it 'type checks it correctly, positive case' do
+        code = <<__CODE
+          ts '#int_int_fn / Integer -> Integer -> Integer'
+          def int_int_fn(a,b); a+b; end
+
+          [1,2,3,4,5].max { |a,b| int_int_fn(a,b) }
+__CODE
+        result = language.check(code)
+        expect(result.to_s).to eq('Integer')
+      end
+    end
+  end
+
+  describe '#partition' do
+    describe '&([T] -> Boolean) -> Pair[Array[T]][Array[T]]' do
+      it 'type checks it correclty, positive case' do
+        code = <<__CODE
+           ts '#odd? / Integer -> Boolean'
+           def odd?(e); false; end
+
+           [1,2,3,4,5,6].partition { |e| odd?(e) }
+__CODE
+        result = language.check(code)
+        expect(result.to_s).to eq('Pair[Array[Integer]][Array[Integer]]')
+      end
+    end
+  end
 end
