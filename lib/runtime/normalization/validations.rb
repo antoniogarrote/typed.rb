@@ -6,7 +6,7 @@ module TypedRb
           return if type == :class_variable || type == :instance_variable
           return if normalized_signature.is_a?(TypedRb::Types::TyFunction)
           fail ::TypedRb::Types::TypeParsingError,
-               "Error parsing receiver, method signature: #{type}[#{klass}] :: '#{method}', function expected, got '#{signatures_acc[method]}'"
+               "Error parsing receiver, method signature: #{type} :: '#{normalized_signature}'"
         end
 
         def validate_signatures(normalized_signatures, klass, method)

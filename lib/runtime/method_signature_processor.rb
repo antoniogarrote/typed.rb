@@ -14,13 +14,15 @@ module TypedRb
         private
 
         def destruct_signature(full_signature)
-          receier_and_message, type_signature = full_signature.split(%r{\s*/\s*})
-          if receier_and_message.index('#')
+          parts = full_signature.split(%r{\s*/\s*})
+          type_signature = parts.pop
+          receiver_and_message = parts.join('/')
+          if receiver_and_message.index('#')
             kind = :instance
-            receiver, message =  receier_and_message.split('#')
-          elsif receier_and_message.index('.')
+            receiver, message =  receiver_and_message.split('#')
+          elsif receiver_and_message.index('.')
             kind = :class
-            receiver, message = receier_and_message.split('.')
+            receiver, message = receiver_and_message.split('.')
           else
             fail ::TypedRb::Types::TypeParsingError, "Error parsing receiver, method type_signature: #{full_signature}"
           end

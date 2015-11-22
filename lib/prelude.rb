@@ -709,12 +709,124 @@ class Range
   ts '#initialize / [T] -> [T] -> Boolean -> Range[T]'
 end
 
-class Integer
-  ts '#+ / Integer -> Integer'
-  def +(_other)
-    fail StandardError.new('Error invoking abstract method Integer#+')
-  end
+class Numeric
+  ts '#% / Numeric -> Float'
+  ts '#+@ / -> Numeric'
+  ts '#-@ / -> Numeric'
+  ts '#<=> / Numeric -> Integer'
+  ts '#abs / -> Numeric'
+  ts '#abs2 / -> Float'
+  ts '#angle / -> Float'
+  ts '#arg / -> Float'
+  ts '#ceil / -> Integer'
+  # ts '#coerce
+  ts '#conj / -> Numeric'
+  ts '#conjugate / -> Numeric'
+  ts '#denominator / -> Integer'
+  ts '#div / Numeric -> Integer'
+  ts '#divmod / Numeric -> Array[Numeric]'
+  ts '#eql? / Numeric -> Boolean'
+  ts '#fdiv / Numeric -> Float'
+  ts '#floor / -> Integer'
+  ts '#i / -> Complex'
+  ts '#imag / -> Integer'
+  ts '#imaginary / -> Integer'
+  #ts '#initialize_copy /
+  ts '#integer? /-> Boolean'
+  ts '#magnitude / -> Numeric'
+  ts '#modulo / Numeric -> Array[Numeric]'
+  ts '#nonzero? / -> Numeric'
+  ts '#numerator / -> Integer'
+  ts '#phase / -> Float'
+  ts '#polar / -> Array[Numeric]'
+  ts '#quo / Numeric -> Numeric'
+  ts '#real / -> Numeric'
+  ts '#real? / -> Boolean'
+  ts '#rect / -> Array[Numeric]'
+  ts '#rectangular / -> Array[Numeric]'
+  ts '#remainder / Numeric -> Float'
+  ts '#round / -> Numeric'
+  ts '#round / Integer -> Numeric'
+  #ts '#singleton_method_added'
+  #ts '#step
+  ts '#to_c / -> Complex'
+  ts '#to_int / -> Integer'
+  ts '#truncate / -> Integer'
+  ts '#zero? / -> Boolean'
+end
 
-  # TODO
-  # [:+, :-, :*, :/, :**, :~, :&, :|, :^, :[], :<<, :>>, :to_f, :size, :bit_length]
+class Integer
+  ts '#chr / -> String'
+  ts '#chr / Encoding -> String'
+  ts '#downto / Integer -> Enumerator[Integer]'
+  ts '#downto / Integer -> &(Integer -> unit) -> Integer'
+  ts '#even? / -> Boolean'
+  ts '#gcd / Integer -> Integer'
+  ts '#gcdlcm / Integer -> Array[Integer]'
+  ts '#lcm / Integer -> Integer'
+  ts '#next / -> Integer'
+  ts '#numerator / -> Integer'
+  ts '#odd? / -> Boolean'
+  ts '#ord / -> Boolean'
+  ts '#pred / -> Integer'
+  ts '#rationalize / -> Rational'
+  ts '#rationalize / BasicObject -> Rational'
+  ts '#round / -> Float'
+  ts '#round / Integer -> Float'
+  ts '#succ / -> Integer'
+  ts '#times / &(Integer -> unit) -> Integer'
+  ts '#times / -> Enumerator[Integer]'
+  ts '#to_i / -> Integer'
+  ts '#to_r / -> Rational'
+  ts '#upto / Integer -> Enumerator[Integer]'
+  ts '#upto / Integer -> &(Integer -> unit) -> Integer'
+
+  [:+, :-, :*, :/, :**, :&, :|, :^, :[], :<<, :>>].each do |method|
+    ts "##{method} / Integer -> Integer"
+    define_method(method){ |_| fail StandardError.new("Error invoking abstract method Integer##{method}") }
+  end
+  [:~, :size, :bit_length].each do |method|
+    ts "##{method} / -> Integer"
+    define_method(method){ fail StandardError.new("Error invoking abstract method Integer##{method}") }
+  end
+end
+
+class Float
+  ts '#+@ / -> Float'
+  ts '#-@ / -> Float'
+  ts '#< / Float -> Boolean'
+  ts '#<= / Float -> Boolean'
+  ts '#> / Float -> Boolean'
+  ts '#>= / Float -> Boolean'
+  ts '#abs / -> Float'
+  ts '#coerce / Numeric -> Array[Float]'
+  ts '#fdiv / Numeric -> Float'
+  ts '#finite? / -> Boolean'
+  ts '#floor / -> Integer'
+  ts '#hash / -> Integer'
+  ts '#infinite? / -> Boolean'
+  ts '#inspect / -> String'
+  ts '#magnitude / -> Float'
+  ts '#modulo / Numeric -> Float'
+  ts '#nan? / -> Boolean'
+  ts '#next_float / -> Float'
+  ts '#numerator / -> Integer'
+  ts '#phase / -> Float'
+  ts '#prev_float / -> Float'
+  ts '#quo / Numeric -> Float'
+  ts '#rationalize / -> Rational'
+  ts '#rationalize / BasicObject -> Rational'
+  ts '#round / -> Float'
+  ts '#round / Integer -> Float'
+  ts '#to_f / -> Float'
+  ts '#to_i / -> Integer'
+  ts '#to_int / -> Integer'
+  ts '#to_r / -> Rational'
+  ts '#to_s / -> String'
+  ts '#truncate / -> Integer'
+  ts '#zero? / -> Boolean'
+
+  [:+, :-, :*, :/, :**].each do |method|
+    ts "##{method} / Float -> Float"
+  end
 end
