@@ -1,4 +1,11 @@
 require 'log4r'
+class Class
+  def for_name(klass)
+    return TrueClass if klass == "Boolean"
+    return NilClass if klass == "unit"
+    const_get(klass)
+  end
+end
 
 module Kernel
   alias_method :old_require, :require
@@ -99,13 +106,13 @@ module TypedRb
                   if client.name
                     client.name
                   else
-                    Object.const_get(client.to_s.match(/Class:(.*)>/)[1]).name
+                    Class.for_name(client.to_s.match(/Class:(.*)>/)[1]).name
                   end
                 else
                   if client.class.name
                     client.class.name
                   else
-                    Object.const_get(client.class.to_s.match(/Class:(.*)>/)[1]).name
+                    Class.for_name(client.class.to_s.match(/Class:(.*)>/)[1]).name
                   end
                 end
     line = client_binding.eval('__LINE__')

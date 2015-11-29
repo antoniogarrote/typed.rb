@@ -36,7 +36,7 @@ module TypedRb
       def build_generic_singleton_object(type_info)
         type_class, info = type_info
         TypedRb.log(binding, :debug,  "Normalising generic type: #{type_class}")
-        info[:type] = Object.const_get(type_class)
+        info[:type] = Class.for_name(type_class)
         info[:parameters] = info[:parameters].map do |parameter|
           ::TypedRb::Runtime::TypeParser.parse(parameter, info[:type])
         end
@@ -67,7 +67,7 @@ module TypedRb
 
       def parse_class(class_name)
         return :main if class_name == :main
-        Object.const_get(class_name.to_s)
+        Class.for_name(class_name.to_s)
       end
 
       def find_methods(klass)

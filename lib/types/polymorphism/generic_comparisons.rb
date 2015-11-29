@@ -2,6 +2,32 @@ module TypedRb
   module Types
     module Polymorphism
       module GenericComparisons
+        def ==(other)
+          return false if !other.is_a?(TyObject) || !other.generic?
+          return false if other.ruby_type != ruby_type
+          to_s == other.to_s
+        end
+
+        def !=(other)
+          ! (self == other)
+        end
+
+        def <(other)
+          self.compatible?(other, :lt)
+        end
+
+        def >(other)
+          self.compatible?(other, :gt)
+        end
+
+        def <=(other)
+          self == other || self.compatible?(other, :lt)
+        end
+
+        def >=(other)
+          self == other || self.compatible?(other, :gt)
+        end
+
         def compatible?(other_type, relation = :lt)
           if other_type.is_a?(TyDynamic) || other_type.is_a?(TyError)
             true

@@ -74,7 +74,7 @@ __CODE
            ts "#int_bool_fn / Integer -> Boolean"
            def int_bool_fn(i); true; end
 
-           ts '#bool_int_ary_fn / Boolean -> Array[Int] -> unit'
+           ts '#bool_int_ary_fn / Boolean -> Array[Integer] -> unit'
            def bool_int_ary_fn(b,a); nil; end
 
            [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5].chunk { |n|
@@ -246,6 +246,32 @@ __CODE
 __CODE
         result = language.check(code)
         expect(result.to_s).to eq('Pair[Array[Integer]][Array[Integer]]')
+      end
+    end
+  end
+
+  describe '#sort_by' do
+    describe '[Comparable[E]] / &([T] -> [E]) -> Array[T]' do
+      it 'type checks it correctly, positive case' do
+        code = <<__CODE
+        ["apple", "pear", "fig" ].sort_by {|word| word.length }
+__CODE
+
+        result = language.check(code)
+        expect(result.to_s).to eq('Array[String]')
+      end
+
+      it 'type checks it correctly, negative case' do
+        code = <<__CODE
+        ts '#uncomparable / String -> Object'
+        def uncomparable(s); Object.new; end
+
+        ->(){ ["apple", "pear", "fig" ].sort_by {|word| uncomparable(word) } }
+__CODE
+
+        expect {
+          language.check(code)
+        }.to raise_error(TypedRb::Types::UncomparableTypes)
       end
     end
   end

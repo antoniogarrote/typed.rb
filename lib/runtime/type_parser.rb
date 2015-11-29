@@ -13,7 +13,7 @@ module TypedRb
           elsif type.is_a?(Array)
             parse_function_type(type, klass)
           elsif type.is_a?(Hash) && (type[:kind] == :type_var || type[:kind] == :method_type_var)
-            maybe_class = Object.const_get(type[:type]) rescue false
+            maybe_class = Class.for_name(type[:type]) rescue false
             if maybe_class
               type[:type] = maybe_class
             else
@@ -33,8 +33,8 @@ module TypedRb
 
         def parse_type_var(type)
           if type[:binding] == '<'
-            upper_bound = Object.const_get(type[:bound]) rescue type[:bound]
-            upper_bound = if upper_bound.is_a?(Class)
+            upper_bound = Class.for_name(type[:bound]) rescue type[:bound]
+            upper_bound = if upper_bound.is_a?(Module)
                             Types::TySingletonObject.new(upper_bound)
                           else
                             Types::Polymorphism::TypeVariable.new(upper_bound, :gen_name => false)
@@ -43,8 +43,8 @@ module TypedRb
                                                   :upper_bound => upper_bound,
                                                   :gen_name    => false)
           elsif type[:binding] == '>'
-            lower_bound = Object.const_get(type[:bound])
-            lower_bound = if lower_bound.is_a?(Class)
+            lower_bound = Class.for_name(type[:bound])
+            lower_bound = if lower_bound.is_a?(Module)
                             Types::TySingletonObject.new(lower_bound)
                           else
                             Types::Polymorphism::TypeVariable.new(lower_bound, :gen_name => false)
@@ -52,7 +52,7 @@ module TypedRb
             Types::Polymorphism::TypeVariable.new(type[:type],
                                                   :lower_bound => lower_bound,
                                                   :gen_name    => false)
-          elsif type[:type].is_a?(Class)
+          elsif type[:type].is_a?(Module)
             type_object = Types::TyObject.new(type[:type])
             type_var = Types::Polymorphism::TypeVariable.new("#{type[:type]}:T",
                                                              :gen_name => false,
@@ -90,7 +90,7 @@ module TypedRb
           end
           # this is the concrete argument to parse
           # it might refer to type vars in the container class
-          ruby_type = Object.const_get(type[:type])
+          ruby_type = Class.for_name(type[:type])
           is_generic = false
           concrete_type_vars = []
           # for each parameter:
@@ -107,7 +107,7 @@ module TypedRb
                               else
                                 if param[:kind] == :generic_type
                                   # It is a nested generic type
-                                  #klass = Object.const_get(param[:type])
+                                  #klass = Class.for_name(param[:type])
                                   bound = parse(param, klass)
                                   concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
                                                                                          :upper_bound => bound,
@@ -138,7 +138,7 @@ module TypedRb
                                 else  # [Type]
                                   begin
                                     # The Generic type is bound to a concrete type: bound == upper_bound == lower_bound
-                                    bound = Types::TySingletonObject.new(Object.const_get(param[:type]))
+                                    bound = Types::TySingletonObject.new(Class.for_name(param[:type]))
                                     concrete_param = Types::Polymorphism::TypeVariable.new(type_var.name,
                                                                                            :upper_bound => bound,
                                                                                            :lower_bound => bound,
@@ -168,7 +168,7 @@ module TypedRb
         end
 
         def parse_existential_object_type(type)
-          ruby_type = Object.const_get(type)
+          ruby_type = Class.for_name(type)
           BasicObject::TypeRegistry.find_existential_type(ruby_type)
         rescue StandardError => e
           TypedRb.log(binding, :error, "Error parsing existential object from type #{type}, #{e.message}")
@@ -176,7 +176,7 @@ module TypedRb
         end
 
         def parse_singleton_object_type(type, node = nil)
-          ruby_type = Object.const_get(type)
+          ruby_type = Class.for_name(type)
           generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
           if generic_type
             generic_type.node = node

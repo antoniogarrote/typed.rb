@@ -16,8 +16,8 @@ module TypedRb
         end
 
         def find_namespace(constant, namespace = self.namespace)
-          return Object.const_get(constant) if constant.start_with?('::')
-          Object.const_get(namespace.join('::') + '::' + constant)
+          return Class.for_name(constant) if constant.start_with?('::')
+          Class.for_name(namespace.join('::') + '::' + constant)
         rescue NameError => e
           if namespace.empty?
             raise e

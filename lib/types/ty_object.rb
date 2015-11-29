@@ -54,10 +54,6 @@ module TypedRb
         self
       end
 
-      def defaults_to_dynamic?
-        !BasicObject::TypeRegistry.registered?(ruby_type)
-      end
-
       def compatible?(other_type, relation = :lt)
         if other_type.is_a?(TyObject)
           begin
@@ -80,7 +76,19 @@ module TypedRb
 
       # Non generic type, the function is alwasy going to be concrete
       def find_function_type(message, num_args, block)
-        find_function_type_in_hierarchy(:instance, message, num_args, block)
+        klass, function = find_function_type_in_hierarchy(:instance, message, num_args, block)
+        if klass != ruby_type && function.generic?
+          generic_type = ::BasicObject::TypeRegistry.find_generic_type(klass)
+          if generic_type.nil?
+            return klass, function # generic method in non-generic class
+          elsif generic_type.type_vars.size == 1
+            generic_type.materialize([self]).find_function_type(message, num_args, block)
+          else
+            fail "Undeclared generic type variables for #{ruby_type} super class/mix-in #{klass.class} #{klass}##{message}, please add a 'super' type annotation"
+          end
+        else
+          return klass, function
+        end
       end
 
       def find_var_type(var, _type = ruby_type)

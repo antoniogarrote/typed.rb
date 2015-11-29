@@ -339,6 +339,7 @@ module TypedRb
         def initialize(constraints, options = {})
           @allow_unbound_receivers = options[:allow_unbound_receivers] || false
           @constraints = canonical_form(constraints)
+          @constraints = expand_constraints
           @gt_constraints = @constraints.select { |(_, t, _r)| t == :gt }.sort do |(_, _, r1), (_, _, r2)|
             -(r1 <=> r2) || 0 rescue 0
           end
@@ -348,6 +349,22 @@ module TypedRb
           @send_constraints = @constraints.select { |(_, t, _r)| t == :send }
           @graph = Topography.new(@constraints)
           @to_bubble = []
+        end
+
+        def expand_constraints
+          expanded = constraints.reduce([]) do |acc, (l,_,r)|
+            acc + expand_constraint(l) + expand_constraint(r)
+          end
+          expanded + @constraints
+        end
+
+        def expand_constraint(element)
+          expanded = []
+          if element.is_a?(TypeVariable) && element.bound.nil?
+            expanded << [element, :gt, element.lower_bound] if element.lower_bound
+            expanded << [element, :lt, element.upper_bound] if element.upper_bound
+          end
+          expanded
         end
 
         def canonical_form(constraints)

@@ -141,7 +141,7 @@ module TypedRb
         # TODO: do this recursively in the case of nested generic type
         # TODO: do we need it at all?
         klass = if type.is_a?(Hash) && type[:kind] == :generic_type
-                  Object.const_get(type[:type])
+                  Class.for_name(type[:type])
                 end
         Runtime::TypeParser.parse(type, klass)
       end
