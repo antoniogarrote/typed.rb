@@ -27,7 +27,7 @@ module TypedRb
         # fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
         # Missing type information stops the type checking process
         # TODO: raise a warning here about the previous fact
-        return if function_type.nil? || function_type.dynamic?
+        return Types::TyUnit.new(node) if function_type.nil? || function_type.dynamic?
 
         context = setup_context(context, function_type)
         # check the body with the new bindings for the args
@@ -131,11 +131,11 @@ module TypedRb
       end
 
       def check_return_type(context, function_type, body_return_type)
-        return function_type.to                                 if function_type.to.instance_of?(Types::TyUnit)
+        return function_type.to if function_type.to.instance_of?(Types::TyUnit)
         # Same as before but for the return type
         function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.clone : function_type.to
-        body_return_type = body_return_type.check_type(context) if body_return_type.is_a?(TmReturn)
-        return function_type                                    if body_return_type.compatible?(function_type_to, :lt)
+        body_return_type = body_return_type.wrapped_type.check_type(context) if body_return_type.stack_jump?
+        return function_type if body_return_type.compatible?(function_type_to, :lt)
         # TODO:
         # A TyObject(Symbol) should be returned not the function type
         # x = def id(x); x; end / => x == :id

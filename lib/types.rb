@@ -38,6 +38,10 @@ module TypedRb
         @node = node
       end
 
+      def stack_jump?
+        false
+      end
+
       # other_type is a meta-type not a ruby type
       def compatible?(other_type, relation = :lt)
         if other_type.instance_of?(Class)

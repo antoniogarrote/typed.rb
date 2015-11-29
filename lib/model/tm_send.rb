@@ -22,7 +22,8 @@ module TypedRb
         @context = context
         TypedRb.log(binding, :debug,  "Type checking message sent: #{message} at line #{node.loc.line}")
         if receiver.nil? && message == :ts
-          # ignore, => type annotation
+        # ignore, => type annotation
+          Types::TyUnit.new(node)
         elsif message == :new && !singleton_object_type(receiver, context).nil? # clean this!
           check_instantiation(context)
         elsif receiver == :self || receiver.nil?

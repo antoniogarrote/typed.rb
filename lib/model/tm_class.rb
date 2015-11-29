@@ -32,7 +32,7 @@ module TypedRb
                         body.check_type(context) if body
                       end
         Types::TypingContext.namespace_pop
-        result_type
+        result_type || Types::TyUnit.new(node)
       end
 
       def self.with_fresh_bindings(generic_class, _context, node)

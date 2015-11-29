@@ -16,6 +16,10 @@ module TypedRb
           @bound = options[:bound]
         end
 
+        def stack_jump?
+          false
+        end
+
         def add_constraint(relation, type)
           if type.is_a?(TypeVariable) && type.bound
             TypingContext.add_constraint(variable, relation, type.bound)
