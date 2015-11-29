@@ -22,7 +22,7 @@ module TypedRb
         @context = context
         TypedRb.log(binding, :debug,  "Type checking message sent: #{message} at line #{node.loc.line}")
         if receiver.nil? && message == :ts
-        # ignore, => type annotation
+          # ignore, => type annotation
           Types::TyUnit.new(node)
         elsif message == :new && !singleton_object_type(receiver, context).nil? # clean this!
           check_instantiation(context)
@@ -183,7 +183,19 @@ module TypedRb
               # -----
               # G = [String, E]
               # E = [String, ?]
-              block_type.compatible?(function_type.block_type, :lt) if function_type.block_type
+              block_return_type = if function_type.block_type
+                                    # materialization and unification will happen in this invocation
+                                    block_type.compatible?(function_type.block_type, :lt)
+                                  else
+                                    block_type.to
+                                  end
+              if block_return_type.to.stack_jump?
+                break_type = block_return_type.to.wrapped_type.check_type(context)
+                unless break_type.compatible?(function_type.to, :lt)
+                  error_message = "Incompatible 'break' type, expected #{function_type.to}, found #{break_type}"
+                  fail error_message, block_return_type.to.node
+                end
+              end
             end
             return_type = function_type.to
             return_type.respond_to?(:as_object_type) ? return_type.as_object_type : return_type

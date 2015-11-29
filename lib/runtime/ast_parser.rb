@@ -118,7 +118,9 @@ module TypedRb
         parse_while(node, context)
       when :irange, :erange
         parse_range(node, context)
-      when :break, :next
+      when :break
+        parse_break(node, context)
+      when :next
         Types::TyUnit.new
       else
         fail TermParsingError.new("Unknown term #{node.type}: #{node.to_sexp}", node)
@@ -441,6 +443,11 @@ module TypedRb
     def parse_return(node, context)
       elements = node.children.map { |element| map(element, context) }
       TmReturn.new(elements, node)
+    end
+
+    def parse_break(node, context)
+      elements = node.children.map { |element| map(element, context) }
+      TmBreak.new(elements, node)
     end
 
     def parse_self(node, _context)

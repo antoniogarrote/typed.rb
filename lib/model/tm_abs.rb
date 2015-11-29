@@ -17,7 +17,10 @@ module TypedRb
       def check_type(context)
         with_fresh_bindings(context) do |var_type_args, var_type_return, context|
           type_term = term.check_type(context)
-          if var_type_return.compatible?(type_term, :gt)
+          fail TypeCheckError.new("Invalid 'return' statement inside abstraction", type_term.node) if type_term.stack_jump? && type_term.return?
+          if type_term.stack_jump?
+            Types::TyGenericFunction.new(var_type_args, type_term, resolve_ruby_method_parameters, node)
+          elsif var_type_return.compatible?(type_term, :gt)
             Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters, node)
           else
             # TODO: improve message
