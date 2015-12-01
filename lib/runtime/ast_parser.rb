@@ -9,6 +9,41 @@ module TypedRb
   # It will transform the signature string into a hash
   # with the type information.
   class AstParser
+
+    class AssignationWrapper
+      def initialize(assignation, children)
+        @assignation = assignation
+        @children = children
+      end
+
+      def children
+        @children
+      end
+
+      def method_missing(m, *args, &block)
+        @assignation.send(m, *args)
+      end
+
+      def to_s
+        @assignation.to_s
+      end
+    end
+
+    class RewrittenWrapper
+      attr_reader :rewritten
+      def initialize(parsed)
+        @rewritten = parsed
+      end
+
+      def type
+        :rewritten
+      end
+
+      def to_sexp
+        "REWRITTEN: #{@rewritten}"
+      end
+    end
+
     include Model
 
     def ast(ruby_code)
@@ -28,6 +63,8 @@ module TypedRb
         TypedRb.log(binding, :debug, "Parsing node #{node}:\n#{sexp}")
       end
       case node.type
+      when :rewritten
+        node.rewritten
       when :nil
         TmNil.new(node)
       when :module
@@ -116,6 +153,8 @@ module TypedRb
         parse_super_with_args(node, context)
       when :while, :while_post, :until, :until_post
         parse_while(node, context)
+      when :for
+        parse_for(node, context)
       when :irange, :erange
         parse_range(node, context)
       when :break
@@ -392,6 +431,18 @@ module TypedRb
       condition_expr = map(condition, context)
       body_expr = body ? map(body, context) : nil
       TmWhile.new(condition_expr, body_expr, node)
+    end
+
+    def parse_for(node, context)
+      lhs, rhs, body = node.children
+      lhs_chilren = []
+      lhs.children.each do |child|
+        lhs_chilren << child
+      end
+      lhs_chilren << RewrittenWrapper.new(TmSend.new(TmSend.new(map(rhs, context),:each, [], node), :next, [], node))
+
+      lhs_wrapped = AssignationWrapper.new(lhs, lhs_chilren)
+      TmFor.new(map(lhs_wrapped, context), map(body, context), node)
     end
 
     def parse_begin(node, context)
