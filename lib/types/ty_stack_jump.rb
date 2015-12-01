@@ -20,12 +20,20 @@ module TypedRb
         TyStackJump.new(:break, return_type, node)
       end
 
+      def self.next(return_type, node = nil)
+        TyStackJump.new(:next, return_type, node)
+      end
+
       def return?
         jump_kind == :return
       end
 
       def break?
         jump_kind == :break
+      end
+
+      def next?
+        jump_kind == :next
       end
     end
   end

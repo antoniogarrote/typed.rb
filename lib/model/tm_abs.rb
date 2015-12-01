@@ -18,8 +18,17 @@ module TypedRb
         with_fresh_bindings(context) do |var_type_args, var_type_return, context|
           type_term = term.check_type(context)
           fail TypeCheckError.new("Invalid 'return' statement inside abstraction", type_term.node) if type_term.stack_jump? && type_term.return?
-          if type_term.stack_jump?
+          if type_term.stack_jump? && type_term.break?
             Types::TyGenericFunction.new(var_type_args, type_term, resolve_ruby_method_parameters, node)
+          elsif type_term.stack_jump? && type_term.next?
+            wrapped_type = type_term.wrapped_type.check_type(context)
+            if var_type_return.compatible?(wrapped_type, :gt)
+              Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters, node)
+            else
+              # TODO: improve message
+              error_msg = "Error parsing abstraction, incompatible break return type found: #{var_type_return} < #{wrapped_type}"
+              fail TypeCheckError.new(error_msg, node)
+            end
           elsif var_type_return.compatible?(type_term, :gt)
             Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters, node)
           else

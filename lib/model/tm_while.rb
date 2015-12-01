@@ -14,7 +14,12 @@ module TypedRb
       def check_type(context)
         condition_expr.check_type(context).compatible?(Types::TyObject.new(BasicObject, node), :lt)
         return Types::TyUnit.new(node) unless body_expr
-        body_expr.check_type(context)
+        while_res = body_expr.check_type(context)
+        if while_res.stack_jump? && (while_res.next? || while_res.break?)
+          while_res.wrapped_type.check_type(context)
+        else
+          while_res
+        end
       end
     end
   end
