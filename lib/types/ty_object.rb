@@ -50,6 +50,10 @@ module TypedRb
         false
       end
 
+      def either?
+        false
+      end
+
       def check_type(_context)
         self
       end
@@ -126,6 +130,11 @@ module TypedRb
         else
           "#{@classes.first} with [#{@modules.map(&:to_s).join(',')}]"
         end
+      end
+
+      def union(other_type, node = nil)
+        smaller_common_class = (classes & other_type.classes).first
+        TyObject.new(smaller_common_class, (node || self.node || other_type.node))
       end
 
       def <=>(other)

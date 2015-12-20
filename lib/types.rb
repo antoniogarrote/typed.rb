@@ -42,6 +42,10 @@ module TypedRb
         false
       end
 
+      def either?
+        false
+      end
+
       # other_type is a meta-type not a ruby type
       def compatible?(other_type, relation = :lt)
         if other_type.instance_of?(Class)

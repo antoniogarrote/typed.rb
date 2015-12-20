@@ -20,7 +20,7 @@ __CODE
     expect(parsed.ruby_type).to eq(String)
   end
 
-  it 'finds type errors in case/when expressions' do
+  it 'Promotes types to union type in case/when expressions' do
     code = <<__CODE
       a = 'a'
       case a
@@ -33,8 +33,7 @@ __CODE
       end
 __CODE
 
-    expect {
-      language.check(code)
-    }.to raise_error(TypedRb::Types::UncomparableTypes)
+    parsed = language.check(code)
+    expect(parsed.ruby_type).to eq(Object)
   end
 end
