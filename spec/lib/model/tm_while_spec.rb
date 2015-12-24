@@ -76,4 +76,66 @@ __CODE
     parsed = language.check(code)
     expect(parsed.to_s).to eq('( -> Integer)')
   end
+
+  context 'with a either type' do
+    it 'type checks the while loop correctly, positive case' do
+      code = <<__CODE
+      ts '#test_while_next / -> Integer'
+      def test_while_next
+        a = while(true) do
+              if(false)
+                1
+              else
+                next 0
+              end
+            end
+
+        a + 10
+      end
+__CODE
+
+      parsed = language.check(code)
+      expect(parsed.to_s).to eq('( -> Integer)')
+    end
+
+    it 'type checks the while loop correctly, negative case' do
+      code = <<__CODE
+      ts '#test_while_next / -> Integer'
+      def test_while_next
+        while(true) do
+          if(false)
+            1
+          else
+            next false
+          end
+        end
+      end
+__CODE
+
+      expect {
+        language.check(code)
+      }.to raise_error(TypedRb::TypeCheckError)
+    end
+
+    it 'type checks the while loop correctly with a return, positive case' do
+      code = <<__CODE
+      ts '#test_while_next / -> Integer'
+      def test_while_next
+        while(true) do
+          if (false)
+            1
+          elsif (true)
+            return 2
+          else
+            next 0
+          end
+        end
+      end
+__CODE
+
+
+      parsed = language.check(code)
+      expect(parsed.to_s).to eq('( -> Integer)')
+    end
+  end
 end

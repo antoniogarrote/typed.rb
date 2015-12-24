@@ -302,4 +302,46 @@ __CODE
       end
     end
   end
+
+  context 'with a either conditional return, positive case' do
+    let(:code) do
+      <<__CODE
+      ts '#t / String -> Integer'
+      def t(s)
+        if s == 'foo'
+          0
+        else
+          return 1
+        end
+      end
+      t('bar')
+__CODE
+    end
+
+    it 'does not raise an error' do
+      result = ast.check_type(TypedRb::Types::TypingContext.top_level)
+      expect(result.ruby_type).to eq(Integer)
+    end
+  end
+
+  context 'with a either conditional return, negative case' do
+    let(:code) do
+      <<__CODE
+      ts '#t / String -> Integer'
+      def t(s)
+        if s == 'foo'
+          0
+        else
+          return 'bar'
+        end
+      end
+__CODE
+    end
+
+    it 'does not raise an error' do
+      expect {
+        ast.check_type(TypedRb::Types::TypingContext.top_level)
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
 end

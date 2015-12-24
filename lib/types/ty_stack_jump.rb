@@ -35,6 +35,10 @@ module TypedRb
       def next?
         jump_kind == :next
       end
+
+      def to_s
+        "Jump[#{jump_kind}:#{wrapped_type}]"
+      end
     end
   end
 end

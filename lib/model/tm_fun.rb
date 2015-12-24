@@ -134,13 +134,31 @@ module TypedRb
         return function_type.to if function_type.to.instance_of?(Types::TyUnit)
         # Same as before but for the return type
         function_type_to = function_type.to.is_a?(Types::TyGenericSingletonObject) ? function_type.to.clone : function_type.to
-        body_return_type = body_return_type.wrapped_type.check_type(context) if body_return_type.stack_jump?
-        return function_type if body_return_type.compatible?(function_type_to, :lt)
+        if body_return_type.either?
+          compatible_body  = body_return_type[:normal].compatible?(function_type_to, :lt)
+          compatible_return = if body_return_type.return?
+                                body_return_type[:return].wrapped_type.compatible?(function_type_to, :lt)
+                              else
+                                true
+                              end
+          if compatible_body && compatible_return
+            return function_type_to
+          else
+            if compatible_body == false
+              fail Types::UncomparableTypes.new(function_type_to, body_return_type[:normal], node)
+            else
+              fail Types::UncomparableTypes.new(function_type_to, body_return_type[:return], node)
+            end
+          end
+        else
+          body_return_type = body_return_type.wrapped_type.check_type(context) if body_return_type.stack_jump?
+          return function_type if body_return_type.compatible?(function_type_to, :lt)
+        end
         # TODO:
         # A TyObject(Symbol) should be returned not the function type
         # x = def id(x); x; end / => x == :id
         error_message = "Error type checking function type #{owner}##{name}: Wrong return type, expected #{function_type.to}, found #{body_return_type}."
-        fail TypeCheckError.new(error_message, node)
+        fail Types::UncomparableTypes.new(function_type.to, body_return_type, node)
       end
     end
   end

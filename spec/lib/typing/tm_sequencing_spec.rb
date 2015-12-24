@@ -60,7 +60,6 @@ __CODE
   end
 
   it 'parses sequencing instructions with nested nodes' do
-
     code = <<__CODE
        ts '#st3 / -> Boolean'
        def st3
@@ -81,6 +80,95 @@ __CODE
 
     parsed = TypedRb::Language.new.check(code)
     expect(parsed.class).to eq(TypedRb::Types::TyBoolean)
+  end
 
+  it 'parses sequencing instructions with either types, positive case' do
+    code = <<__CODE
+       ts '#st3 / -> Boolean'
+       def st3
+         if true
+           1
+           return true
+         else
+           'string'
+           false
+         end
+         0
+         true
+         nil
+       end
+
+       st3
+__CODE
+
+    parsed = TypedRb::Language.new.check(code)
+    expect(parsed.class).to eq(TypedRb::Types::TyBoolean)
+  end
+
+  it 'parses sequencing instructions with either types, negative case' do
+    code = <<__CODE
+       ts '#st3 / -> Boolean'
+       def st3
+         if true
+           1
+           return 2.0
+         else
+           'string'
+           false
+         end
+         0
+         true
+         nil
+       end
+
+       st3
+__CODE
+
+    expect {
+      TypedRb::Language.new.check(code)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
+  end
+
+  it 'parses sequencing instructions with either types, negative case2' do
+    code = <<__CODE
+       ts '#st3 / -> Boolean'
+       def st3
+         if true
+           1
+           return 2.0
+         else
+           'string'
+           false
+         end
+         0
+         return true
+         nil
+       end
+
+       st3
+__CODE
+
+    expect {
+      TypedRb::Language.new.check(code)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
+  end
+
+  it 'parses sequencing instructions with either types, negative case 3' do
+    code = <<__CODE
+       ts '#st3 / -> Boolean'
+       def st3
+         if true
+           1
+           2.0
+         else
+           'string'
+           return false
+         end
+       end
+__CODE
+
+    expect {
+      TypedRb::Language.new.check(code)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
   end
 end

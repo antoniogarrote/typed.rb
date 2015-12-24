@@ -235,4 +235,54 @@ describe TypedRb::Types::TyEither do
       end
     end
   end
+
+  describe '.wrap/#unwrap' do
+
+    context 'with an either_type' do
+      it 'returns the same input either type' do
+        a = described_class.new
+        a[:normal] = TypedRb::Types::TyFloat.new
+        a[:return] = TypedRb::Types::TyStackJump.return(TypedRb::Types::TyFloat.new)
+        expect(described_class.wrap(a)).to eq(a)
+        expect(described_class.wrap(a).unwrap).to eq(a)
+      end
+    end
+
+    context 'with a normal type' do
+      it 'returns a wrapped either type' do
+        a = TypedRb::Types::TyFloat.new
+
+        either = described_class.wrap(a)
+        expect(either).to be_instance_of(described_class)
+        expect(either[:normal]).to eq(a)
+        expect(either.unwrap).to eq(a)
+      end
+    end
+
+    context 'with a stack jump' do
+      it 'returns a wrapped either type' do
+        a = TypedRb::Types::TyStackJump.return(TypedRb::Types::TyFloat.new)
+        either = described_class.wrap(a)
+        expect(either).to be_instance_of(described_class)
+        expect(either[:return]).to eq(a)
+        expect(either.unwrap).to eq(a)
+      end
+    end
+
+    context 'with no type wrapped' do
+      it 'returns the unit type' do
+        expect(described_class.new.unwrap.to_s).to eq('NilClass')
+      end
+    end
+  end
+
+  describe '#to_s' do
+    it 'displays a string for the type' do
+      a = described_class.new
+      a[:normal] = TypedRb::Types::TyFloat.new
+      a[:return] = TypedRb::Types::TyStackJump.return(TypedRb::Types::TyFloat.new)
+
+      expect(a.to_s).to eq('Either[normal:Float | return:Jump[return:Float]]')
+    end
+  end
 end

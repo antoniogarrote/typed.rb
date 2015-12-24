@@ -70,4 +70,24 @@ __CODE
       expect(parsed.ruby_type).to eq(Integer)
     end
   end
+
+  describe 'Simple for loop, either' do
+    let(:language) { TypedRb::Language.new }
+
+    it 'type checks a for statement' do
+      code = <<__CODE
+       a = for i in 0..3
+             if i == 0
+               next(3)
+              else
+                i
+              end
+           end
+       a
+__CODE
+
+      parsed = language.check(code)
+      expect(parsed.ruby_type).to eq(Integer)
+    end
+  end
 end

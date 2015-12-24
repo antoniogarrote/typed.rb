@@ -4,7 +4,33 @@ module TypedRb
       attr_accessor :options
       def initialize(node=nil)
         super(NilClass, node)
-        @options = {}
+        @options = { :normal => TypedRb::Types::TyUnit.new }
+      end
+
+      def self.wrap(type)
+        if type.either?
+          type
+        elsif type.stack_jump?
+          either = TyEither.new(type.node)
+          either[type.jump_kind] = type
+          either
+        else
+          either = TyEither.new(type.node)
+          either[:normal] = type
+          either
+        end
+      end
+
+      def unwrap
+        normal = self[:normal].is_a?(TypedRb::Types::TyUnit) ? nil : self[:normal]
+        wrapped_types = [normal, self[:return], self[:break], self[:next]].compact
+        if wrapped_types.count > 1
+          self
+        elsif wrapped_types.count == 1
+          wrapped_types.first
+        else
+          TypedRb::Types::TyUnit.new
+        end
       end
 
       def either?
@@ -41,23 +67,36 @@ module TypedRb
         options[kind] = value
       end
 
+      def check_type(context, types=[:return])
+        relevant_types = types.map { |type| self[type] }.reject(&:nil?)
+        relevant_types = relevant_types.map { |type| type.stack_jump? ? type.wrapped_type : type }
+        relevant_types = relevant_types.map { |type| type.check_type(context) }
+        relevant_types.max rescue relevant_types.reduce { |type_a, type_b| type_a.union(type_b) }
+      end
+
       # This compatible function is to use the normal wrapped type in regular comparisons
       def compatible?(other_type, relation = :lt)
         (options[:normal] || TyUnit.new(node)).compatible?(other_type, relation)
       end
 
-      # This compatible function is to build the comparison in conditinal terms
+      # This compatible function is to build the comparison in conditional terms
       def compatible_either?(other_type)
         if other_type.either? # either vs either
           kinds.each do |kind|
             check_jump_kind(kind, other_type[kind])
           end
-          check_normal_kind(other_type)
+          check_normal_kind(other_type[:normal])
         elsif other_type.stack_jump? # either vs jump
           check_jump_kind(other_type.jump_kind, other_type)
         else # either vs normal flow
           check_normal_kind(other_type)
         end
+        self
+      end
+
+      def to_s
+        vals = options.to_a.reject {|(k,v)| v.nil? }.map{ |k,v| "#{k}:#{v}" }.join(" | ")
+        "Either[#{vals}]"
       end
 
       private

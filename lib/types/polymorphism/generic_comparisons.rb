@@ -91,7 +91,7 @@ module TypedRb
             superset, subset = relation == :lt ? [other_type_var, type_var] : [type_var, other_type_var]
 
             super_min, super_max, sub_min, sub_max = [superset.lower_bound, superset.upper_bound, subset.lower_bound, subset.upper_bound]. map do |bound|
-              if bound.nil? || bound.is_a?(TyUnboundType)
+              if bound.nil?
                 nil
               else
                 bound

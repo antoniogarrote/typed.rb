@@ -23,6 +23,36 @@ __END
       expect(result).to eq(tystring)
     end
 
+    it 'evaluates lambda functions with either types' do
+      expr = <<__END
+      f = ->() do
+          if(true)
+            1.0
+          else
+            return 2
+          end
+      end
+      f[]
+__END
+      result = language.check(expr)
+      expect(result.to_s).to eq('Numeric')
+    end
+
+    xit 'evaluates lambda functions with either types including break type' do
+      expr = <<__END
+      f = ->() do
+          if(true)
+            1.0
+          else
+            break 2
+          end
+      end
+      f[]
+__END
+      result = language.check(expr)
+      expect(result.to_s).to eq('Numeric')
+    end
+
     it 'evaluates lambda functions applications with message sending inside' do
       expr = <<__END
      class Integer

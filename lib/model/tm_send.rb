@@ -195,6 +195,12 @@ module TypedRb
                   error_message = "Incompatible 'break' type, expected #{function_type.to}, found #{break_type}"
                   fail error_message, block_return_type.to.node
                 end
+              elsif block_return_type.to.either?
+                max_type = block_return_type.check_type(context, [:return, :break, :normal])
+                unless max_type.compatible?(function_type.to, :lt)
+                  error_message = "Incompatible either max type, expected #{function_type.to}, found #{max_type}"
+                  fail error_message, block_return_type.to.node
+                end
               end
             end
             return_type = function_type.to

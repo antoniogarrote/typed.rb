@@ -20,13 +20,28 @@ module TypedRb
           fail TypeCheckError.new("Invalid 'return' statement inside abstraction", type_term.node) if type_term.stack_jump? && type_term.return?
           if type_term.stack_jump? && type_term.break?
             Types::TyGenericFunction.new(var_type_args, type_term, resolve_ruby_method_parameters, node)
-          elsif type_term.stack_jump? && type_term.next?
+          elsif type_term.stack_jump? && (type_term.next? || type_term.return?)
             wrapped_type = type_term.wrapped_type.check_type(context)
             if var_type_return.compatible?(wrapped_type, :gt)
               Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters, node)
             else
               # TODO: improve message
               error_msg = "Error parsing abstraction, incompatible break return type found: #{var_type_return} < #{wrapped_type}"
+              fail TypeCheckError.new(error_msg, node)
+            end
+          elsif type_term.either?
+            max_either_type = type_term.check_type(context, [:normal, :return, :next])
+            if var_type_return.compatible?(max_either_type, :gt)
+              if type_term.break?
+                either_return = Types::TyEither.new(node)
+                either_return[:break] = type_term[:break]
+                either_return[:normal] = var_type_return
+                Types::TyGenericFunction.new(var_type_args, either_return, resolve_ruby_method_parameters, node)
+              else
+                Types::TyGenericFunction.new(var_type_args, var_type_return, resolve_ruby_method_parameters, node)
+              end
+            else
+              error_msg = "Error parsing abstraction, incompatible either return type found: #{var_type_return} < #{type_term}}"
               fail TypeCheckError.new(error_msg, node)
             end
           elsif var_type_return.compatible?(type_term, :gt)
