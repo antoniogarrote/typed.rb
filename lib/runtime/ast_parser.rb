@@ -464,12 +464,17 @@ module TypedRb
     end
 
     def parse_rescue(node, context)
-      rescue_body = node.children[2]
-      if rescue_body.nil?
-        nil
-      else
-        map(rescue_body, context)
-      end
+      catched_types = if node.children[0].nil?
+                        []
+                      else
+                        node.children[0].children.map do |node|
+                          map(node, context)
+                        end
+                      end
+      assigned_exception = node.children[1].nil? ? nil : node.children[1].children[0]
+
+      rescue_body = node.children[2].nil? ? nil : map(node.children[2], context)
+      TmRescue.new(catched_types, assigned_exception, rescue_body)
     end
 
     def parse_array_literal(node, context)
