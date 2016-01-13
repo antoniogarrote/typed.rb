@@ -8,9 +8,8 @@ module TypedRb
     attr_reader :unification_result
 
     def check(expr)
-      ::BasicObject::TypeRegistry.clear
+      restore_prelude
       $TYPECHECK = true
-      load File.join(File.dirname(__FILE__), 'prelude.rb')
       eval(expr, TOPLEVEL_BINDING)
       $TYPECHECK = false
       TypedRb.log(binding, :debug, 'Normalize top level')
@@ -20,6 +19,52 @@ module TypedRb
       ::BasicObject::TypeRegistry.check_super_type_annotations
       @unification_result = run_unification
       check_result
+    end
+
+    def gen_bin_prelude
+      File.open(File.join(File.dirname(__FILE__), 'prelude_registry.bin'), 'w') do |f|
+        f.write(Marshal.dump(::BasicObject::TypeRegistry.send(:registry)))
+      end
+      File.open(File.join(File.dirname(__FILE__), 'prelude_generic_registry.bin'), 'w') do |f|
+        f.write(Marshal.dump(::BasicObject::TypeRegistry.send(:generic_types_registry)))
+      end
+      File.open(File.join(File.dirname(__FILE__), 'prelude_existential_registry.bin'), 'w') do |f|
+        f.write(Marshal.dump(::BasicObject::TypeRegistry.send(:existential_types_registry)))
+      end
+    end
+
+    def load_bin_prelude
+      old_value = $TYPECHECK
+      $TYPECHECK = false
+      require('prelude')
+      $TYPECHECK = old_value
+      ::BasicObject::TypeRegistry.clear
+      File.open(File.join(File.dirname(__FILE__), 'prelude_registry.bin'), 'r') do |f|
+        ::BasicObject::TypeRegistry.registry =  Marshal.load(f.read)
+      end
+      File.open(File.join(File.dirname(__FILE__), 'prelude_generic_registry.bin'), 'r') do |f|
+        ::BasicObject::TypeRegistry.generic_types_registry = Marshal.load(f.read)
+      end
+      File.open(File.join(File.dirname(__FILE__), 'prelude_existential_registry.bin'), 'r') do |f|
+        ::BasicObject::TypeRegistry.existential_types_registry = Marshal.load(f.read)
+      end
+      ::BasicObject::TypeRegistry.clear_parsing_registries
+      true
+    rescue
+      false
+    end
+
+    def restore_prelude
+      unless load_bin_prelude
+        ::BasicObject::TypeRegistry.clear
+        $TYPECHECK = true
+        load File.join(File.dirname(__FILE__), 'prelude.rb')
+        $TYPECHECK = false
+        ::BasicObject::TypeRegistry.normalize_types!
+        gen_bin_prelude
+        TypingContext.clear(:top_level)
+        ::BasicObject::TypeRegistry.clear_parsing_registries
+      end
     end
 
     def check_files(files)

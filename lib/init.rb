@@ -1,8 +1,8 @@
 require 'log4r'
 class Class
   def for_name(klass)
-    return TrueClass if klass == "Boolean"
-    return NilClass if klass == "unit"
+    return TrueClass if klass == 'Boolean'
+    return NilClass if klass == 'unit'
     const_get(klass)
   end
 end

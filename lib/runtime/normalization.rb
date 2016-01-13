@@ -6,7 +6,7 @@ module TypedRb
       include Validations
       ts '#normalize_generic_types! / -> unit'
       def normalize_generic_types!
-        initial_value = Hash.call(Class, TypedRb::Types::TyGenericSingletonObject).new
+        initial_value = @generic_types_registry || Hash.call(Class, TypedRb::Types::TyGenericSingletonObject).new
         @generic_types_registry = generic_types_parser_registry.each_with_object(initial_value) do |type_info, acc|
           generic_singleton_object = build_generic_singleton_object(type_info)
           acc[generic_singleton_object.ruby_type] = generic_singleton_object
@@ -18,7 +18,7 @@ module TypedRb
 
       ts '#normalize_methods! / -> unit'
       def normalize_methods!
-        @registry = {}
+        @registry = @registry || {}
         parser_registry.each_pair do |object_key, method_signatures|
           method_type, class_name = parse_object_key(object_key)
           klass = parse_class(class_name)

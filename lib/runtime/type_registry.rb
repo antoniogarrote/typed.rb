@@ -5,12 +5,17 @@ class BasicObject
     class << self
       include TypedRb::Runtime::Normalization
 
+      ts '.clear_parsing_registries / -> unit'
+      def clear_parsing_registries
+        generic_types_parser_registry.clear
+        parser_registry.clear
+      end
+
       ts '.clear / -> unit'
       def clear
         generic_types_registry.clear
-        generic_types_parser_registry.clear
         registry.clear
-        parser_registry.clear
+        clear_parsing_registries
       end
 
       ts '.register_type_information / Symbol -> String -> String -> Object -> unit'
@@ -107,6 +112,18 @@ class BasicObject
       def normalize_types!
         normalize_generic_types!
         normalize_methods!
+      end
+
+      def registry=(registry)
+        @registry = registry
+      end
+
+      def generic_types_registry=(registry)
+        @generic_types_registry = registry
+      end
+
+      def existential_types_registry=(registry)
+        @existential_types_registry = registry
       end
 
       protected
