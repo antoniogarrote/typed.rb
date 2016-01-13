@@ -22,7 +22,9 @@ module TypedRb
           var.compatible?(rhs_type, :gt)
           var
         else
-          type = [lhs_type, rhs_type].max rescue Types::TyObject.new(Object, node)
+          types = [lhs_type, rhs_type].reject { |type| type.is_a?(Types::TyUnit) || type.is_a?(Types::TyError) }
+          type = types.max rescue Types::TyObject.new(Object, node)
+          type  = Types::TyUnit.new if type.nil?
           type.node = node
           type
         end
