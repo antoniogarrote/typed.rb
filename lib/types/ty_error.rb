@@ -13,9 +13,6 @@ module TypedRb
         true
       end
 
-      def self.is?(type)
-        type == TyError || type.is_a?(TyError)
-      end
     end
   end
 end
