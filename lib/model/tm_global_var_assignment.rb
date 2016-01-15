@@ -9,15 +9,11 @@ module TypedRb
       def check_type(context)
         rvalue_type = rvalue.check_type(context)
         lvalue_type = Types::TypingContext.type_variable_for_global(lvalue.val)
-        if lvalue_type.nil?
-          fail TypeCheckError.new("Error type checking global var #{lvalue}: Cannot find type for variable", node)
-        end
-        if lvalue_type.compatible?(rvalue_type, :gt)
-          rvalue_type
-        else
-          error_message = "Error type checking global var #{lvalue}: Cannot find compatible global variable,  expected #{lvalue_type} found #{rvalue_type}"
-          fail TypeCheckError.new(error_message, node)
-        end
+        # This is always going to add just another constraint to the var that will
+        # be resolved in the unification process.
+        # No need to check the compatible value.
+        lvalue_type.compatible?(rvalue_type, :gt)
+        rvalue_type
       end
     end
   end

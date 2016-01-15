@@ -52,9 +52,21 @@ __CODE
       parsed = language.check(code)
       expect(parsed.ruby_type).to eq(Integer)
     end
+
+    it 'type checks a for statement returning an array' do
+      code = <<__CODE
+       for i in 0..3
+         break 7,3
+         ""
+       end
+__CODE
+
+      parsed = language.check(code)
+      expect(parsed.to_s).to eq('Array[Integer]')
+    end
   end
 
-  describe 'Simple for loop, break' do
+  describe 'Simple for loop, next' do
     let(:language) { TypedRb::Language.new }
 
     it 'type checks a for statement' do
@@ -68,6 +80,23 @@ __CODE
 
       parsed = language.check(code)
       expect(parsed.ruby_type).to eq(Integer)
+    end
+  end
+
+  describe 'Simple for loop, next array' do
+    let(:language) { TypedRb::Language.new }
+
+    it 'type checks a for statement' do
+      code = <<__CODE
+       a = for i in 0..3
+             next 3,4
+             nil
+           end
+       a
+__CODE
+
+      parsed = language.check(code)
+      expect(parsed.to_s).to eq('Array[Integer]')
     end
   end
 

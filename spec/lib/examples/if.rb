@@ -1,7 +1,3 @@
-class BasicObject
-  ts '#== / BasicObject -> Boolean'
-end
-
 class TestIf
 
   ts '#initialize / -> unit'
@@ -9,8 +5,8 @@ class TestIf
     @state = 'unknown'
   end
 
-  ts '#open / -> String'
-  def open
+  ts '#open! / -> String'
+  def open!
     @state = 'open'
   end
 

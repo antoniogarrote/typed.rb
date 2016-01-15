@@ -6,16 +6,7 @@ module TypedRb
       attr_reader :elements
       def initialize(elements, node)
         super(node)
-        @elements = if elements.is_a?(Array)
-                      elements
-                    else
-                      if elements.is_a?(TmReturn)
-                        # flattening nested tm_return
-                        elments.elements
-                      else
-                        [elements]
-                      end
-                    end
+        @elements = elements
       end
 
       def check_type(context)

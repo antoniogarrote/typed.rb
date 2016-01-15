@@ -14,7 +14,7 @@ module TypedRb
           duplicated_arities = arities.select { |arity| arities.count(arity) > 1 }
           duplicated_arities.each do |arity|
             duplicated = normalized_signatures.select { |signature| signature.arity == arity }
-            unless duplicated.count == 2 || duplicated.first.block_type.nil? != duplicated.first.block_type.nil?
+            unless duplicated.count == 2 && duplicated.first.block_type.nil? != duplicated.last.block_type.nil?
               error_message = "Duplicated arity '#{arity}' for method '#{klass}' / '#{method}'"
               fail ::TypedRb::Types::TypeParsingError, error_message
             end

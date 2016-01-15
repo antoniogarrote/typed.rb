@@ -155,7 +155,7 @@ module Kernel
   ts '#p / Object... -> Array[Object]'
   ts '#print / Object... -> unit'
   ts '#printf / String -> Object... -> unit'
-  ts '#printf / IO -> String -> Object... -> unit'
+  #ts '#printf / IO -> String -> Object... -> unit'
   # ts '#proc / '
   ts '#putc / Integer -> Integer'
   ts '#puts / Object -> Object... -> unit'

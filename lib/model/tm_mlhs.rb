@@ -29,7 +29,7 @@ module TypedRb
               lambda_arg.compatible?(other_type.type_vars.first, relation)
             end
           elsif other_type.type_vars.size == @lambda_args.size
-            @lambda_args.each_with_object do |lambda_arg, i|
+            @lambda_args.each_with_index do |lambda_arg, i|
               lambda_arg.compatible?(other_type.type_vars[i], relation)
             end
           else

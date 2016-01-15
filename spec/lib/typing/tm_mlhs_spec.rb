@@ -38,6 +38,28 @@ __CODE
     }.to raise_error(TypedRb::Types::UncomparableTypes)
   end
 
+  it 'type checks array Pair arg, positive case' do
+    code = <<__CODE
+      ts '#mlhstestpair1 / Pair[String][Integer] -> Integer'
+      def mlhstestpair1((a,b)); b; end
+__CODE
+
+    expect {
+      language.check(code)
+    }.to_not raise_error
+  end
+
+  it 'type checks array Pair arg, negative case' do
+    code = <<__CODE
+      ts '#mlhstestpair1 / Pair[String][Integer] -> Integer'
+      def mlhstestpair1((a,b,c)); a; end
+__CODE
+
+    expect {
+      language.check(code)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
+  end
+
   it 'raises an error if the type of the argument is not an array or tuple' do
     code = <<__CODE
       ts '#mlhstest_error / Integer -> Integer'
@@ -81,6 +103,60 @@ __CODE
       mlhstest4(['a','b']) { |(a,b)| mlhsaddition4(a,b) }
 __CODE
 
+    expect {
+      language.check(code)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
+  end
+
+  it 'type checks pair args for blocks, positive case' do
+    code = <<__CODE
+      ts '#mlhstestpair3 / Pair[String][Integer] -> &(Pair[String][Integer] -> Integer) -> Integer'
+      def mlhstestpair3(p)
+        yield p
+      end
+
+      mlhstestpair3(cast(['a',1],'Pair[String][Integer]')) { |(a,b)| b }
+__CODE
+
+    result = language.check(code)
+    expect(result.ruby_type).to eq(Integer)
+  end
+
+  it 'type checks pair args for blocks, negative case' do
+    code = <<__CODE
+      ts '#mlhstestpair3 / Pair[String][Integer] -> &(Pair[String][Integer] -> Integer) -> Integer'
+      def mlhstestpair3(p)
+        yield p
+      end
+
+      mlhstestpair3(cast(['a',1],'Pair[String][Integer]')) { |(a,b)| a }
+__CODE
+    expect {
+    language.check(code)
+    }.to raise_error(TypedRb::Types::UncomparableTypes)
+  end
+
+  it 'type checks assignation of pairs, positive case' do
+    code = <<__CODE
+    ts '#x / Pair[String][Integer] -> String'
+    def x(p)
+      a,b = p
+      a
+    end
+__CODE
+    expect {
+      language.check(code)
+    }.to_not raise_error
+  end
+
+  it 'type checks assignation of pairs, negative case' do
+    code = <<__CODE
+    ts '#x / Pair[String][Integer] -> String'
+    def x(p)
+      a,b = p
+      b
+    end
+__CODE
     expect {
       language.check(code)
     }.to raise_error(TypedRb::Types::UncomparableTypes)

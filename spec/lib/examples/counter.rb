@@ -1,7 +1,3 @@
-class Integer
-  ts '#+ / Integer -> Integer'
-end
-
 class Counter
   ts '#initialize / Integer -> unit'
   def initialize(start_value)
