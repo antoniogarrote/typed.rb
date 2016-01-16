@@ -25,7 +25,7 @@ module Kernel
                   File.absolute_path(File.join(dir, name))
                 end
       if $LOADED_MAP[to_load].nil?
-        # puts "** LOADING #{to_load}"
+        #puts "** LOADING #{to_load}"
         process_dependency(to_load) { old_load(name, wrap) }
       else
         old_load(name, wrap)

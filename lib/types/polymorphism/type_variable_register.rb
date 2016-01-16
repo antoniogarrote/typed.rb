@@ -276,7 +276,7 @@ module TypedRb
         # The registry can be the current one.
         def upper_class_register
           current = self
-          while current.kind != :top_level && current.kind != :class && current.kind != :module
+          while current.kind != :top_level && current.kind != :class && current.kind != :module && current.kind != :sclass
             current = current.parent
           end
           current

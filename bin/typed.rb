@@ -54,7 +54,7 @@ class TargetFinder
       return true if File.extname(file) == '.rb'
       return true if ruby_executable?(file)
     end
-    true
+    false
   end
 
   # Search for files recursively starting at the given base directory using
@@ -103,7 +103,8 @@ class TargetFinder
 end
 
 time = Benchmark.realtime do
-  TypedRb::Language.new.check_files(TargetFinder.new.find(ARGV))
+  files_to_check = TargetFinder.new.find(ARGV).reject { |f| f == File.expand_path(__FILE__) }
+  TypedRb::Language.new.check_files(files_to_check)
 end
 
 puts "Finished in #{time} seconds"
