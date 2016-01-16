@@ -46,9 +46,9 @@ module TypedRb
         if other_type.is_a?(TySingletonObject)
           if ruby_type == Class || other_type.ruby_type == Class
             if relation == :gt
-              ruby_type == Class
+              Class.ancestors.include(ruby_type)
             elsif relation == :lt
-              other_type.ruby_type == Class
+              Class.ancestors.include?(other_type.ruby_type)
             end
           else
             super(other_type, relation)

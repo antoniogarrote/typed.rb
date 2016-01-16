@@ -1,4 +1,5 @@
 require 'parser/current'
+require_relative '../runtime'
 require_relative '../model'
 require_relative '../types'
 
@@ -20,6 +21,7 @@ module TypedRb
         @children
       end
 
+      ts_ignore
       def method_missing(m, *args, &block)
         @assignation.send(m, *args)
       end
@@ -57,6 +59,10 @@ module TypedRb
     private
 
     def map(node, context)
+      if @ignore_node
+        @ignore_node = false
+        return TmNil.new(node)
+      end
       if node
         sexp = node.to_sexp
         sexp = "#{sexp[0..50]} ... #{sexp[-50..-1]}" if sexp.size > 100
@@ -296,9 +302,13 @@ module TypedRb
 
     def parse_send(node, context)
       children = node.children
+      message = children[1]
+      if message == :ts_ignore
+        @ignore_node = true
+        return
+      end
       receiver_node = children[0]
       receiver = receiver_node.nil? ? receiver_node : map(receiver_node, context)
-      message = children[1]
       args = (children.drop(2) || []).map { |arg| map(arg, context) }
       build_send_message(receiver, message, args, node, context)
     end

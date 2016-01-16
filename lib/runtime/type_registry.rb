@@ -98,14 +98,17 @@ class BasicObject
           # if registered?(klass)
           #   nil
           # else
-          [::TypedRb::Types::TyDynamicFunction.new(klass, message)]
+          result = Array.('TypedRb::Types::TyFunction').new
+          result << ::TypedRb::Types::TyDynamicFunction.new(klass, message)
+          result
           # end
         end
       end
 
       ts '.registered? / Class -> Boolean'
       def registered?(klass)
-        registry.keys.map(&:last).include?(klass)
+        registered_classes = registry.keys.map(&:last)
+        registered_classes.include?(klass)
       end
 
       ts '.normalize_types! / -> unit'

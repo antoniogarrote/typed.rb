@@ -214,6 +214,7 @@ module TypedRb
       end
 
       def check_args_application(parameters_info, formal_parameters, actual_arguments, context)
+        #binding.pry if actual_arguments.size == 1 && actual_arguments.first.class == TypedRb::Model::TmVar && actual_arguments.first.val == "klass" && actual_arguments.first.col == 36
         parameters_info.each_with_index do |(require_info, arg_name), index|
           actual_argument = actual_arguments[index]
           formal_parameter_type = formal_parameters[index]

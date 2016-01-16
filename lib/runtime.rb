@@ -17,6 +17,8 @@ class BasicObject
     #  raise ::StandardError, "Error parsing type signature '#{signature}': #{ex.message}"
   end
 
+  def ts_ignore; end
+
   def cast(from, _to)
     # noop
     from
