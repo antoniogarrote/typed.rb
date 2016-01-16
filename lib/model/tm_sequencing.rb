@@ -25,7 +25,7 @@ module TypedRb
             process_terms_after_return(terms.drop(1), context)
             make_final_return(term_type, potential_return)
           elsif term_type.either?
-            process_terms_before_return(terms.drop(1), context, processed_terms, make_final_return(term_type, potential_return))
+            process_terms_before_return(terms.drop(1), context, processed_terms << nil, make_final_return(term_type, potential_return))
           else
             process_terms_before_return(terms.drop(1), context, processed_terms << term_type, potential_return)
           end

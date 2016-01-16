@@ -107,7 +107,7 @@ module TypedRb
         if to.is_a?(Polymorphism::TypeVariable)
           @to = to.apply_bindings(bindings_map)
           @to = to.bound if to.bound
-        elsif to.is_a?(TyGenericSingletonObject) || to.is_a?(TyGenericObject)
+        elsif to.respond_to?(:apply_bindings)
           @to = to.apply_bindings(bindings_map)
         end
 

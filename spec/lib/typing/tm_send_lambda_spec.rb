@@ -38,7 +38,7 @@ __END
       expect(result.to_s).to eq('Numeric')
     end
 
-    xit 'evaluates lambda functions with either types including break type' do
+    it 'evaluates lambda functions with either types including break type' do
       expr = <<__END
       f = ->() do
           if(true)
@@ -50,7 +50,9 @@ __END
       f[]
 __END
       result = language.check(expr)
-      expect(result.to_s).to eq('Numeric')
+      expect(result).to be_instance_of(TypedRb::Types::TyEither)
+      expect(result[:normal].to_s).to eq('Float')
+      expect(result[:break].to_s).to eq('Jump[break:Integer]')
     end
 
     it 'evaluates lambda functions applications with message sending inside' do
@@ -114,7 +116,7 @@ __END
      f[1,2]
 __END
       expect {
-        result = language.check(expr)
+        language.check(expr)
       }.to raise_error(TypedRb::TypeCheckError)
 
       expr = <<__END

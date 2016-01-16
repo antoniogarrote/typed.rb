@@ -57,6 +57,10 @@ module TypedRb
         [:return, :next, :break]
       end
 
+      def all_kinds
+        [:normal] + kinds
+      end
+
       def [](kind)
         valid_kind?(kind)
         options[kind]
@@ -97,6 +101,20 @@ module TypedRb
       def to_s
         vals = options.to_a.reject {|(k,v)| v.nil? }.map{ |k,v| "#{k}:#{v}" }.join(" | ")
         "Either[#{vals}]"
+      end
+
+      def apply_bindings(bindings_map)
+        all_kinds.each do |kind|
+          if self[kind]
+            if self[kind].is_a?(Polymorphism::TypeVariable)
+              self[kind].apply_bindings(bindings_map)
+              self[kind] = self[kind].bound if self[kind].bound
+            elsif self[kind].is_a?(TyGenericSingletonObject) || self[kind].is_a?(TyGenericObject)
+              self[kind].apply_bindings(bindings_map)
+            end
+          end
+        end
+        self
       end
 
       private
