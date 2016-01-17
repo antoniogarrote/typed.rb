@@ -24,10 +24,10 @@ module TypedRb
 
         function_klass_type, function_type = owner_type.find_function_type(name, @arg_count, @has_block)
 
-        # fail TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
-        # Missing type information stops the type checking process
-        # TODO: raise a warning here about the previous fact
-        return Types::TyUnit.new(node) if function_type.nil? || function_type.dynamic?
+        if function_type.nil? || function_type.dynamic?
+          TypedRb.log_dynamic_warning(node, owner_type, name)
+          return Types::TyUnit.new(node)
+        end
 
         context = setup_context(context, function_type)
         # check the body with the new bindings for the args

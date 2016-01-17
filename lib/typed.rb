@@ -100,6 +100,15 @@ end
 Kernel.reset_dependencies
 
 module TypedRb
+
+  def options
+    @options || {}
+  end
+
+  def options=(options)
+    @options = options
+  end
+
   def log(client_binding, level, message)
     client = client_binding.receiver
     client_id = if client.instance_of?(Class)
@@ -119,6 +128,13 @@ module TypedRb
     file = client_binding.eval('__FILE__')
     message = "#{file}:#{line}\n  #{message}\n"
     logger('[' + client_id.gsub('::', '/') + ']').send(level, message)
+  end
+
+  def log_dynamic_warning(node, owner, name)
+    if options[:dynamic_warnings]
+      error = TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
+      puts error
+    end
   end
 
   def logger(client)
@@ -154,8 +170,14 @@ TypedRb.module_eval do
   public :logger
   module_function(:set_level)
   public :set_level
+  module_function(:log_dynamic_warning)
+  public :log_dynamic_warning
+  module_function(:options=)
+  public :options=
+  module_function(:options)
+  public :options
 end
 
 Dir[File.join(File.dirname(__FILE__), '**/*.rb')].each do |file|
-  load(file) if file != __FILE__ && !file.end_with?('lib/prelude.rb')
+  load(file) if file != __FILE__ && !file.end_with?('lib/typed/prelude.rb')
 end

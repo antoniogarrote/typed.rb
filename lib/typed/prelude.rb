@@ -445,6 +445,12 @@ end
 
 ts 'type Pair[S][T] super Array[Object]'
 class Pair < Array
+  ts '.of[S][T] / [S] -> [T] -> Pair[S][T]'
+  ts_ignore
+  def self.of(f,s)
+    Pair.new([f,s])
+  end
+
   ts '#first / -> [S]'
 
   ts '#second / -> [T]'

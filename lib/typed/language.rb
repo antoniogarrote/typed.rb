@@ -36,7 +36,7 @@ module TypedRb
     def load_bin_prelude
       old_value = $TYPECHECK
       $TYPECHECK = false
-      require('prelude')
+      require_relative('./prelude')
       $TYPECHECK = old_value
       ::BasicObject::TypeRegistry.clear
       File.open(File.join(File.dirname(__FILE__), 'prelude_registry.bin'), 'r') do |f|

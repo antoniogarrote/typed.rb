@@ -1,6 +1,8 @@
 module TypedRb
   module Types
     class TyFunction < Type
+      include Comparable
+
       attr_accessor :from, :to, :parameters_info, :block_type, :arity, :min_arity
       attr_writer :name
 
@@ -114,6 +116,16 @@ module TypedRb
         block_type.apply_bindings(bindings_map) if block_type && block_type.generic?
         self
       end
+
+      def <=>(other)
+        if other.is_a?(TyFunction)
+          # TODO: implement!
+          raise 'Non implemented yet'
+        else
+          TyObject.new(Method, node) <=> other
+        end
+      end
+
 
       protected
 

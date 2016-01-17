@@ -52,6 +52,8 @@ module TypedRb
       def check_instantiation(context)
         self_type = singleton_object_type(receiver, context).as_object_type
         function_klass_type, function_type = self_type.find_function_type(:initialize, args.size, @block)
+        TypedRb.log_dynamic_warning(node, self_type, :initialize) if function_type.dynamic?
+
         # function application
         @message = :initialize
         begin
@@ -94,6 +96,7 @@ module TypedRb
           check_lambda_application(receiver_type, context)
         else
           function_klass_type, function_type = receiver_type.find_function_type(message, args.size, @block)
+          TypedRb.log_dynamic_warning(node, receiver_type, message) if function_type.dynamic?
           # begin
           if function_type.nil?
             error_message = "Error type checking message sent '#{message}': Type information for #{receiver_type}:#{message} not found."
@@ -262,10 +265,11 @@ module TypedRb
       end
 
       def check_casting(context)
-        from = args[0].check_type(context)
-        to = parse_type_application_arguments([args[1]], context).first.as_object_type
-        TypedRb.log(binding, :info, "Casting #{from} into #{to}")
-        to
+        from_type = args[0].check_type(context)
+        to = parse_type_application_arguments([args[1]], context).first
+        to_type = to.is_a?(Types::TyObject) ? to.as_object_type : to
+        TypedRb.log(binding, :info, "Casting #{from_type} into #{to_type}")
+        to_type
       end
 
       def module_include_implementation?(function_klass_type)

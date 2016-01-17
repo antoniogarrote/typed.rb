@@ -1,10 +1,36 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 require 'pry'
-require_relative '../lib/init'
+require_relative '../lib/typed'
 require 'benchmark'
-
 require 'set'
+require 'optparse'
+
+class OptionsParser
+  class << self
+    def parse(options)
+      args = { :dynamic_warnings => false }
+
+
+      opt_parser = OptionParser.new do |opts|
+        opts.banner = 'Usage: typed.rb [options] [path]'
+
+        opts.on('-m', '--missing-type', 'Produce warnings when a missing type annotation has been detected') do |m|
+          args[:dynamic_warnings] = true
+        end
+
+        opts.on('-h', '--help', 'Prints this help') do
+          puts opts
+          exit
+        end
+      end
+
+      opt_parser.parse!(options)
+
+      args
+    end
+  end
+end
 
 class TargetFinder
   # Generate a list of target files by expanding globbing patterns
@@ -101,6 +127,8 @@ class TargetFinder
     end
   end
 end
+
+TypedRb.options = OptionsParser.parse(ARGV)
 
 time = Benchmark.realtime do
   files_to_check = TargetFinder.new.find(ARGV).reject { |f| f == File.expand_path(__FILE__) }
