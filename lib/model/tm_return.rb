@@ -10,7 +10,9 @@ module TypedRb
       end
 
       def check_type(context)
-        returned_type = if elements.size == 1
+        returned_type = if elements.size == 0
+                          Types::TyUnit.new(node)
+                        elsif elements.size == 1
                           elements.first.check_type(context)
                         else
                           TmArrayLiteral.new(elements, node).check_type(context)

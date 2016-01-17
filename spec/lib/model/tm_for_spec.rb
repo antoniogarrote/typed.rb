@@ -53,6 +53,21 @@ __CODE
       expect(parsed.ruby_type).to eq(Integer)
     end
 
+    it 'type checks a for statement, no value' do
+      code = <<__CODE
+       ts '#test_i_fn / Integer -> Integer'
+       def test_i_fn(x); x + 1; end
+
+       for i in 0..3
+         break
+         ""
+       end
+__CODE
+
+      parsed = language.check(code)
+      expect(parsed.ruby_type).to eq(NilClass)
+    end
+
     it 'type checks a for statement returning an array' do
       code = <<__CODE
        for i in 0..3
@@ -80,6 +95,19 @@ __CODE
 
       parsed = language.check(code)
       expect(parsed.ruby_type).to eq(Integer)
+    end
+
+    it 'type checks a for statement, no value' do
+      code = <<__CODE
+       a = for i in 0..3
+             next
+             nil
+           end
+       a
+__CODE
+
+      parsed = language.check(code)
+      expect(parsed.ruby_type).to eq(NilClass)
     end
   end
 

@@ -152,6 +152,8 @@ module TypedRb
               compare_with_union(other)
             end
           end
+        #else
+        #  fail UncomparableTypes.new(self, other)
         end
       end
 
@@ -181,7 +183,8 @@ module TypedRb
             1
           elsif hierarchy.include?(other.ruby_type)
             -1
-            # fail UncomparableTypes.new(self, other)
+          #else
+          #  fail UncomparableTypes.new(self, other)
           end
         end
       end
@@ -196,7 +199,8 @@ module TypedRb
           1
         elsif hierarchy.include?(ruby_type) && all_those_modules_included && !all_these_modules_included
           -1
-          # fail UncomparableTypes.new(self, other)
+        #else
+        #  fail UncomparableTypes.new(self, other)
         end
       end
 

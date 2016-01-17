@@ -51,6 +51,8 @@ module TypedRb
           else
             check_generic_type_relation(other_type.ruby_type, relation)
           end
+        rescue ArgumentError
+          raise TypedRb::Types::UncomparableTypes.new(self, other_type)
         end
 
         def incompatible_free_type_vars?(type_var, other_type_var)

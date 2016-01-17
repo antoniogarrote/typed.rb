@@ -89,7 +89,7 @@ class BasicObject
           # The class has been typed but only partially?
           # Dynamic invocation or error?
           # Maybe an additional @dynamic annotation can be added to distinguish the desired outcome.
-          # Preferred outcome right now is nil to catch errors in unification, safer assumption.
+          # Preferred outcome might be nil to catch errors in unification, safer assumption.
           # class_data[message.to_s] || nil # ::TypedRb::Types::TyDynamicFunction.new(klass, message)
           class_data[message.to_s] || [::TypedRb::Types::TyDynamicFunction.new(klass, message)]
         elsif kind == :instance_variable || kind == :class_variable

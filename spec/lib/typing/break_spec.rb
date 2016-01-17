@@ -17,6 +17,20 @@ __END
     expect(result.to_s).to eq('Integer')
   end
 
+  it 'is type checked correctly, no break value, positive case' do
+    code = <<__END
+     ts '#test_break / Integer -> &(Integer -> unit) -> Integer'
+     def test_break(x)
+       yield(x)
+     end
+
+     test_break(0) { |x| break }
+__END
+
+    result = language.check(code)
+    expect(result.to_s).to eq('Integer')
+  end
+
   it 'is type checked correctly, negative case' do
     code = <<__END
      ts '#test_break / Integer -> &(Integer -> unit) -> Integer'
