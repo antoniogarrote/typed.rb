@@ -62,12 +62,12 @@ RSpec.configure do |config|
 end
 
 # Clear cached prelude data
-File.unlink(File.join(File.dirname(__FILE__),"..","lib","prelude_existential_registry.bin")) rescue nil
-File.unlink(File.join(File.dirname(__FILE__),"..","lib","prelude_generic_registry.bin")) rescue nil
-File.unlink(File.join(File.dirname(__FILE__),"..","lib","prelude_registry.bin")) rescue nil
+File.unlink(File.join(File.dirname(__FILE__), "..", "lib", "typed", "prelude_existential_registry.bin")) rescue nil
+File.unlink(File.join(File.dirname(__FILE__), "..", "lib", "typed", "prelude_generic_registry.bin")) rescue nil
+File.unlink(File.join(File.dirname(__FILE__), "..", "lib", "typed", "prelude_registry.bin")) rescue nil
 
 # Load all files
-require_relative '../lib/init'
+require_relative '../lib/typed'
 
 def tyobject(klass)
   TypedRb::Types::TyObject.new(klass)

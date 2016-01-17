@@ -150,7 +150,11 @@ module TypedRb
           type_var.compatible?(non_type_var, :gt)
           type_var
         else
-          [type_a, type_b].max rescue type_a.union(type_b)
+          begin
+            [type_a, type_b].max
+          rescue Exception => ex
+            type_a.union(type_b)
+          end
         end
       end
 

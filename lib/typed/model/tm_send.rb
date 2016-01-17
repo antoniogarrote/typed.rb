@@ -262,10 +262,11 @@ module TypedRb
       end
 
       def check_casting(context)
-        from = args[0].check_type(context)
-        to = parse_type_application_arguments([args[1]], context).first.as_object_type
-        TypedRb.log(binding, :info, "Casting #{from} into #{to}")
-        to
+        from_type = args[0].check_type(context)
+        to = parse_type_application_arguments([args[1]], context).first
+        to_type = to.is_a?(Types::TyObject) ? to.as_object_type : to
+        TypedRb.log(binding, :info, "Casting #{from_type} into #{to_type}")
+        to_type
       end
 
       def module_include_implementation?(function_klass_type)

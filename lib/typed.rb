@@ -157,5 +157,5 @@ TypedRb.module_eval do
 end
 
 Dir[File.join(File.dirname(__FILE__), '**/*.rb')].each do |file|
-  load(file) if file != __FILE__ && !file.end_with?('lib/prelude.rb')
+  load(file) if file != __FILE__ && !file.end_with?('lib/typed/prelude.rb')
 end

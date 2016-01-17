@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 require 'pry'
-require_relative '../lib/init'
+require_relative '../lib/typed'
 require 'benchmark'
 
 require 'set'
