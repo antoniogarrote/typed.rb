@@ -3,7 +3,6 @@ require_relative '../runtime'
 module TypedRb
   module Runtime
     module Normalization
-      include Validations
       ts '#normalize_generic_types! / -> unit'
       def normalize_generic_types!
         initial_value = @generic_types_registry || Hash.call(Class, TypedRb::Types::TyGenericSingletonObject).new

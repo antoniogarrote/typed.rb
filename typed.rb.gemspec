@@ -3,7 +3,7 @@ require File.expand_path("../lib/typed/version", __FILE__)
 Gem::Specification.new do |s|
   s.name        = 'typed.rb'
   s.version     = TypedRb::VERSION
-  s.date        = '2016-01-17'
+  s.date        = Time.now.strftime('%Y-%m-%d')
   s.summary     = 'Gradual type checker for Ruby'
   s.authors     = ['Antonio Garrote']
   s.email       = 'antoniogarrote@gmail.com'

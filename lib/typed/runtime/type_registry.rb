@@ -3,7 +3,9 @@ require_relative '../runtime'
 class BasicObject
   class TypeRegistry
     class << self
+
       include TypedRb::Runtime::Normalization
+      include TypedRb::Runtime::Normalization::Validations
 
       ts '.clear_parsing_registries / -> unit'
       def clear_parsing_registries
