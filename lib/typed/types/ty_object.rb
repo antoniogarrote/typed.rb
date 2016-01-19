@@ -137,6 +137,14 @@ module TypedRb
         TyObject.new(smaller_common_class, (node || self.node || other_type.node))
       end
 
+      def max(other)
+        if other.is_a?(TyObject)
+          [self, other].max rescue TyObject.new((self.classes & other.classes).first, (node || other.node))
+        else
+          fail TypedRb::UncomparableTypes(self, other).new
+        end
+      end
+
       def <=>(other)
         if other.is_a?(TyObject)
           if other.with_ruby_type

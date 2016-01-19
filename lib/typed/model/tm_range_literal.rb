@@ -15,7 +15,7 @@ module TypedRb
       def check_type(context)
         start_range_type = start_range.check_type(context)
         end_range_type = end_range.check_type(context)
-        max_type = [start_range_type, end_range_type].max
+        max_type = start_range_type.max(end_range_type)
 
         type_var = Types::Polymorphism::TypeVariable.new('Range:T',
                                                          :node => node,

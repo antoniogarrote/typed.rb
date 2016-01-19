@@ -13,7 +13,7 @@ module TypedRb
 
       def check_type(context)
         if catch_var
-          exception_type = exceptions.map{|e| e.check_type(context) }.max
+          exception_type = exceptions.map{|e| e.check_type(context) }.reduce(&:max)
           context.add_binding!(catch_var, exception_type)
         end
         if rescue_body

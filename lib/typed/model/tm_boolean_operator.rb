@@ -23,7 +23,7 @@ module TypedRb
           var
         else
           types = [lhs_type, rhs_type].reject { |type| type.is_a?(Types::TyUnit) || type.is_a?(Types::TyError) }
-          type = types.max rescue Types::TyObject.new(Object, node)
+          type = types.reduce(&:max)
           type  = Types::TyUnit.new if type.nil?
           type.node = node
           type

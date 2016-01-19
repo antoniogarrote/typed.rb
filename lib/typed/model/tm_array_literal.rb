@@ -11,7 +11,7 @@ module TypedRb
 
       def check_type(context)
         element_types = elements.map { |element|  element.check_type(context) }
-        max_type = element_types.max rescue Types::TyObject.new(Object, node)
+        max_type = element_types.reduce(&:max)
         type_var = Types::Polymorphism::TypeVariable.new('Array:T',
                                                          :node => node,
                                                          :gen_name => false,

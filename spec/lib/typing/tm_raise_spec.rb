@@ -24,7 +24,7 @@ __END
 __END
       expect {
         language.check(code)
-      }.not_to raise_error(TypedRb::Types::UncomparableTypes)
+      }.not_to raise_error
     end
   end
 

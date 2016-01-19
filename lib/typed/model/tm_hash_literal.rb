@@ -11,8 +11,8 @@ module TypedRb
 
       def check_type(context)
         pair_types = pairs.map { |key, element|  [key.check_type(context), element.check_type(context)] }
-        max_key_type = pair_types.map(&:first).max rescue Types::TyObject.new(Object, node)
-        max_value_type = pair_types.map(&:last).max rescue Types::TyObject.new(Object, node)
+        max_key_type = pair_types.map(&:first).reduce(&:max)
+        max_value_type = pair_types.map(&:last).reduce(&:max)
         type_var_key = Types::Polymorphism::TypeVariable.new('Hash:T',
                                                              :node => node,
                                                              :gen_name => false,

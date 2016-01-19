@@ -98,6 +98,6 @@ __END
 
     expect {
       language.check(code)
-    }.to raise_error
+    }.to raise_error(TypedRb::TypeCheckError)
   end
 end

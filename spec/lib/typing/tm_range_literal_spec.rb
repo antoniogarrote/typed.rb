@@ -16,10 +16,10 @@ describe TypedRb::Model::TmRangeLiteral do
     expect(result.type_vars.first.bound.ruby_type).to eq(String)
   end
 
-  it 'fails for incompatible types' do
+  it 'defaults to the super type for uncomparable types' do
     code = '0..10.0'
-    expect {
-      language.check(code)
-    }.to raise_error
+    result = language.check(code)
+    expect(result.ruby_type).to eq(Range)
+    expect(result.type_vars.first.bound.ruby_type).to eq(Numeric)
   end
 end
