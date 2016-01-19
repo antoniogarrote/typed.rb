@@ -109,6 +109,16 @@ module TypedRb
     @options = options
   end
 
+  def dynamic_warnings
+    @dynamic_warnings ||= {}
+  end
+
+  def register_dynamic_warning(warning)
+    file_warnings = dynamic_warnings[$TYPECHECK_FILE] || []
+    file_warnings << warning
+    dynamic_warnings[$TYPECHECK_FILE] = file_warnings
+  end
+
   def log(client_binding, level, message)
     client = client_binding.receiver
     client_id = if client.instance_of?(Class)
@@ -133,7 +143,8 @@ module TypedRb
   def log_dynamic_warning(node, owner, name)
     if options[:dynamic_warnings]
       error = TypeCheckError.new("Error type checking function #{owner}##{name}: Cannot find function type information for owner.", node)
-      puts error
+      print '.'.yellow
+      register_dynamic_warning(error)
     end
   end
 
@@ -176,6 +187,10 @@ TypedRb.module_eval do
   public :options=
   module_function(:options)
   public :options
+  module_function(:dynamic_warnings)
+  public :dynamic_warnings
+  module_function(:register_dynamic_warning)
+  public :register_dynamic_warning
 end
 
 Dir[File.join(File.dirname(__FILE__), '**/*.rb')].each do |file|

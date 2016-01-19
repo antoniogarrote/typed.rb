@@ -1,4 +1,5 @@
 require_relative './runtime/ast_parser'
+require 'colorize'
 
 module TypedRb
   class Language
@@ -67,7 +68,7 @@ module TypedRb
       end
     end
 
-    def check_files(files)
+    def check_files(files, raise_errors = false)
       ::BasicObject::TypeRegistry.clear
       $TYPECHECK = true
       prelude_path = File.join(File.dirname(__FILE__), 'prelude.rb')
@@ -85,27 +86,74 @@ module TypedRb
       ::BasicObject::TypeRegistry.normalize_types!
       TypingContext.clear(:top_level)
       check_result = nil
+      errors = {}
       ordered_files.each do |file|
-        puts "*** FILE #{file}"
         $TYPECHECK_FILE = file
         expr = File.open(file, 'r').read
-        #begin
+        begin
           check_result = check_type(parse(expr))
-        #rescue TypedRb::Types::UncomparableTypes => e
-        #  puts e.backtrace.join("\n")
-        #  puts e.message
-        #  exit(-1)
-        #rescue TypedRb::TypeCheckError => e
-        # puts e.message
-        #end
+          print '.'.green
+        rescue TypedRb::Types::UncomparableTypes, TypedRb::TypeCheckError => e
+          print 'E'.red
+          errors_for_file = errors[file] || []
+          errors_for_file << e
+          errors[file] = errors_for_file
+        end
       end
-      ::BasicObject::TypeRegistry.check_super_type_annotations
-      @unification_result = run_unification
+      top_level_errors = []
+      begin
+        ::BasicObject::TypeRegistry.check_super_type_annotations
+        @unification_result = run_unification
+      rescue TypedRb::Types::UncomparableTypes, TypedRb::TypeCheckError => e
+        print 'E'.red
+        top_level_errors << e
+      end
+      puts "\n"
+      total_errors = all_errors(top_level_errors, errors)
+      dynamic_warnings = TypedRb.dynamic_warnings
+      if total_errors.count > 0
+        puts "\nErrors:"
+        report_errors(top_level_errors, errors, {})
+      end
+      if dynamic_warnings.count > 0
+        puts "\nWarnings:"
+        report_errors([], {}, dynamic_warnings)
+      end
+      puts "\nProcessed #{files.size} files, #{total_errors.count} errors, #{dynamic_warnings.count} warnings\n"
+      check_errors(total_errors) if raise_errors
       check_result
     end
 
-    def check_file(path)
-      check_files([path])
+    def report_errors(top_level_errors, errors, warnings)
+      files = (errors.keys||[]) + (warnings.keys||[])
+      files.each do |file|
+        errors_for_file = errors[file] || []
+        warnings_for_file = warnings[file] || []
+        errors_for_file.each do |error|
+          puts "\n"
+          puts error.message.red
+        end
+        warnings_for_file.each do |warning|
+          puts "\n"
+          puts warning.message.yellow
+        end
+      end
+      top_level_errors.each do |error|
+        puts "\n"
+        puts error.message.red
+      end
+    end
+
+    def all_errors(top_level_errors, errors)
+      (top_level_errors||[]) + ((errors||{}).values.reduce(&:concat) || [])
+    end
+
+    def check_errors(total_errors)
+      raise total_errors.first if total_errors.count > 0
+    end
+
+    def check_file(path, raise_errors = false)
+      check_files([path], raise_errors)
     end
 
     def parse(expr)

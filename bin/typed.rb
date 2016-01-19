@@ -130,9 +130,19 @@ end
 
 TypedRb.options = OptionsParser.parse(ARGV)
 
+success = true
 time = Benchmark.realtime do
-  files_to_check = TargetFinder.new.find(ARGV).reject { |f| f == File.expand_path(__FILE__) }
-  TypedRb::Language.new.check_files(files_to_check)
+  begin
+    files_to_check = TargetFinder.new.find(ARGV).reject { |f| f == File.expand_path(__FILE__) }
+    TypedRb::Language.new.check_files(files_to_check, true)
+  rescue TypedRb::TypeCheckError => e
+    success = false
+  end
 end
 
-puts "Finished in #{time} seconds"
+puts "\nFinished in #{time} seconds"
+if success == false
+  exit(1)
+else
+  exit(0)
+end

@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'parser'
 gem 'log4r'
+gem 'colorize'
 
 group :development do
   gem 'pry'
