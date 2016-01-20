@@ -8,3 +8,4 @@ coverage
 profiles
 *.bin
 pending.tokens
+*.gem
