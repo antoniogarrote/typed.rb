@@ -49,4 +49,16 @@ describe TypedRb::Language do
                        /Error type checking message sent 'mindless_func': Array\[Animal1\] expected, Array\[Cat1\] found/)
     end
   end
+
+  context 'with monoid eample' do
+    let(:example) { 'monoid.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.not_to raise_error
+    end
+  end
 end

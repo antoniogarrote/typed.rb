@@ -123,10 +123,11 @@ module TypedRb
         def add_type_var_constraint(type_var, other_type_var, relation)
           if type_var.bound
             type_var, other_type_var = other_type_var, type_var
-            relation = relation == :lt ? :gt : :lt
+            #relation = relation == :lt ? :gt : :lt
           end
-          type_var.add_constraint(relation, other_type_var.bound)
-          true
+          [:lt, :gt].each do |relation|
+            type_var.add_constraint(relation, other_type_var.bound)
+          end
         end
       end
     end

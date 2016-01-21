@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-require 'pry'
 require_relative '../lib/typed'
 require 'benchmark'
 require 'set'
@@ -135,6 +134,8 @@ time = Benchmark.realtime do
   begin
     files_to_check = TargetFinder.new.find(ARGV).reject { |f| f == File.expand_path(__FILE__) }
     TypedRb::Language.new.check_files(files_to_check, true)
+  rescue TypedRb::Types::TypeParsingError => e
+    raise e
   rescue TypedRb::TypeCheckError => e
     success = false
   end
