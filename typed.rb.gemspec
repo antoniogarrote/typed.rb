@@ -11,4 +11,8 @@ Gem::Specification.new do |s|
   s.executables << 'typed.rb'
   s.files       = Dir['Rakefile', '{bin,lib,spec}/**/*', 'README*', 'LICENSE*']
   s.license     = 'MIT'
+
+  s.add_dependency('parser', '~> 2.2')
+  s.add_dependency('log4r', '~> 1.1')
+  s.add_dependency('colorize', '~> 0.7')
 end
