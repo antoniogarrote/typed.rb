@@ -37,7 +37,7 @@ __CODE
     expect {
       language.check(code)
     }.to raise_error(TypedRb::Types::UncomparableTypes,
-                     'Cannot compare types Integer <=> String')
+                     /Cannot compare types Integer <=> String/)
   end
 
   it 'includes a module referencing instance variables in a class' do

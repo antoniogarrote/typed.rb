@@ -161,10 +161,13 @@ module TypedRb
             var_constraints = @constraints[variable_name] || []
             var_constraints << [relation_type, type]
             @constraints[variable_name] = var_constraints
-          elsif parent
+          elsif parent.include?(variable_name)
             parent.add_constraint(variable_name, relation_type, type)
           else
-            fail StandardError, "Cannot find variable #{variable_name} to add a constraint"
+            key = [:local, nil, variable_name]
+            type_variables_register[key] = TypeVariable.new(variable_name, gen_name: false)
+            @constraints[variable_name] = [relation_type, type]
+            # fail StandardError, "Cannot find variable #{variable_name} to add a constraint"
           end
         end
 

@@ -44,8 +44,6 @@ module TypedRb
         def compatible?(type, relation = :lt)
           if @bound
             @bound.compatible?(type, relation)
-          elsif incompatible_vars?(type)
-            false
           else
             add_constraint(relation, type)
             true
@@ -116,21 +114,6 @@ module TypedRb
 
         def bound_to_generic?
           bound && bound.respond_to?(:generic?) && bound.generic?
-        end
-
-        private
-
-        def incompatible_vars?(type)
-          if type.is_a?(TypeVariable)
-            left_var = bound || self
-            right_var = type.bound || type
-
-            left_var.is_a?(TypeVariable) &&
-              right_var.is_a?(TypeVariable) &&
-              left_var.variable != right_var.variable &&
-              (TypingContext.bound_generic_type_var?(left_var) &&
-               TypingContext.bound_generic_type_var?(right_var))
-          end
         end
       end
     end

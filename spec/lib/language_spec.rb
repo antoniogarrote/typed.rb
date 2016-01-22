@@ -50,7 +50,7 @@ describe TypedRb::Language do
     end
   end
 
-  context 'with monoid eample' do
+  context 'with monoid example' do
     let(:example) { 'monoid.rb' }
 
     it 'should be possible to type check the example correctly' do
@@ -59,6 +59,54 @@ describe TypedRb::Language do
           language.check_file(file, true)
         end
       }.not_to raise_error
+    end
+  end
+
+  context 'with monoid error example, inconsistent type annotation' do
+    let(:example) { 'monoid/monoid_error1.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
+
+  context 'with monoid error example, inconsistent type annotation' do
+    let(:example) { 'monoid/monoid_error2.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
+
+  context 'with monoid error example, inconsistent type annotation' do
+    let(:example) { 'monoid/monoid_error3.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
+
+  context 'with monoid error example, inconsistent type annotation' do
+    let(:example) { 'monoid/monoid_error4.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to raise_error(TypedRb::Types::Polymorphism::UnificationError)
     end
   end
 end

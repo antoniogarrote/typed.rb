@@ -47,7 +47,7 @@ module TypedRb
           begin
             value_l <= value_r ? value_l : fail(UnificationError, error_message)
           rescue ArgumentError
-            raise(Types::UncomparableTypes.new(value_l, value_r))
+            raise(Types::UncomparableTypes.new(value_l, value_r, nil, ", #{value_l} is not a subtype of #{value_r}"))
           end
         end
 

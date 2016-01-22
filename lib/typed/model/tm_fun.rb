@@ -87,7 +87,7 @@ module TypedRb
           function_arg_type = function_type.from[i]
           # Generic arguments are parsed by runtime without checking constraints since they are not available at parsing type.
           # We need to run unification in them before using the type to detect invalid type argument applications.
-          function_arg_type = function_arg_type.self_materialize if function_arg_type.is_a?(Types::TyGenericSingletonObject)
+          function_arg_type = function_arg_type.self_materialize.as_object_type if function_arg_type.is_a?(Types::TyGenericSingletonObject)
           context = case arg.first
                     when :arg, :restarg
                       context.add_binding(arg[1], function_arg_type)
@@ -157,8 +157,9 @@ module TypedRb
         # TODO:
         # A TyObject(Symbol) should be returned not the function type
         # x = def id(x); x; end / => x == :id
-        error_message = "Error type checking function type #{owner}##{name}: Wrong return type, expected #{function_type.to}, found #{body_return_type}."
-        fail Types::UncomparableTypes.new(function_type.to, body_return_type, node)
+        error_message = ". Wrong return type, expected #{function_type.to}, found #{body_return_type}."
+        body_return_type.compatible?(function_type_to, :lt)
+        fail Types::UncomparableTypes.new(function_type.to, body_return_type, node, error_message)
       end
     end
   end

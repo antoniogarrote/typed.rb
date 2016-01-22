@@ -2,16 +2,16 @@ module TypedRb
   module Types
     class UncomparableTypes < TypeCheckError
       attr_reader :from, :to
-      def initialize(from, to, node = nil)
+      def initialize(from, to, node = nil, msg='')
         nodes = [from.node, to.node].compact
         if node
-          super("Cannot compare types #{from} <=> #{to}", node)
+          super("Cannot compare types #{from} <=> #{to}#{msg}", node)
         elsif nodes.size == 2
-          super("Cannot compare types #{from} <=> #{to}", nodes)
+          super("Cannot compare types #{from} <=> #{to}#{msg}", nodes)
         elsif nodes.size == 1
-          super("Cannot compare types #{from} <=> #{to}", nodes.first)
+          super("Cannot compare types #{from} <=> #{to}#{msg}", nodes.first)
         else
-          super("Cannot compare types #{from} <=> #{to}", nil)
+          super("Cannot compare types #{from} <=> #{to}#{msg}", nil)
         end
       end
     end

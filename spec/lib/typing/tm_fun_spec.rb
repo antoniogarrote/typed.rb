@@ -46,7 +46,7 @@ __CODE
   context 'with not matching arg type in function definition' do
     let(:code) do
       text = <<__CODE
-      class A
+      class ADefault
         ts '#f1 / Integer -> String'
         def f1(num='text')
           'String'

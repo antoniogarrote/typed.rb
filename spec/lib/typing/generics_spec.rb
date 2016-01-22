@@ -1,6 +1,9 @@
 require_relative '../../spec_helper'
 
-describe 'generics use caes' do
+describe 'generics use case
+when 
+  
+end' do
   let(:language) { TypedRb::Language.new }
 
   it 'applies arguments to generic types' do
@@ -108,8 +111,7 @@ __END
 
     expect do
       language.check(code)
-    end.to raise_error(TypedRb::TypeCheckError,
-                       /TestGen2\:T\:\:\[\?,\?\] expected, TestGen2\:U\:\:\[\?,\?\]/)
+    end.to raise_error(TypedRb::TypeCheckError)
   end
 
   it 'type-checks correctly super type generics' do
