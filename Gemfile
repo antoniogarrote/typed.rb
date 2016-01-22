@@ -15,3 +15,5 @@ group :test do
   gem 'simplecov', require: false
   gem 'rspec-prof'
 end
+
+gem 'coveralls', require: false

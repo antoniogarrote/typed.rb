@@ -1,6 +1,9 @@
 require 'pry'
 require 'simplecov'
 require 'rspec-prof'
+require 'coveralls'
+
+Coveralls.wear!
 
 SimpleCov.start do
   add_filter "/spec/"
