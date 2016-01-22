@@ -1,4 +1,4 @@
-#Typed.rb [![Build Status](https://circleci.com/gh/antoniogarrote/typed.rb.png?circle-token=:circle-token)](https://circleci.com/gh/antoniogarrote/typed.rb/tree/master)
+#Typed.rb [![Build Status](https://circleci.com/gh/antoniogarrote/typed.rb.png?circle-token=:circle-token)](https://circleci.com/gh/antoniogarrote/typed.rb/tree/master) [![Coverage Status](https://coveralls.io/repos/github/antoniogarrote/typed.rb/badge.svg?branch=master)](https://coveralls.io/github/antoniogarrote/typed.rb?branch=master)
 
 Gradual type checker for Ruby.
 
