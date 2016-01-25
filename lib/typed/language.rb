@@ -87,6 +87,7 @@ module TypedRb
       TypingContext.clear(:top_level)
       check_result = nil
       errors = {}
+      errors_accum = {}
       ordered_files.each do |file|
         $TYPECHECK_FILE = file
         expr = File.open(file, 'r').read
@@ -95,9 +96,13 @@ module TypedRb
           print '.'.green
         rescue TypedRb::Types::UncomparableTypes, TypedRb::TypeCheckError => e
           print 'E'.red
-          errors_for_file = errors[file] || []
-          errors_for_file << e
-          errors[file] = errors_for_file
+          hash = e.to_s.hash
+          unless errors_accum[hash]
+            errors_accum[hash] = true
+            errors_for_file = errors[file] || []
+            errors_for_file << e
+            errors[file] = errors_for_file
+          end
         end
       end
       top_level_errors = []
@@ -105,8 +110,12 @@ module TypedRb
         ::BasicObject::TypeRegistry.check_super_type_annotations
         @unification_result = run_unification
       rescue TypedRb::Types::UncomparableTypes, TypedRb::TypeCheckError => e
-        print 'E'.red
-        top_level_errors << e
+        hash = e.to_s.hash
+        unless errors_accum[hash]
+          errors_accum[hash] = true
+          print 'E'.red
+          top_level_errors << e
+        end
       end
       puts "\n"
       total_errors = all_errors(top_level_errors, errors)
@@ -134,8 +143,12 @@ module TypedRb
           puts error.message.red
         end
         warnings_for_file.each do |warning|
-          puts "\n"
-          puts warning.message.yellow
+          hash = warning.to_s.hash
+          unless errors_accum[hash]
+            errors_accum[hash] = true
+            puts "\n"
+            puts warning.message.yellow
+          end
         end
       end
       top_level_errors.each do |error|

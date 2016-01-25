@@ -7,6 +7,9 @@ module TypedRb
 
       def initialize(ruby_type, node = nil)
         super(ruby_type, node)
+        @hierarchy = [ruby_type] + Module.ancestors
+        @classes = @hierarchy.select { |klass| klass.instance_of?(Class) }
+        @modules = @hierarchy.select { |klass| klass.instance_of?(Module) }
       end
 
       def check_inclusion(self_type)

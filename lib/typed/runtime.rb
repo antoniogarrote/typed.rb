@@ -24,7 +24,6 @@ class BasicObject
     from
   end
 
-  ts '#abstract / Symbol -> Symbol'
   def abstract(name)
     define_method(name) { |*args| raise "Invoking abstract method #{name}"}
   end
