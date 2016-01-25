@@ -94,7 +94,7 @@ The method receives a string with the type signature and returns unit. At run-ti
 A type signature for a method is composed of the following parts:
 
 ```
-Type?(#/.)method[T]* / ArgumentType? (-> ArgumentType)* -> &( BlockArgumenType? (-> BlockArgumenType)* -> BlockReturnType )? -> ReturnType
+Type?(#/.)method[T]* / ArgumentType? (-> ArgumentType)* -> &BlockType? -> ReturnType
 ```
 
 For example, the type signature of the ```#ts``` method itself is ```BasicObject#ts / String -> unit```.
@@ -139,6 +139,19 @@ type TypeName[T]? (super BaseType[U]*)?
 - ```[T]*``` type variables for the polymorphic type
 - ```(super BaseType[U]*)?``` base polymorphic class/module for the type
 
+
+## Type inference and minimal typing
+
+Typed.rb will try to perform automatic type inference for the following language constructs and don't need to be annotated:
+
+- global variables
+- instance variables
+- local variables
+- constants
+
+To know more about the type inferance mechanism, check the implementation of the unification algorithm used by the type checker in ```lib/typed/types/polymorphism/unification.rb```.
+
+Class and modules only need to be annotated if they are defined as polymorphic. All methods must be annotated.
 
 ## Running the type-checker
 
