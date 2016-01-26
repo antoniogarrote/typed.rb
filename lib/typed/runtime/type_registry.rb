@@ -28,12 +28,12 @@ class BasicObject
       end
 
       ts '.register_generic_type_information / Hash[Object][Object] -> Hash[Object][Object] -> unit'
-      def register_generic_type_information(generic_type_information, generic_super_type_information)
+      def register_generic_type_information(generic_type_information, generic_super_types_information)
         unless generic_type_information.is_a?(String) # TODO: String when super annotations for non-generic types
-          generic_type_information[:super_type] = generic_super_type_information
+          generic_type_information[:super_type] = generic_super_types_information
           if generic_types_parser_registry[generic_type_information[:type]]
-            fail ::TypedRb::Types::TypeParsingError,
-            "Duplicated generic type definition for #{generic_type_information[:type]}"
+            super_type = (generic_types_parser_registry[generic_type_information[:type]][:super_type] || [])
+            generic_types_parser_registry[generic_type_information[:type]][:super_type]= super_type.concat(generic_type_information[:super_type])
           else
             generic_types_parser_registry[generic_type_information[:type]] = generic_type_information
           end

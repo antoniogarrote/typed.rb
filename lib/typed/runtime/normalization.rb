@@ -28,7 +28,11 @@ module TypedRb
       ts '#check_super_type_annotations / -> unit'
       def check_super_type_annotations
         @generic_types_registry.values.each do |type|
-          type.super_type.self_materialize if type.super_type
+          if type.super_type
+            type.super_type.each do |super_type|
+              super_type.self_materialize
+            end
+          end
         end
       end
 
@@ -44,16 +48,15 @@ module TypedRb
 
       def check_generic_super_type(type_info)
         _, info = type_info
-        super_type = build_generic_super_type(info)
-        @generic_types_registry[info[:type]].super_type = super_type if super_type
+        @generic_types_registry[info[:type]].super_type = (info[:super_type] || []).map do |super_type_spec|
+          build_generic_super_type(info[:type], super_type_spec)
+        end
       end
 
-      def build_generic_super_type(info)
-        with_super_type = valid_super_type?(info[:type], info[:super_type])
-        if with_super_type
-          TypedRb.log(binding, :debug,  "Normalising generic super type: #{info[:super_type][:type]} for #{info[:type]}")
-          build_generic_singleton_object([info[:super_type][:type], info[:super_type]])
-        end
+      def build_generic_super_type(type, super_type)
+        valid_super_type?(type, super_type)
+        TypedRb.log(binding, :debug,  "Normalising generic super type: #{super_type[:type]} for #{type}")
+        build_generic_singleton_object([super_type[:type], super_type])
       end
 
       def valid_super_type?(base_class, super_type_info)

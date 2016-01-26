@@ -109,4 +109,16 @@ describe TypedRb::Language do
       }.to raise_error(TypedRb::Types::Polymorphism::UnificationError)
     end
   end
+
+  context 'with monoid2 example, type checks correctly' do
+    let(:example) { 'monoid2.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to_not raise_error
+    end
+  end
 end

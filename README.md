@@ -94,7 +94,7 @@ The method receives a string with the type signature and returns unit. At run-ti
 A type signature for a method is composed of the following parts:
 
 ```
-Type?(#/.)method[T]* / ArgumentType? (-> ArgumentType)* -> &BlockType? -> ReturnType
+Type?(#/.)method[T]* / ArgumentType? (-> ArgumentType)* (-> &BlockType)? -> ReturnType
 ```
 
 For example, the type signature of the ```#ts``` method itself is ```BasicObject#ts / String -> unit```.
@@ -148,6 +148,7 @@ Typed.rb will try to perform automatic type inference for the following language
 - instance variables
 - local variables
 - constants
+- lambda functions
 
 To know more about the type inferance mechanism, check the implementation of the unification algorithm used by the type checker in ```lib/typed/types/polymorphism/unification.rb```.
 

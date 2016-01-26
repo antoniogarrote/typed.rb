@@ -18,9 +18,9 @@ module TypedRb
       def find_function_type(message, num_args, block)
         function_klass_type, function_type = find_function_type_in_hierarchy(:instance, message, num_args, block)
         if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
-          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, explicit super type #{generic_singleton_object.super_type}"
-          target_class = generic_singleton_object.super_type
-          target_type_vars = generic_singleton_object.super_type.type_vars
+          target_class = ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, explicit super type #{target_class}"
+          target_type_vars = target_class.type_vars
           materialize_super_type_found_function(message, num_args, block, target_class, target_type_vars)
         elsif function_klass_type != ruby_type && BasicObject::TypeRegistry.find_generic_type(function_klass_type)
           TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, implict super type #{function_klass_type}"
@@ -99,9 +99,10 @@ module TypedRb
         end
       end
 
-      def ancestor_of_super_type?(super_type_klass, function_klass_type)
-        return false if super_type_klass.nil?
-        super_type_klass.ruby_type.ancestors.include?(function_klass_type)
+      def ancestor_of_super_type?(super_type_klasses, function_klass_type)
+        super_type_klasses.detect do |super_type_klass|
+            super_type_klass.ruby_type.ancestors.include?(function_klass_type)
+        end
       end
 
       def materialize_found_function_arg(arg)

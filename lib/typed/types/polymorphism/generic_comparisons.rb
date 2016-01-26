@@ -48,8 +48,10 @@ module TypedRb
             else
               false
             end
-          else
+          elsif other_type.is_a?(TyObject)
             check_generic_type_relation(other_type.ruby_type, relation)
+          else
+            other_type.compatible?(self, relation == :lt ? :gt : :lt)
           end
         rescue ArgumentError
           raise TypedRb::Types::UncomparableTypes.new(self, other_type)

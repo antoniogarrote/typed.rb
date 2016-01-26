@@ -142,10 +142,11 @@ module TypedRb
           puts "\n"
           puts error.message.red
         end
+        warnings_accum= {}
         warnings_for_file.each do |warning|
           hash = warning.to_s.hash
-          unless errors_accum[hash]
-            errors_accum[hash] = true
+          unless warnings_accum[hash]
+            warnings_accum[hash] = true
             puts "\n"
             puts warning.message.yellow
           end

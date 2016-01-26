@@ -35,7 +35,9 @@ module TypedRb
 
       def self_materialize
         TypedRb.log binding, :debug, "Materialising self for generic singleton object '#{self}'"
-        BasicObject::TypeRegistry.find_generic_type(ruby_type).materialize(type_vars)
+        generic_type = BasicObject::TypeRegistry.find_generic_type(ruby_type)
+        fail TypeCheckError.new("Missing generic type annotation for #{ruby_type}", node) if generic_type.nil?
+        generic_type.materialize(type_vars)
       end
 
       # materialize will be invoked by the logic handling invocations like:
