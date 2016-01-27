@@ -62,12 +62,13 @@ describe Array do
 
   describe '#count' do
     it 'type checks / &([T] -> Boolean) -> Integer' do
+=begin
       result = language.check('Array.(Integer).new(10,0).count(0)')
       expect(result.ruby_type).to eq(Integer)
-
+=end
       result = language.check('Array.(Integer).new(10,0).count{ |x| x == 0 }')
       expect(result.ruby_type).to eq(Integer)
-
+=begin
       expect {
         code = <<__CODE
           ts '#testarrs / String -> Boolean'
@@ -77,6 +78,7 @@ describe Array do
 __CODE
         language.check(code)
       }.to raise_error(TypedRb::Types::UncomparableTypes)
+=end
     end
   end
 

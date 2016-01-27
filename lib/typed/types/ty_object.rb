@@ -86,7 +86,7 @@ module TypedRb
           if generic_type.nil?
             return klass, function # generic method in non-generic class
           elsif generic_type.type_vars.size == 1
-            generic_type.materialize([self]).find_function_type(message, num_args, block)
+            generic_type.materialize([self]).as_object_type.find_function_type(message, num_args, block)
           else
             fail "Undeclared generic type variables for #{ruby_type} super class/mix-in #{klass.class} #{klass}##{message}, please add a 'super' type annotation"
           end

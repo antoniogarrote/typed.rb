@@ -15,7 +15,7 @@ module Monoid
   end
 end
 
-ts 'type Array[T] super Monoid::Instance[T]'
+ts 'type Array[T] super Monoid::Instance[Array[T]]'
 class Array
 
   extend Monoid::Class
@@ -31,4 +31,4 @@ class Array
 
 end
 
-Array.new.mappend([3])
+Array.(Integer).new.mappend([3])

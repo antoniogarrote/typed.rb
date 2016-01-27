@@ -19,7 +19,7 @@ module TypedRb
       end
 
       def find_function_type_in_metaclass_hierarchy(message, num_args, block)
-        hierarchy = Class.ancestors
+        hierarchy = ruby_type.meta_ancestors
         initial_value = select_matching_function_in_class(hierarchy.first, :instance, message, num_args, block)
         hierarchy.drop(1).inject([hierarchy.first, initial_value]) do |(klass, acc), type|
           if acc.nil? || acc.is_a?(TyDynamicFunction)

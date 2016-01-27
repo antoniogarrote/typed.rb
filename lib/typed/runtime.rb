@@ -34,4 +34,20 @@ class Class
   def call(*_types)
     self
   end
+
+  ts_ignore
+  def meta_ancestors
+    singleton_class = class << self
+      self
+    end
+    singleton_class.ancestors
+  end
+end
+
+class Module
+
+  ts_ignore
+  def meta_ancestors
+    [self] + self.class.ancestors
+  end
 end
