@@ -30,7 +30,7 @@ class BasicObject
 end
 
 class Class
-  ts '.call / Class... -> unit'
+  ts '.call / Object... -> Class'
   def call(*_types)
     self
   end

@@ -139,6 +139,47 @@ type TypeName[T]? (super BaseType[U]*)?
 - ```[T]*``` type variables for the polymorphic type
 - ```(super BaseType[U]*)?``` base polymorphic class/module for the type
 
+## Polymorphism
+
+Typed.rb supports annotations for polymorphic types and methods. Type variables are introduced using square brackets and a capital letter (e.g ```[T]```).
+When creating an instance of a polymorphic type in your code, information about the specialization of the type variables must be provided. The Typed.rb runtime defines a version of the ```#call`` method for the ```Class``` class as a noop that can be used to pass the value of the type variables.
+For example, to declare an ```Array``` of ```Integers``` the following code can be used:
+
+```ruby
+var xs = Array.(Integer).new
+```
+Instead of a class, a string with the description of the type variables using the same syntax as the one used in the type annotations can be used.
+The previous definition could be expressed in an equivalent way using the following snippet:
+
+```ruby
+var xs = Array.('Integer').new
+```
+
+Using a string is the only option when dealing with type vars as in the following declaration:
+
+```ruby
+ts 'type Wrapper[T]'
+class Wrapper
+
+  ts '#zero / -> Array[T]'
+  def zero
+   Array.('[T]').new
+  end
+
+end
+```
+
+If no value for the type variables of the polymorphic type are given, the type checker will assume that ```Object``` is used.
+
+When initiating objects using type literals, like arrays or hashes, the type checker will try to infer the type variables using the max type for the provided values in the literal:
+
+```ruby
+[1, 2, 3]    # Array[Integer]
+[1, :2, '3'] # Array[Object]
+```
+
+Type boundaries can be provided for the type variables using the ```?```, ```<``` and ```>``` symbols, where ```?``` is used as type wildcard, for instance: ```[? < Integer]```, ```[? > String]```. ```[?]```.
+
 
 ## Type inference and minimal typing
 
