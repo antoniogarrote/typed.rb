@@ -146,13 +146,13 @@ When creating an instance of a polymorphic type in your code, information about 
 For example, to declare an ```Array``` of ```Integers``` the following code can be used:
 
 ```ruby
-var xs = Array.(Integer).new
+xs = Array.(Integer).new
 ```
 Instead of a class, a string with the description of the type variables using the same syntax as the one used in the type annotations can be used.
 The previous definition could be expressed in an equivalent way using the following snippet:
 
 ```ruby
-var xs = Array.('Integer').new
+xs = Array.('Integer').new
 ```
 
 Using a string is the only option when dealing with type vars as in the following declaration:
