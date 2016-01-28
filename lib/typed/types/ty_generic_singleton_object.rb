@@ -1,10 +1,12 @@
 require_relative 'ty_singleton_object'
 require_relative 'polymorphism/generic_comparisons'
 require_relative 'polymorphism/generic_variables'
+require_relative 'polymorphism/generic_object'
 
 module TypedRb
   module Types
     class TyGenericSingletonObject < TySingletonObject
+      include Polymorphism::GenericObject
       include Polymorphism::GenericComparisons
       include Polymorphism::GenericVariables
 
@@ -111,10 +113,6 @@ module TypedRb
         Model::TmClass.with_fresh_bindings(self, nil, node)
       end
 
-      def generic?
-        true
-      end
-
       def apply_bindings(bindings_map)
         type_vars(recursive: false).each_with_index do |var, _i|
           if var.is_a?(Polymorphism::TypeVariable) && var.bound_to_generic?
@@ -166,6 +164,28 @@ module TypedRb
           end
         end
         self.class.new(ruby_type, materialized_type_vars, super_type, node)
+      end
+
+      # This object has concrete type parameters
+      # The generic Function we retrieve from the registry might be generic
+      # If it is generic we apply the bound parameters and we obtain a concrete function type
+      def find_function_type(message, num_args, block)
+        function_klass_type, function_type = super(message, num_args, block)
+        if function_klass_type != ruby_type && ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
+          target_class = ancestor_of_super_type?(generic_singleton_object.super_type, function_klass_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, explicit super type #{target_class}"
+          target_type_vars = target_class.type_vars
+          materialize_super_type_found_function(message, num_args, block, target_class, target_type_vars)
+        elsif function_klass_type != ruby_type && BasicObject::TypeRegistry.find_generic_type(function_klass_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}, implict super type #{function_klass_type}"
+          target_class = BasicObject::TypeRegistry.find_generic_type(function_klass_type)
+          materialize_super_type_found_function(message, num_args, block, target_class, type_vars)
+        else
+          TypedRb.log binding, :debug, "Found message '#{message}', generic function: #{function_type}"
+          materialized_function = materialize_found_function(function_type)
+          TypedRb.log binding, :debug, "Found message '#{message}', materialized generic function: #{materialized_function}"
+          [function_klass_type, materialized_function]
+        end
       end
 
       protected

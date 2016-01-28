@@ -35,5 +35,5 @@ end
 a = Array.(String).mempty
 
 ->() {
-  a.mappend(['string'])
+  a.mappend([2])
 }

@@ -62,6 +62,7 @@ module TypedRb
       def valid_super_type?(base_class, super_type_info)
         return false if super_type_info.nil?
         valid = base_class.ancestors.map(&:name).detect { |klass_name| klass_name == super_type_info[:type].to_s }
+        valid = valid || base_class.meta_ancestors.map(&:name).detect { |klass_name| klass_name == super_type_info[:type].to_s }
         return true if valid
         fail ::TypedRb::Types::TypeParsingError,
              "Super type annotation '#{super_type_info[:type]}' not a super class of '#{base_class}'"

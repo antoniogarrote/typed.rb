@@ -62,7 +62,7 @@ describe TypedRb::Language do
     end
   end
 
-  context 'with monoid error example, inconsistent type annotation' do
+  context 'with monoid error example 1, inconsistent type annotation' do
     let(:example) { 'monoid/monoid_error1.rb' }
 
     it 'should be possible to type check the example correctly' do
@@ -74,7 +74,7 @@ describe TypedRb::Language do
     end
   end
 
-  context 'with monoid error example, inconsistent type annotation' do
+  context 'with monoid error example 2, inconsistent type annotation' do
     let(:example) { 'monoid/monoid_error2.rb' }
 
     it 'should be possible to type check the example correctly' do
@@ -86,7 +86,7 @@ describe TypedRb::Language do
     end
   end
 
-  context 'with monoid error example, inconsistent type annotation' do
+  context 'with monoid error example 3, inconsistent type annotation' do
     let(:example) { 'monoid/monoid_error3.rb' }
 
     it 'should be possible to type check the example correctly' do
@@ -98,7 +98,7 @@ describe TypedRb::Language do
     end
   end
 
-  context 'with monoid error example, inconsistent type annotation' do
+  context 'with monoid error example 4, inconsistent type annotation' do
     let(:example) { 'monoid/monoid_error4.rb' }
 
     it 'should be possible to type check the example correctly' do
@@ -119,6 +119,18 @@ describe TypedRb::Language do
           language.check_file(file, true)
         end
       }.to_not raise_error
+    end
+  end
+
+  context 'with monoid2 error example 1, inconsistent type' do
+    let(:example) { 'monoid2/monoid2_error1.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
   end
 end
