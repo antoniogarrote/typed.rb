@@ -489,4 +489,52 @@ __CODE
       expect(array_super_numeric.compatible?(arg5, :gt)).to be_truthy
     end
   end
+
+  describe 'Implicit generic singleton class inheritance' do
+    let(:language) { TypedRb::Language.new }
+
+    it 'checks correctly super annotations for generic singleton classes without explicit type parameters' do
+      code = <<__CODE
+      ts 'type GTE1[T]'
+      module GTE1
+        ts '#t1 / [T] -> [T]'
+        def t1(x); x; end
+      end
+
+      ts 'type CGTE1[T]'
+      class CGTE1
+
+        extend GTE1
+
+      end
+
+      CGTE1.('String').t1('string')
+__CODE
+
+      expect(language.check(code).to_s).to eq('String')
+    end
+
+    it 'checks correctly super annotations for generic singleton classes without explicit type parameters, negative case' do
+      code = <<__CODE
+      ts 'type GTE1[T]'
+      module GTE1
+        ts '#t1 / [T] -> [T]'
+        def t1(x); x; end
+      end
+
+      ts 'type CGTE1[T]'
+      class CGTE1
+
+        extend GTE1
+
+      end
+
+      CGTE1.('String').t1(1)
+__CODE
+
+      expect {
+        language.check(code).to_s
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
 end

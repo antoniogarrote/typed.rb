@@ -139,6 +139,60 @@ type TypeName[T]? (super BaseType[U]*)?
 - ```[T]*``` type variables for the polymorphic type
 - ```(super BaseType[U]*)?``` base polymorphic class/module for the type
 
+If one class extends generic classes or includes/extends generic modules and not super annotation is provided but a generic annotation is provided, the type checker will try to use the already existing annotation matching the type variable of the super type with the type variables of the base type.
+More than one type annotation can be provided for polymorphic type to declare multiple types in the super clause. For instance, given the following types
+
+```ruby
+ts 'type Ca[T]'
+class Ca
+ # ...
+end
+
+ts 'type Ma[T]'
+module Ma
+ # ...
+end
+
+class B < Ca
+  include Ma
+end
+```
+
+The following declarations are equivalent:
+
+```ruby
+# Annotation a)
+ts 'type B[T] super Ca[T], Ma[T]'
+
+# Annotation b)
+ts 'type B[T] super Ca[T]'
+ts 'type B[T] super Ma[T]'
+```
+
+In the current implementation, ```super``` clauses in the type annotation must be used for super classes but also for modules extended in class singleton object:
+
+```ruby
+module M
+  ts 'type M::InstanceMethods[T]'
+  module InstanceMethods
+    # ...
+  end
+
+  ts 'type M::ClassMethods[T]'
+  module ClassMethods
+    # ...
+  end
+end
+
+
+# super must be used for both
+ts 'type W[T] super M::InstanceMethods[T]'
+ts 'type W[T] super M::ClassMethods[T]'
+class W
+  include M::InstanceMethods
+  extend M::ClassMethods
+end
+```
 ## Polymorphism
 
 Typed.rb supports annotations for polymorphic types and methods. Type variables are introduced using square brackets and a capital letter (e.g ```[T]```).
@@ -179,7 +233,82 @@ When initiating objects using type literals, like arrays or hashes, the type che
 ```
 
 Type boundaries can be provided for the type variables using the ```?```, ```<``` and ```>``` symbols, where ```?``` is used as type wildcard, for instance: ```[? < Integer]```, ```[? > String]```. ```[?]```.
+For example, the following snippet shows how to use type boundaries in a method:
 
+```ruby
+ts '#test_bound1 / Array[? < Integer] -> unit'
+def test_bound1(gc); end
+
+# This application will type-check correctly
+arg1 = Array.(Integer).new
+test_bound1(arg1)
+
+# This application will fail type-checking
+arg2 = Array.(Numeric).new
+test_bound1(arg2)
+```
+
+## Run-time additions and considerations
+
+In order to use the type checker, the runtime portion of the library must be included in the code to be checked through the ```typed/runtime``` script.
+This library includes the discussed extensions to the standard library that allow to declare type annotations.
+
+```ruby
+include 'typed/runtime'
+
+# ts available now
+ts '#foo / -> unit'
+```
+As we have discussed the modifications introduced by typed.rb define noops with no performance impact on the execution of Ruby code.
+
+Typed.rb defines an ```abstract``` method that can introduce methods in a module/class intended to be implemented by subclasses.
+Modules with only abstract methods can form the basis for an interface declaration, however, in the current implementation the type checker doesn't check that the subclass including the abstract module provides an implementation for all the abstract methods.
+If an abstract method is invoked at run-time, an exception will be thrown.
+
+```ruby
+ts 'type Monoid[T]'
+module Monoid
+
+  ts '#mappend / [T] -> [T] -> [T]'
+  abstract(:mappend)
+
+  ts '#mempty / -> [T]'
+  abstract(:mempty)
+
+end
+```
+
+In order to perform the type checking, typed.rb will load your program in memory to collect information from the Ruby run-time about the types defined in the scripts to be type-checked.
+This means that code performing side effects at the top level of a script will be executed during type-checking.
+To protect these portions of the code, the global ```$TYPECHECK``` boolean variable can be used to protect these sections of the code:
+
+
+```ruby
+# the following method application will not be evaluated
+# when performing type-checking.
+
+my_app.run! unless $TYPECHECK
+```
+
+To instruct the type checker to not check a method in the code the ```BasicObject#ts_ignore``` method can be used. When inserted before a method definition, the type-checker will not evaluate the body of that method.
+Even if the ```ts_ignore``` annotation is used, a proper type annotation can also be provided so client code will be type checked using the provided annotation when invoking the ignored method:
+
+```ruby
+
+# Foo will still have type '-> Integer'
+ts '#foo / -> Integer'
+ts_ignore
+def foo
+  3 # The body of foo will not be type-checked
+end
+```
+
+Sometimes it is useful to cast an expression into a type. This can be accomplished using the ```BasicObject#cast``` method.
+```cast``` accepts two parameters, an expression, and a type expression. It has not effect at run-time, just returning the result of the expression in the first argument, but during type-checking will provide the type defined in the second argument as the resulting type for the expression in the first argument:
+
+```ruby
+a = cast(send(:dynamic_invocation),'Integer') # send(:dynamic_invocation) will have type Integer
+```
 
 ## Type inference and minimal typing
 
@@ -200,3 +329,30 @@ Class and modules only need to be annotated if they are defined as polymorphic. 
 To execute the type checker, the ```bin/typed.rb``` script can be used. The script accepts a list of options and path to the entry-point of the source code to be type-checked. Currently the only option available is ```--missing-type``` that will force the type-checker to produce a warning every single time a default dynamic type is introduced due to lack of typing information.
 
 The script will produce some error report output and return an appropriate exit value according to the result of the the check.
+
+## Bibliography
+
+- Types and programming languages, Pierce, MIT Press
+- [Local Type Inference,Pierce, Turner](http://www.cis.upenn.edu/~bcpierce/papers/lti-toplas.pdf)
+- [Dynamic Inference of Static Types for Ruby, Jong-hoon (David) An](http://drum.lib.umd.edu/bitstream/handle/1903/10946/An_umd_0117N_11611.pdf;jsessionid=E6E82129BA5C84B19A98303566F8C4DA?sequence=1)
+- [A Practical Optional Type System for Clojure, Ambrose Bonnaire-Sergeant](https://cloud.github.com/downloads/frenchy64/papers/ambrose-honours.pdf)
+- [Designand Evaluation of Gradual Typing for Python, Vitousek, Kent, Siek et alt.](http://wphomes.soic.indiana.edu/jsiek/files/2014/08/retic-python-v3.pdf)
+- [On Understanding Types, Data Abstraction, and Polymorphism, Cardelli, Wegner](http://lucacardelli.name/papers/onunderstanding.a4.pdf)
+- [An Imperative Object Calculus, Abadi, Cardelli](http://agp.hx0.ru/oop/PrimObjImp.pdf)
+
+## License
+
+Copyright 2016 Antonio Garrote
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.

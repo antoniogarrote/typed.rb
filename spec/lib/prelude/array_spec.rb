@@ -22,7 +22,7 @@ describe Array do
       expect(result.type_vars.first.bound.ruby_type).to eq(String)
 
       expect {
-        result = language.check('Array.(String).new(3, 0)')
+        language.check('Array.(String).new(3, 0)')
       }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
   end
@@ -62,13 +62,13 @@ describe Array do
 
   describe '#count' do
     it 'type checks / &([T] -> Boolean) -> Integer' do
-=begin
+
       result = language.check('Array.(Integer).new(10,0).count(0)')
       expect(result.ruby_type).to eq(Integer)
-=end
+
       result = language.check('Array.(Integer).new(10,0).count{ |x| x == 0 }')
       expect(result.ruby_type).to eq(Integer)
-=begin
+
       expect {
         code = <<__CODE
           ts '#testarrs / String -> Boolean'
@@ -78,7 +78,6 @@ describe Array do
 __CODE
         language.check(code)
       }.to raise_error(TypedRb::Types::UncomparableTypes)
-=end
     end
   end
 
@@ -262,4 +261,18 @@ __END
       expect(result.type_vars.map(&:bound).map(&:ruby_type)).to eq([Integer, Integer])
     end
   end
+
+  describe '#+' do
+    it 'type checks / Array[T] -> Array[T]' do
+      result = language.check('a = Array.(Integer).new; a + [10]')
+      expect(result.to_s).to eq('Array[Integer]')
+    end
+
+    it 'type checks / Array[T] -> Array[T], negative case' do
+      expect {
+        language.check('Array.(Integer).new + ["b"]')
+      }.to raise_error(TypedRb::Types::UncomparableTypes)
+    end
+  end
 end
+
