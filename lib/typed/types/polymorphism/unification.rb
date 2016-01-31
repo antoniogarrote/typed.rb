@@ -163,10 +163,17 @@ module TypedRb
         end
 
         def [](var)
-          if var.is_a?(TypeVariable)
-            groups[var]
+          found = if var.is_a?(TypeVariable)
+                    groups[var]
+                  else
+                    var
+                  end
+          if found.nil?
+            var_key = groups.keys.detect{ |key| key.name == var.name }
+            found = groups[var_key]
+            found || raise(TypedRb::Types::Polymorphism::UnificationError.new("Unification error, cannot find type variable #{var}"))
           else
-            var
+            found
           end
         end
 

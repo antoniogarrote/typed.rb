@@ -29,21 +29,32 @@ class BasicObject
 
       ts '.register_generic_type_information / Hash[Object][Object] -> Hash[Object][Object] -> unit'
       def register_generic_type_information(generic_type_information, generic_super_types_information)
-        unless generic_type_information.is_a?(String) # TODO: String when super annotations for non-generic types
-          generic_type_information[:super_type] = generic_super_types_information
-          if generic_types_parser_registry[generic_type_information[:type]]
-            super_type = (generic_types_parser_registry[generic_type_information[:type]][:super_type] || [])
-            generic_types_parser_registry[generic_type_information[:type]][:super_type]= super_type.concat(generic_type_information[:super_type])
-          else
-            generic_types_parser_registry[generic_type_information[:type]] = generic_type_information
-          end
+        if generic_type_information.is_a?(String)
+          # concrete type with a generic super type
+          generic_type_information = {
+              :type => generic_type_information,
+              :parameters => [],
+              :kind => :generic_type
+          }
+        end
+        generic_type_information[:super_type] = generic_super_types_information
+        if generic_types_parser_registry[generic_type_information[:type]]
+          super_type = (generic_types_parser_registry[generic_type_information[:type]][:super_type] || [])
+          generic_types_parser_registry[generic_type_information[:type]][:super_type]= super_type.concat(generic_type_information[:super_type])
+        else
+          generic_types_parser_registry[generic_type_information[:type]] = generic_type_information
         end
       end
 
       def find_existential_type(type)
         existential_type = existential_types_registry[type]
         if existential_type.nil?
-          existential_type = TypedRb::Types::TyExistentialType.new(type)
+          generic_existential_type = generic_types_registry[type]
+          existential_type = if generic_existential_type
+                               TypedRb::Types::TyGenericExistentialType.new(type, generic_existential_type.type_vars)
+                             else
+                               TypedRb::Types::TyExistentialType.new(type)
+                             end
           @existential_types_registry[type] = existential_type
         end
         existential_type

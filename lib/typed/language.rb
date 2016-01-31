@@ -105,6 +105,7 @@ module TypedRb
           end
         end
       end
+
       top_level_errors = []
       begin
         ::BasicObject::TypeRegistry.check_super_type_annotations

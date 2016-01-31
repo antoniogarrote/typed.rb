@@ -37,19 +37,6 @@ module TypedRb
         end
       end
 
-      def to_s
-        base_string = super
-        var_types_strings = @type_vars.map do |var_type|
-          if var_type.respond_to?(:bound) && var_type.bound
-            # "[#{var_type.variable} <= #{var_type.bound}]"
-            "[#{var_type.bound}]"
-          else
-            "[#{var_type}]"
-          end
-        end
-        "#{base_string}#{var_types_strings.join}"
-      end
-
       def clone_with_substitutions(substitutions)
         materialized_type_vars = type_vars(recursive: false).map do |type_var|
           if type_var.is_a?(Polymorphism::TypeVariable)
@@ -74,7 +61,6 @@ module TypedRb
         end
         self
       end
-
     end
   end
 end

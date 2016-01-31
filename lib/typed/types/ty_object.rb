@@ -19,7 +19,8 @@ module TypedRb
     class TyObject < Type
       include Comparable
 
-      attr_reader :hierarchy, :classes, :modules, :ruby_type, :with_ruby_type
+      attr_reader :classes, :modules, :ruby_type, :with_ruby_type
+      attr_accessor :hierarchy
 
       def initialize(ruby_type, node = nil, classes = [], modules = [])
         super(node)

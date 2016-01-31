@@ -2,6 +2,7 @@ require_relative 'ty_singleton_object'
 require_relative 'polymorphism/generic_comparisons'
 require_relative 'polymorphism/generic_variables'
 require_relative 'polymorphism/generic_object'
+require_relative 'singleton_object'
 
 module TypedRb
   module Types
@@ -9,6 +10,7 @@ module TypedRb
       include Polymorphism::GenericObject
       include Polymorphism::GenericComparisons
       include Polymorphism::GenericVariables
+      include SingletonObject
 
       attr_accessor :local_typing_context, :super_type
 
@@ -82,26 +84,6 @@ module TypedRb
         fresh_vars_generic_type.apply_bindings(unification.bindings_map)
       end
 
-      # TODO: We do need this for cases like Array.(Int).class_method
-
-      # def find_function_type(message)
-      #   function_type = BasicObject::TypeRegistry.find(:class, ruby_type, message)
-      #   replace_bound_type_vars(function_type, type_vars)
-      # end
-
-      #          def find_function_type(message)
-      #            BasicObject::TypeRegistry.find(:class, ruby_type, message)
-      #          end
-      #
-      #          def find_var_type(var)
-      #            var_type = BasicObject::TypeRegistry.find(:class_variable, ruby_type, var)
-      #            if var_type
-      #              var_type
-      #            else
-      #              Types::TypingContext.type_variable_for(:class_variable, var, hierarchy)
-      #            end
-      #          end
-
       def as_object_type
         # this should only be used to check the body type of this
         # class. The variables are going to be unbound.
@@ -131,41 +113,6 @@ module TypedRb
         TyGenericSingletonObject.new(ruby_type, cloned_type_vars, super_type, node)
       end
 
-      def to_s
-        base_string = super
-        var_types_strings = @type_vars.map do |var_type|
-          if !var_type.is_a?(Polymorphism::TypeVariable)
-            "[#{var_type}]"
-          elsif var_type.bound && var_type.bound.is_a?(Polymorphism::TypeVariable)
-            "[#{var_type.variable} <= #{var_type.bound.bound || var_type.bound.variable}]"
-          else
-            "[#{var_type.bound || var_type.variable}]"
-          end
-        end
-        "#{base_string}#{var_types_strings.join}"
-      end
-
-      def clone_with_substitutions(substitutions)
-        materialized_type_vars = type_vars(recursive: false).map do |type_var|
-          if type_var.is_a?(Polymorphism::TypeVariable) && type_var.bound_to_generic?
-            new_type_var = Polymorphism::TypeVariable.new(type_var.variable, node: type_var.node, gen_name: false)
-            new_type_var.to_wildcard! if type_var.wildcard?
-            bound = type_var.bound.clone_with_substitutions(substitutions)
-            new_type_var.bind(bound)
-            new_type_var.upper_bound = bound if type_var.upper_bound
-            new_type_var.lower_bound = bound if type_var.lower_bound
-            new_type_var
-          elsif type_var.is_a?(Polymorphism::TypeVariable)
-            substitutions[type_var.variable] || type_var.clone
-          elsif type_var.is_a?(TyGenericSingletonObject) || type_var.is_a?(TyGenericObject)
-            type_var.clone_with_substitutions(substitutions)
-          else
-            type_var
-          end
-        end
-        self.class.new(ruby_type, materialized_type_vars, super_type, node)
-      end
-
       # This object has concrete type parameters
       # The generic Function we retrieve from the registry might be generic
       # If it is generic we apply the bound parameters and we obtain a concrete function type
@@ -188,73 +135,6 @@ module TypedRb
         end
       end
 
-      protected
-
-      def apply_type_arguments(fresh_vars_generic_type, actual_arguments)
-        fresh_vars_generic_type.type_vars.each_with_index do |type_var, i|
-          if type_var.bound.is_a?(TyGenericSingletonObject)
-            type_var.bind(apply_type_arguments_recursively(type_var.bound, actual_arguments))
-          else
-            apply_type_argument(actual_arguments[i], type_var)
-          end
-        end
-      end
-
-      def apply_type_argument(argument, type_var)
-        if argument.is_a?(Polymorphism::TypeVariable)
-          if argument.wildcard?
-            # Wild card type
-            # If the type is T =:= E < Type1 or E > Type1 only that constraint should be added
-            { :lt => :upper_bound, :gt => :lower_bound }.each do |relation, bound|
-              if argument.send(bound)
-                value = if argument.send(bound).is_a?(TyGenericSingletonObject)
-                          argument.send(bound).clone # .self_materialize
-                        else
-                          argument.send(bound)
-                        end
-                type_var.compatible?(value, relation)
-              end
-            end
-            type_var.to_wildcard! # WILD CARD
-          elsif argument.bound # var type with a particular value
-            argument = argument.bound
-            if argument.is_a?(TyGenericSingletonObject)
-              argument = argument.clone # .self_materialize
-            end
-            # This is only for matches T =:= Type1 -> T < Type1, T > Type1
-            fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :lt)
-            fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :gt)
-          else
-            # Type variable
-            type_var.bound = argument
-            type_var.lower_bound = argument
-            type_var.upper_bound = argument
-          end
-        else
-          if argument.is_a?(TyGenericSingletonObject)
-            argument = argument.clone # .self_materialize
-          end
-          # This is only for matches T =:= Type1 -> T < Type1, T > Type1
-          fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :lt)
-          fail Types::UncomparableTypes.new(type_var, argument) unless type_var.compatible?(argument, :gt)
-        end
-      end
-
-      def apply_type_arguments_recursively(generic_type_bound, actual_arguments)
-        arg_names = actual_arguments_hash(actual_arguments)
-        recursive_actual_arguments = generic_type_bound.type_vars.map do |type_var|
-          arg_names[type_var.variable] || fail("Unbound type variable #{type_var.variable} for recursive generic type #{generic_type_bound}")
-        end
-        generic_type_bound.materialize(recursive_actual_arguments)
-      end
-
-      def actual_arguments_hash(actual_arguments)
-        acc = {}
-        type_vars.each_with_index do |type_var, i|
-          acc[type_var.variable] = actual_arguments[i]
-        end
-        acc
-      end
     end
   end
 end

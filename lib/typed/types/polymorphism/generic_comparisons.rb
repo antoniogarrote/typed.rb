@@ -31,8 +31,8 @@ module TypedRb
         def compatible?(other_type, relation = :lt)
           if other_type.is_a?(TyDynamic) || other_type.is_a?(TyError)
             true
-          elsif other_type.is_a?(TyGenericObject) || other_type.is_a?(TyGenericSingletonObject)
-            if check_generic_type_relation(other_type.ruby_type, relation)
+          elsif other_type.is_a?(TyGenericObject) || other_type.is_a?(TyGenericSingletonObject) || other_type.is_a?(TyGenericExistentialType)
+            if check_generic_type_relation(other_type, relation)
               type_vars.each_with_index do |type_var, i|
                 other_type_var = other_type.type_vars[i]
                 compatible = if incompatible_free_type_vars?(type_var, other_type_var)
@@ -49,7 +49,7 @@ module TypedRb
               false
             end
           elsif other_type.is_a?(TyObject)
-            check_generic_type_relation(other_type.ruby_type, relation)
+            check_generic_type_relation(other_type, relation)
           else
             other_type.compatible?(self, relation == :lt ? :gt : :lt)
           end
@@ -79,12 +79,23 @@ module TypedRb
              TypingContext.bound_generic_type_var?(right_var))
         end
 
-        def check_generic_type_relation(other_ruby_type, relation)
+        def check_generic_type_relation(other_type, relation)
           if relation == :gt
-            TyObject.new(ruby_type) >= TyObject.new(other_ruby_type)
+            to_ty_object(self)  >= to_ty_object(other_type)
           else
-            TyObject.new(ruby_type) <= TyObject.new(other_ruby_type)
+            to_ty_object(self)  <= to_ty_object(other_type)
           end
+        end
+
+        def to_ty_object(type)
+          ty_object = TyObject.new(type.ruby_type)
+          if type.is_a?(Types::TySingletonObject) ||
+             type.is_a?(Types::TyGenericSingletonObject) ||
+             type.is_a?(Types::TyExistentialType) ||
+             type.is_a?(Types::TyGenericExistentialType)
+            ty_object.hierarchy = type.ruby_type.meta_ancestors
+          end
+          ty_object
         end
 
         def check_type_var_inclusion(type_var, other_type_var, relation)
