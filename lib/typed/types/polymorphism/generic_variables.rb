@@ -18,6 +18,18 @@ module TypedRb
           #  acc[type_var.variable] = type_var
           #end.values
         end
+
+        def unbound_vars
+          @type_vars.map do |type_var|
+            if type_var.is_a?(Polymorphism::TypeVariable) && type_var.bound_to_generic?
+              type_var.bound.unbound_vars
+            elsif type_var.is_a?(Polymorphism::TypeVariable)
+              type_var if type_var.bound.nil?
+            else
+              type_var.unbound_vars
+            end
+          end.flatten.reject(&:nil?)
+        end
       end
     end
   end

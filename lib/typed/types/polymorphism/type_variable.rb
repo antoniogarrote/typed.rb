@@ -115,6 +115,19 @@ module TypedRb
         def bound_to_generic?
           bound && bound.respond_to?(:generic?) && bound.generic?
         end
+
+        def clean_dynamic_bindings
+          if @bound.is_a?(TypedRb::Types::TyDynamic)
+            @bound = nil
+          end
+          if @lower_bound.is_a?(TypedRb::Types::TyDynamic)
+            @lower_bound = nil
+          end
+          if @upper_bound.is_a?(TypedRb::Types::TyDynamic)
+            @upper_bound = nil
+          end
+        end
+
       end
     end
   end

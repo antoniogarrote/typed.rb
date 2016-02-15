@@ -133,4 +133,40 @@ describe TypedRb::Language do
       }.to raise_error(TypedRb::Types::UncomparableTypes)
     end
   end
+
+  context 'with equality example, type checks correctly' do
+    let(:example) { 'equality.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        silence_stream(STDOUT) do
+          language.check_file(file, true)
+        end
+      }.to_not raise_error
+    end
+  end
+
+  context 'with enum example, type checks correctly' do
+    let(:example) { 'enum.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        expr = File.new(file, 'r').read
+        result = language.check(expr)
+        expect(result.to_s).to eq('Array[Integer]')
+      }.to_not raise_error
+    end
+  end
+
+  context 'with enum example error1, type checks correctly' do
+    let(:example) { 'enum/enum_error1.rb' }
+
+    it 'should be possible to type check the example correctly' do
+      expect {
+        expr = File.new(file, 'r').read
+        language.check(expr)
+      }.to raise_error(TypedRb::Types::Polymorphism::UnificationError)
+    end
+  end
+
 end

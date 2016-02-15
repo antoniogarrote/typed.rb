@@ -158,8 +158,7 @@ __END
 
     expect do
       language.check(code)
-    end.to raise_error(TypedRb::Types::UncomparableTypes,
-                       /Cannot compare types Object with.*Integer/)
+    end.to raise_error(TypedRb::Types::Polymorphism::UnificationError)
   end
 
   it 'type-checks correctly super type generics detecting type errors based on the super-type parameter on type instantiation' do
@@ -186,8 +185,7 @@ __END
 
     expect do
       language.check(code)
-    end.to raise_error(TypedRb::Types::UncomparableTypes,
-                       /Cannot compare types Object with.*Integer/)
+    end.to raise_error(TypedRb::Types::Polymorphism::UnificationError)
   end
 
 end

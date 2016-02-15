@@ -63,8 +63,11 @@ module TypedRb
           end
 
           generic_function = (from_args + [to_arg, materialized_block_type]).any? do |arg|
-            arg.is_a?(Polymorphism::TypeVariable) ||
-                (arg.respond_to?(:generic?) && arg.generic?)
+            next arg.bound.nil? if arg.is_a?(Polymorphism::TypeVariable)
+            next false if !arg.respond_to?(:generic?) || !arg.generic?
+            next true if arg.is_a?(Types::TyGenericFunction)
+            unbound_vars = arg.unbound_vars
+            unbound_vars.count > 0
           end
 
           if generic_function

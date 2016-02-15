@@ -125,8 +125,9 @@ module TypedRb
             type_var_signature = argument.node.children.first
             maybe_generic_method_var = Types::TypingContext.vars_info(:method)[type_var_signature]
             maybe_generic_class_var = Types::TypingContext.vars_info(:class)[type_var_signature]
-            if maybe_generic_method_var || maybe_generic_class_var
-              maybe_generic_method_var || maybe_generic_class_var
+            maybe_generic_module_var = Types::TypingContext.vars_info(:module)[type_var_signature]
+            if maybe_generic_method_var || maybe_generic_class_var || maybe_generic_module_var
+              maybe_generic_method_var || maybe_generic_class_var || maybe_generic_module_var
             else
               parsed_types = TypeSignature::Parser.parse(type_var_signature)
               if parsed_types.is_a?(Array)
@@ -236,7 +237,8 @@ module TypedRb
                                         rest_type
                                       end
               actual_arguments[index..-1].each do |actual_argument|
-                unless actual_argument.check_type(context).compatible?(formal_parameter_type, :lt)
+                actual_argument_type = actual_argument.check_type(context)
+                unless actual_argument_type.compatible?(formal_parameter_type, :lt)
                   error_message = "Error type checking message sent '#{message}': #{formal_parameter_type} expected, #{actual_argument_type} found"
                   fail TypeCheckError.new(error_message, node)
                 end

@@ -27,7 +27,7 @@ __END
 
       expect {
         language.check(expr)
-      }.to raise_error(TypedRb::Types::UncomparableTypes)
+      }.to raise_error(TypedRb::Types::Polymorphism::UnificationError)
     end
   end
 end

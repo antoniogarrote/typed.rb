@@ -27,7 +27,9 @@ module TypedRb
         unification = Types::Polymorphism::Unification.new(module_type.local_typing_context.all_constraints,
                                                            :allow_unbound_receivers => true)
         unification.run
-
+        if(module_type.is_a?(TypedRb::Types::TyGenericExistentialType))
+          module_type.clean_dynamic_bindings
+        end
         module_type
       end
 
@@ -38,6 +40,21 @@ module TypedRb
         module_self_variable.node = node
         module_self_variable.module_type = module_type
         module_type.self_variable = module_self_variable
+
+        if(module_type.is_a?(TypedRb::Types::TyGenericExistentialType))
+          module_type.type_vars.each do |type_var|
+            type_var = Types::TypingContext.type_variable_for_generic_type(type_var)
+            type_var.node = node
+
+            if type_var.upper_bound
+              type_var.compatible?(type_var.upper_bound, :lt)
+            end
+
+            if type_var.lower_bound
+              type_var.compatible?(type_var.lower_bound, :gt)
+            end
+          end
+        end
         yield(module_self_variable)
 
         # Since every single time we find the generic type the same instance

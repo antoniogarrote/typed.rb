@@ -44,6 +44,13 @@ module TypedRb
         Polymorphism::Unification.new(applied_typing_context.all_constraints).run(false)
         applied_typing_context.unlink # these constraints have already been satisfied
       end
+
+      def clean_dynamic_bindings
+        type_vars.each do |type_var|
+          type_var.clean_dynamic_bindings
+        end
+        local_typing_context.clean_dynamic_bindings
+      end
     end
   end
 end

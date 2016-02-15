@@ -166,7 +166,7 @@ module TypedRb
           else
             key = [:local, nil, variable_name]
             type_variables_register[key] = TypeVariable.new(variable_name, gen_name: false)
-            @constraints[variable_name] = [relation_type, type]
+            @constraints[variable_name] = [[relation_type, type]]
             # fail StandardError, "Cannot find variable #{variable_name} to add a constraint"
           end
         end
@@ -198,6 +198,23 @@ module TypedRb
             acc[var_type.variable] = var_type.clone
           end
           [apply_type(parent, substitutions), substitutions]
+        end
+
+        def clean_dynamic_bindings
+          constraints.values.each do |constraint|
+            constraint.each do |type, value|
+              if type == :lt || type == :gt
+                if value.is_a?(TypedRb::Types::Polymorphism::TypeVariable)
+                  value.clean_dynamic_bindings
+                end
+              end
+            end
+          end
+          type_variables_register.values.each do |type_var|
+            if type_var.is_a?(TypedRb::Types::Polymorphism::TypeVariable)
+              type_var.clean_dynamic_bindings
+            end
+          end
         end
 
         protected

@@ -119,8 +119,14 @@ module TypedRb
               fn_arg = fn.from[i]
               if arg.is_a?(TypeVariable)
                 if graph[arg][:lower_type]
-                  type = compatible_lt_type?(graph[arg][:lower_type], fn_arg)
-                  graph[arg][:lower_type] = type
+                  begin
+                    type = [graph[arg][:lower_type], fn_arg].min
+                    graph[arg][:lower_type] = type
+                  rescue TypedRb::Types::Polymorphism::UnificationError
+                    value_l = graph[arg][:lower_type]
+                    value_r = fn_arg
+                    raise TypedRb::Types::UncomparableTypes.new(value_l, value_r, nil, ", #{value_l} cannot be compared to #{value_r}")
+                  end
                 else
                   graph[arg][:lower_type] = fn_arg
                 end
@@ -402,6 +408,7 @@ module TypedRb
           # in the remaining @lt constraints
           @lt_constraints = graph.replace_groups(@lt_constraints)
           unify(@lt_constraints)
+          graph.check_bindings
           unify(@send_constraints)
           graph.check_bindings
           graph.print_groups
@@ -462,7 +469,6 @@ module TypedRb
                 end
             text << "#{l} :send #{message}[ #{arg_types.join(',')} -> #{return_type}]\n"
           end
-
           TypedRb.log binding, :debug, text.string
         end
 
